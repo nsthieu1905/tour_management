@@ -1,0 +1,1842 @@
+<!-- Header -->
+<header
+  class="bg-white shadow-sm border-b border-gray-200 fixed w-full top-0 z-50"
+>
+  <div class="flex items-center justify-between px-6 py-4">
+    <div class="flex items-center space-x-4">
+      <div class="gradient-bg p-2 rounded-lg">
+        <i class="fas fa-map-marked-alt text-white text-xl"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">TravelAdmin Pro</h1>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <!-- Search -->
+      <div class="relative">
+        <input
+          type="text"
+          placeholder="Tìm kiếm..."
+          class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+      </div>
+
+      <!-- Notifications -->
+      <div class="relative">
+        <button class="p-2 text-gray-600 hover:text-gray-900 relative">
+          <i class="fas fa-bell text-xl"></i>
+          <span
+            class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+            >3</span
+          >
+        </button>
+      </div>
+
+      <!-- Dark Mode Toggle -->
+      <button
+        onclick="toggleDarkMode()"
+        class="p-2 text-gray-600 hover:text-gray-900"
+      >
+        <i class="fas fa-moon text-xl"></i>
+      </button>
+
+      <!-- User Menu -->
+      <div class="flex items-center space-x-3">
+        <img
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='16' font-weight='bold'%3EAD%3C/text%3E%3C/svg%3E"
+          alt="Admin"
+          class="w-10 h-10 rounded-full"
+        />
+        <div>
+          <p class="text-sm font-medium text-gray-900">Admin User</p>
+          <p class="text-xs text-gray-500">Quản trị viên</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="flex pt-16">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg h-screen fixed left-0 overflow-y-auto">
+    <nav class="p-4 space-y-2">
+      <div
+        class="sidebar-item p-3 rounded-lg cursor-pointer bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+        onclick="showSection('dashboard')"
+      >
+        <i class="fas fa-tachometer-alt mr-3"></i>
+        Dashboard
+      </div>
+
+      <div
+        class="sidebar-item p-3 rounded-lg cursor-pointer text-gray-700 hover:text-white"
+        onclick="showSection('tours')"
+      >
+        <i class="fas fa-route mr-3"></i>
+        Quản lý Tour
+      </div>
+
+      <div
+        class="sidebar-item p-3 rounded-lg cursor-pointer text-gray-700 hover:text-white"
+        onclick="showSection('bookings')"
+      >
+        <i class="fas fa-calendar-check mr-3"></i>
+        Đơn đặt tour
+      </div>
+
+      <div
+        class="sidebar-item p-3 rounded-lg cursor-pointer text-gray-700 hover:text-white"
+        onclick="showSection('customers')"
+      >
+        <i class="fas fa-users mr-3"></i>
+        Khách hàng
+      </div>
+
+      <div
+        class="sidebar-item p-3 rounded-lg cursor-pointer text-gray-700 hover:text-white"
+        onclick="showSection('analytics')"
+      >
+        <i class="fas fa-chart-line mr-3"></i>
+        Báo cáo & Phân tích
+      </div>
+
+      <div
+        class="sidebar-item p-3 rounded-lg cursor-pointer text-gray-700 hover:text-white"
+        onclick="showSection('partners')"
+      >
+        <i class="fas fa-handshake mr-3"></i>
+        Đối tác
+      </div>
+
+      <div
+        class="sidebar-item p-3 rounded-lg cursor-pointer text-gray-700 hover:text-white"
+        onclick="showSection('settings')"
+      >
+        <i class="fas fa-cog mr-3"></i>
+        Cài đặt
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 ml-64 p-6">
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section">
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">
+          Dashboard Tổng quan
+        </h2>
+        <p class="text-gray-600">
+          Theo dõi hiệu suất kinh doanh và các chỉ số quan trọng
+        </p>
+      </div>
+
+      <!-- Key Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Doanh thu tháng</p>
+              <p class="text-3xl font-bold text-gray-900">2.4B VNĐ</p>
+              <p class="text-sm text-green-600">+12.5% so với tháng trước</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Đơn đặt tour</p>
+              <p class="text-3xl font-bold text-gray-900">1,247</p>
+              <p class="text-sm text-blue-600">+8.2% so với tháng trước</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tỷ lệ lấp đầy</p>
+              <p class="text-3xl font-bold text-gray-900">87.3%</p>
+              <p class="text-sm text-orange-600">+3.1% so với tháng trước</p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+              <i class="fas fa-percentage text-orange-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Khách hàng mới</p>
+              <p class="text-3xl font-bold text-gray-900">342</p>
+              <p class="text-sm text-purple-600">+15.7% so với tháng trước</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-user-plus text-purple-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            Doanh thu theo tháng
+          </h3>
+          <canvas id="revenueChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            Tour phổ biến
+          </h3>
+          <canvas id="popularToursChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Hoạt động gần đây
+        </h3>
+        <div class="space-y-4">
+          <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <div class="bg-green-100 p-2 rounded-full">
+              <i class="fas fa-check text-green-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900">
+                Đơn đặt tour #TK2024001 đã được xác nhận
+              </p>
+              <p class="text-xs text-gray-500">2 phút trước</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <div class="bg-blue-100 p-2 rounded-full">
+              <i class="fas fa-plus text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900">
+                Tour mới "Hạ Long - Sapa 4N3Đ" đã được thêm
+              </p>
+              <p class="text-xs text-gray-500">15 phút trước</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <div class="bg-orange-100 p-2 rounded-full">
+              <i class="fas fa-exclamation-triangle text-orange-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900">
+                Tour "Phú Quốc 3N2Đ" sắp hết chỗ (còn 3 chỗ)
+              </p>
+              <p class="text-xs text-gray-500">1 giờ trước</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tours Management Section -->
+    <div id="tours" class="section hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">Quản lý Tour</h2>
+          <p class="text-gray-600">
+            Thêm mới, chỉnh sửa và theo dõi các tour du lịch
+          </p>
+        </div>
+        <button
+          onclick="showAddTourModal()"
+          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <i class="fas fa-plus mr-2"></i>Thêm tour mới
+        </button>
+      </div>
+
+      <!-- Tour Filters -->
+      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả trạng thái</option>
+            <option>Đang hoạt động</option>
+            <option>Tạm dừng</option>
+            <option>Hết chỗ</option>
+          </select>
+
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả điểm đến</option>
+            <option>Hà Nội</option>
+            <option>TP.HCM</option>
+            <option>Đà Nẵng</option>
+            <option>Phú Quốc</option>
+          </select>
+
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+
+          <input
+            type="text"
+            placeholder="Tìm kiếm tour..."
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <!-- Tours Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
+          <div class="h-48 bg-gradient-to-r from-blue-400 to-blue-600 relative">
+            <div class="absolute top-4 left-4">
+              <span
+                class="bg-green-500 text-white px-2 py-1 rounded-full text-xs"
+                >Đang hoạt động</span
+              >
+            </div>
+            <div class="absolute top-4 right-4">
+              <button
+                class="bg-white bg-opacity-20 text-white p-2 rounded-full hover:bg-opacity-30"
+              >
+                <i class="fas fa-heart"></i>
+              </button>
+            </div>
+            <div class="absolute bottom-4 left-4 text-white">
+              <h3 class="text-xl font-bold">Hạ Long - Sapa</h3>
+              <p class="text-sm opacity-90">4 ngày 3 đêm</p>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-2xl font-bold text-blue-600"
+                >4.500.000 VNĐ</span
+              >
+              <div class="text-right">
+                <p class="text-sm text-gray-600">Còn lại</p>
+                <p class="text-lg font-semibold text-orange-600">12/30 chỗ</p>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between text-sm text-gray-600 mb-4"
+            >
+              <span><i class="fas fa-calendar mr-1"></i>15/12/2024</span>
+              <span><i class="fas fa-users mr-1"></i>18 đã đặt</span>
+              <span><i class="fas fa-star mr-1"></i>4.8 (24)</span>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
+              </button>
+              <button
+                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                <i class="fas fa-eye mr-1"></i>Xem chi tiết
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
+          <div
+            class="h-48 bg-gradient-to-r from-green-400 to-green-600 relative"
+          >
+            <div class="absolute top-4 left-4">
+              <span
+                class="bg-orange-500 text-white px-2 py-1 rounded-full text-xs"
+                >Sắp hết chỗ</span
+              >
+            </div>
+            <div class="absolute bottom-4 left-4 text-white">
+              <h3 class="text-xl font-bold">Phú Quốc</h3>
+              <p class="text-sm opacity-90">3 ngày 2 đêm</p>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-2xl font-bold text-green-600"
+                >3.200.000 VNĐ</span
+              >
+              <div class="text-right">
+                <p class="text-sm text-gray-600">Còn lại</p>
+                <p class="text-lg font-semibold text-red-600">3/25 chỗ</p>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between text-sm text-gray-600 mb-4"
+            >
+              <span><i class="fas fa-calendar mr-1"></i>20/12/2024</span>
+              <span><i class="fas fa-users mr-1"></i>22 đã đặt</span>
+              <span><i class="fas fa-star mr-1"></i>4.9 (31)</span>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
+              </button>
+              <button
+                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                <i class="fas fa-eye mr-1"></i>Xem chi tiết
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
+          <div
+            class="h-48 bg-gradient-to-r from-purple-400 to-purple-600 relative"
+          >
+            <div class="absolute top-4 left-4">
+              <span
+                class="bg-green-500 text-white px-2 py-1 rounded-full text-xs"
+                >Đang hoạt động</span
+              >
+            </div>
+            <div class="absolute bottom-4 left-4 text-white">
+              <h3 class="text-xl font-bold">Đà Nẵng - Hội An</h3>
+              <p class="text-sm opacity-90">4 ngày 3 đêm</p>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-2xl font-bold text-purple-600"
+                >3.800.000 VNĐ</span
+              >
+              <div class="text-right">
+                <p class="text-sm text-gray-600">Còn lại</p>
+                <p class="text-lg font-semibold text-green-600">18/30 chỗ</p>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between text-sm text-gray-600 mb-4"
+            >
+              <span><i class="fas fa-calendar mr-1"></i>25/12/2024</span>
+              <span><i class="fas fa-users mr-1"></i>12 đã đặt</span>
+              <span><i class="fas fa-star mr-1"></i>4.7 (19)</span>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
+              </button>
+              <button
+                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                <i class="fas fa-eye mr-1"></i>Xem chi tiết
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bookings Section -->
+    <div id="bookings" class="section hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            Quản lý Đơn đặt tour
+          </h2>
+          <p class="text-gray-600">Theo dõi và xử lý các đơn đặt tour</p>
+        </div>
+        <div class="flex space-x-3">
+          <button
+            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+          >
+            <i class="fas fa-download mr-2"></i>Xuất Excel
+          </button>
+          <button
+            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          >
+            <i class="fas fa-file-pdf mr-2"></i>Xuất PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Booking Filters -->
+      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả trạng thái</option>
+            <option>Chờ xác nhận</option>
+            <option>Đã xác nhận</option>
+            <option>Đã hủy</option>
+            <option>Hoàn thành</option>
+          </select>
+
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả tour</option>
+            <option>Hạ Long - Sapa</option>
+            <option>Phú Quốc</option>
+            <option>Đà Nẵng - Hội An</option>
+          </select>
+
+          <input
+            type="text"
+            placeholder="Tìm theo mã đơn, tên KH..."
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <!-- Bookings Table -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Mã đơn
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Khách hàng
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tour
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Ngày đi
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Số người
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tổng tiền
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Trạng thái
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr class="hover:bg-gray-50">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  #TK2024001
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">
+                      Nguyễn Văn An
+                    </div>
+                    <div class="text-sm text-gray-500">0901234567</div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Hạ Long - Sapa 4N3Đ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  15/12/2024
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4 người
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  18.000.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="status-pending px-2 py-1 text-xs font-medium rounded-full"
+                    >Chờ xác nhận</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Xác nhận
+                  </button>
+                  <button class="text-red-600 hover:text-red-900">Hủy</button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  #TK2024002
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">
+                      Trần Thị Bình
+                    </div>
+                    <div class="text-sm text-gray-500">0912345678</div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Phú Quốc 3N2Đ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  20/12/2024
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  2 người
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  6.400.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="status-confirmed px-2 py-1 text-xs font-medium rounded-full"
+                    >Đã xác nhận</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Sửa
+                  </button>
+                  <button class="text-red-600 hover:text-red-900">Hủy</button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  #TK2024003
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">
+                      Lê Minh Cường
+                    </div>
+                    <div class="text-sm text-gray-500">0923456789</div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Đà Nẵng - Hội An 4N3Đ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  10/12/2024
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  6 người
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  22.800.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="status-completed px-2 py-1 text-xs font-medium rounded-full"
+                    >Hoàn thành</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-purple-600 hover:text-purple-900">
+                    Đánh giá
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div
+          class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200"
+        >
+          <div class="flex-1 flex justify-between sm:hidden">
+            <button
+              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Trước
+            </button>
+            <button
+              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Sau
+            </button>
+          </div>
+          <div
+            class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
+          >
+            <div>
+              <p class="text-sm text-gray-700">
+                Hiển thị
+                <span class="font-medium">1</span>
+                đến
+                <span class="font-medium">10</span>
+                trong
+                <span class="font-medium">97</span>
+                kết quả
+              </p>
+            </div>
+            <div>
+              <nav
+                class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+              >
+                <button
+                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  1
+                </button>
+                <button
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  2
+                </button>
+                <button
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  3
+                </button>
+                <button
+                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  Sau
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customers Section -->
+    <div id="customers" class="section hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            Quản lý Khách hàng
+          </h2>
+          <p class="text-gray-600">Theo dõi thông tin và hành vi khách hàng</p>
+        </div>
+        <button
+          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <i class="fas fa-envelope mr-2"></i>Gửi Email Marketing
+        </button>
+      </div>
+
+      <!-- Customer Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tổng khách hàng</p>
+              <p class="text-2xl font-bold text-gray-900">2,847</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-users text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Khách VIP</p>
+              <p class="text-2xl font-bold text-gray-900">127</p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <i class="fas fa-crown text-yellow-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">
+                Khách mới tháng này
+              </p>
+              <p class="text-2xl font-bold text-gray-900">342</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-user-plus text-green-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tỷ lệ quay lại</p>
+              <p class="text-2xl font-bold text-gray-900">68.5%</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-redo text-purple-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Filters -->
+      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả phân loại</option>
+            <option>Khách VIP</option>
+            <option>Khách thường</option>
+            <option>Khách mới</option>
+          </select>
+
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả khu vực</option>
+            <option>Hà Nội</option>
+            <option>TP.HCM</option>
+            <option>Đà Nẵng</option>
+            <option>Khác</option>
+          </select>
+
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+
+          <input
+            type="text"
+            placeholder="Tìm theo tên, email, SĐT..."
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <!-- Customer List -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Khách hàng
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Phân loại
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Số tour đã đặt
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tổng chi tiêu
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Lần cuối đặt
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3ENA%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Nguyễn Văn An
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        nguyenvanan@email.com
+                      </div>
+                      <div class="text-sm text-gray-500">0901234567</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800"
+                  >
+                    <i class="fas fa-crown mr-1"></i>VIP
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  8 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  45.600.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  15/11/2024
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Email
+                  </button>
+                  <button class="text-purple-600 hover:text-purple-900">
+                    Lịch sử
+                  </button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%2310b981'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3ETB%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Trần Thị Bình
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        tranthibinh@email.com
+                      </div>
+                      <div class="text-sm text-gray-500">0912345678</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+                    >Thường</span
+                  >
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  3 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  18.200.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  28/10/2024
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Email
+                  </button>
+                  <button class="text-purple-600 hover:text-purple-900">
+                    Lịch sử
+                  </button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23f59e0b'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3ELC%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Lê Minh Cường
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        leminhcuong@email.com
+                      </div>
+                      <div class="text-sm text-gray-500">0923456789</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+                    >Mới</span
+                  >
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  1 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  22.800.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  05/12/2024
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Email
+                  </button>
+                  <button class="text-purple-600 hover:text-purple-900">
+                    Lịch sử
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div id="analytics" class="section hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            Báo cáo & Phân tích
+          </h2>
+          <p class="text-gray-600">
+            Theo dõi hiệu suất kinh doanh và xu hướng thị trường
+          </p>
+        </div>
+        <div class="flex space-x-3">
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>30 ngày qua</option>
+            <option>90 ngày qua</option>
+            <option>6 tháng qua</option>
+            <option>1 năm qua</option>
+          </select>
+          <button
+            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+          >
+            <i class="fas fa-download mr-2"></i>Xuất báo cáo
+          </button>
+        </div>
+      </div>
+
+      <!-- Analytics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">
+                Doanh thu trung bình/ngày
+              </p>
+              <p class="text-2xl font-bold text-gray-900">80M VNĐ</p>
+              <p class="text-sm text-green-600">+5.2% so với kỳ trước</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-chart-line text-green-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tỷ lệ chuyển đổi</p>
+              <p class="text-2xl font-bold text-gray-900">12.8%</p>
+              <p class="text-sm text-blue-600">+2.1% so với kỳ trước</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-percentage text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">
+                Giá trị đơn hàng TB
+              </p>
+              <p class="text-2xl font-bold text-gray-900">6.2M VNĐ</p>
+              <p class="text-sm text-orange-600">+8.7% so với kỳ trước</p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+              <i class="fas fa-money-bill-wave text-orange-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tỷ lệ hủy tour</p>
+              <p class="text-2xl font-bold text-gray-900">3.2%</p>
+              <p class="text-sm text-red-600">-1.1% so với kỳ trước</p>
+            </div>
+            <div class="bg-red-100 p-3 rounded-full">
+              <i class="fas fa-times-circle text-red-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            Xu hướng đặt tour theo mùa
+          </h3>
+          <canvas id="seasonalChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            Phân bố theo điểm đến
+          </h3>
+          <canvas id="destinationChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Performance Table -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Hiệu suất tour theo tháng
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Tour
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Đã bán
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Doanh thu
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Tỷ lệ lấp đầy
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Đánh giá TB
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                >
+                  Xu hướng
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr>
+                <td class="px-4 py-4 text-sm font-medium text-gray-900">
+                  Hạ Long - Sapa 4N3Đ
+                </td>
+                <td class="px-4 py-4 text-sm text-gray-900">156 chỗ</td>
+                <td class="px-4 py-4 text-sm text-gray-900">702M VNĐ</td>
+                <td class="px-4 py-4 text-sm text-gray-900">89.2%</td>
+                <td class="px-4 py-4 text-sm text-gray-900">4.8/5</td>
+                <td class="px-4 py-4 text-sm text-green-600">↗ +12%</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-4 text-sm font-medium text-gray-900">
+                  Phú Quốc 3N2Đ
+                </td>
+                <td class="px-4 py-4 text-sm text-gray-900">203 chỗ</td>
+                <td class="px-4 py-4 text-sm text-gray-900">649.6M VNĐ</td>
+                <td class="px-4 py-4 text-sm text-gray-900">92.7%</td>
+                <td class="px-4 py-4 text-sm text-gray-900">4.9/5</td>
+                <td class="px-4 py-4 text-sm text-green-600">↗ +18%</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-4 text-sm font-medium text-gray-900">
+                  Đà Nẵng - Hội An 4N3Đ
+                </td>
+                <td class="px-4 py-4 text-sm text-gray-900">127 chỗ</td>
+                <td class="px-4 py-4 text-sm text-gray-900">482.6M VNĐ</td>
+                <td class="px-4 py-4 text-sm text-gray-900">78.4%</td>
+                <td class="px-4 py-4 text-sm text-gray-900">4.7/5</td>
+                <td class="px-4 py-4 text-sm text-red-600">↘ -3%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partners Section -->
+    <div id="partners" class="section hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">Quản lý Đối tác</h2>
+          <p class="text-gray-600">Theo dõi và đánh giá hiệu quả hợp tác</p>
+        </div>
+        <button
+          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <i class="fas fa-plus mr-2"></i>Thêm đối tác mới
+        </button>
+      </div>
+
+      <!-- Partner Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tổng đối tác</p>
+              <p class="text-2xl font-bold text-gray-900">47</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-handshake text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Đối tác hoạt động</p>
+              <p class="text-2xl font-bold text-gray-900">42</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-check-circle text-green-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">
+                Doanh thu từ đối tác
+              </p>
+              <p class="text-2xl font-bold text-gray-900">1.8B VNĐ</p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <i class="fas fa-coins text-yellow-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Đánh giá TB</p>
+              <p class="text-2xl font-bold text-gray-900">4.6/5</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-star text-purple-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partners List -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Đối tác
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Loại hình
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tour cung cấp
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Doanh thu
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Đánh giá
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Trạng thái
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='12' font-weight='bold'%3EHL%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Hạ Long Bay Tours
+                      </div>
+                      <div class="text-sm text-gray-500">halong@tours.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Tour operator
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  12 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  450M VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4.8/5 (156)
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+                    >Hoạt động</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Đánh giá
+                  </button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Hợp đồng
+                  </button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%2310b981'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='12' font-weight='bold'%3EPQ%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Phú Quốc Resort
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        phuquoc@resort.com
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Khách sạn
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  8 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  380M VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4.9/5 (203)
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+                    >Hoạt động</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Đánh giá
+                  </button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Hợp đồng
+                  </button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23f59e0b'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='12' font-weight='bold'%3EDN%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Đà Nẵng Travel
+                      </div>
+                      <div class="text-sm text-gray-500">danang@travel.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Lữ hành
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  15 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  320M VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4.7/5 (127)
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800"
+                    >Đánh giá</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Đánh giá
+                  </button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Hợp đồng
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div id="settings" class="section hidden">
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Cài đặt hệ thống</h2>
+        <p class="text-gray-600">Quản lý cấu hình và bảo mật hệ thống</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- General Settings -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            Cài đặt chung
+          </h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Tên công ty</label
+              >
+              <input
+                type="text"
+                value="TravelAdmin Pro"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Email liên hệ</label
+              >
+              <input
+                type="email"
+                value="admin@traveladmin.com"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Múi giờ</label
+              >
+              <select
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option>GMT+7 (Việt Nam)</option>
+                <option>GMT+8 (Singapore)</option>
+                <option>GMT+9 (Nhật Bản)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Bảo mật</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700"
+                >Xác thực 2 yếu tố</span
+              >
+              <button
+                class="bg-green-500 text-white px-3 py-1 rounded-full text-xs"
+              >
+                Đã bật
+              </button>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700"
+                >Ghi log hoạt động</span
+              >
+              <button
+                class="bg-green-500 text-white px-3 py-1 rounded-full text-xs"
+              >
+                Đã bật
+              </button>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700"
+                >Sao lưu tự động</span
+              >
+              <button
+                class="bg-green-500 text-white px-3 py-1 rounded-full text-xs"
+              >
+                Hàng ngày
+              </button>
+            </div>
+            <button
+              class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
+            >
+              Đổi mật khẩu
+            </button>
+          </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông báo</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">Đơn đặt mới</span>
+              <input type="checkbox" checked class="rounded" />
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700"
+                >Tour sắp hết chỗ</span
+              >
+              <input type="checkbox" checked class="rounded" />
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700"
+                >Yêu cầu hủy tour</span
+              >
+              <input type="checkbox" checked class="rounded" />
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700"
+                >Báo cáo hàng tuần</span
+              >
+              <input type="checkbox" class="rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Integration -->
+      <div class="bg-white rounded-xl shadow-sm p-6 mt-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Tích hợp API</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="font-medium text-gray-900 mb-3">Cổng thanh toán</h4>
+            <div class="space-y-3">
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+              >
+                <div class="flex items-center space-x-3">
+                  <div
+                    class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center"
+                  >
+                    <i class="fas fa-credit-card text-blue-600"></i>
+                  </div>
+                  <span class="text-sm font-medium">VNPay</span>
+                </div>
+                <span
+                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
+                  >Đã kết nối</span
+                >
+              </div>
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+              >
+                <div class="flex items-center space-x-3">
+                  <div
+                    class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center"
+                  >
+                    <i class="fas fa-mobile-alt text-orange-600"></i>
+                  </div>
+                  <span class="text-sm font-medium">MoMo</span>
+                </div>
+                <span
+                  class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full"
+                  >Chưa kết nối</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-medium text-gray-900 mb-3">Dịch vụ khác</h4>
+            <div class="space-y-3">
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+              >
+                <div class="flex items-center space-x-3">
+                  <div
+                    class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"
+                  >
+                    <i class="fas fa-envelope text-green-600"></i>
+                  </div>
+                  <span class="text-sm font-medium">Email Marketing</span>
+                </div>
+                <span
+                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
+                  >Đã kết nối</span
+                >
+              </div>
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+              >
+                <div class="flex items-center space-x-3">
+                  <div
+                    class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center"
+                  >
+                    <i class="fas fa-robot text-purple-600"></i>
+                  </div>
+                  <span class="text-sm font-medium">AI Dự báo</span>
+                </div>
+                <span
+                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
+                  >Đã kết nối</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add Tour Modal -->
+<div
+  id="addTourModal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center"
+>
+  <div
+    class="bg-white rounded-xl p-6 w-full max-w-2xl mx-4 max-h-screen overflow-y-auto"
+  >
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-semibold text-gray-900">Thêm tour mới</h3>
+      <button
+        onclick="hideAddTourModal()"
+        class="text-gray-400 hover:text-gray-600"
+      >
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <form class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Tên tour</label
+          >
+          <input
+            type="text"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="Nhập tên tour"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Điểm đến</label
+          >
+          <select
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Chọn điểm đến</option>
+            <option>Hà Nội</option>
+            <option>TP.HCM</option>
+            <option>Đà Nẵng</option>
+            <option>Phú Quốc</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Số ngày</label
+          >
+          <input
+            type="number"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="4"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Số đêm</label
+          >
+          <input
+            type="number"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="3"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Giá (VNĐ)</label
+          >
+          <input
+            type="number"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="4500000"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Mô tả tour</label
+        >
+        <textarea
+          rows="4"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="Nhập mô tả chi tiết về tour..."
+        ></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Ngày khởi hành</label
+          >
+          <input
+            type="date"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Số chỗ tối đa</label
+          >
+          <input
+            type="number"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="30"
+          />
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-4">
+        <button
+          type="button"
+          onclick="hideAddTourModal()"
+          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+        >
+          Hủy
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          Thêm tour
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/admin/js/dashboard.js"></script>

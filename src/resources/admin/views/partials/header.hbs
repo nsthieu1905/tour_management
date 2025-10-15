@@ -1,0 +1,57 @@
+<!-- Header -->
+<header
+  class="bg-white shadow-sm border-b border-gray-200 fixed w-full top-0 z-50"
+>
+  <div class="flex items-center justify-between px-6 py-4">
+    <div class="flex items-center space-x-4">
+      <div class="gradient-bg p-2 rounded-lg">
+        <i class="fas fa-map-marked-alt text-white text-xl"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">TravelAdmin Pro</h1>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <!-- Search -->
+      <div class="relative">
+        <input
+          type="text"
+          placeholder="Tìm kiếm..."
+          class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+      </div>
+
+      <!-- Notifications -->
+      <div class="relative">
+        <button class="p-2 text-gray-600 hover:text-gray-900 relative">
+          <i class="fas fa-bell text-xl"></i>
+          <span
+            class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+            >3</span
+          >
+        </button>
+      </div>
+
+      <!-- Dark Mode Toggle -->
+      <button
+        onclick="toggleDarkMode()"
+        class="p-2 text-gray-600 hover:text-gray-900"
+      >
+        <i class="fas fa-moon text-xl"></i>
+      </button>
+
+      <!-- User Menu -->
+      <div class="flex items-center space-x-3">
+        <img
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='16' font-weight='bold'%3EAD%3C/text%3E%3C/svg%3E"
+          alt="Admin"
+          class="w-10 h-10 rounded-full"
+        />
+        <div>
+          <p class="text-sm font-medium text-gray-900">Admin User</p>
+          <p class="text-xs text-gray-500">Quản trị viên</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
