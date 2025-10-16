@@ -4,8 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon --inspect ./src/index.js",
-    "watch:c": "sass --watch ./src/resources/client/scss/app.scss:./src/public/client/css/app.css",
-    "watch:d": "sass --watch ./src/resources/admin/scss/app.scss:./src/public/admin/css/app.css",
+    "watch": "sass --watch ./src/resources/scss/app.scss:./src/public/css/app.css",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clear": "taskkill /F /IM node.exe"
   },

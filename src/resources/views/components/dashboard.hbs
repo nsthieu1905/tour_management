@@ -1,0 +1,133 @@
+<div class="flex pt-16">
+  <!-- Main Content -->
+  <main class="flex-1 ml-64 p-6">
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section">
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">
+          Dashboard Tổng quan
+        </h2>
+        <p class="text-gray-600">
+          Theo dõi hiệu suất kinh doanh và các chỉ số quan trọng
+        </p>
+      </div>
+
+      <!-- Key Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Doanh thu tháng</p>
+              <p class="text-3xl font-bold text-gray-900">2.4B VNĐ</p>
+              <p class="text-sm text-green-600">+12.5% so với tháng trước</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Đơn đặt tour</p>
+              <p class="text-3xl font-bold text-gray-900">1,247</p>
+              <p class="text-sm text-blue-600">+8.2% so với tháng trước</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tỷ lệ lấp đầy</p>
+              <p class="text-3xl font-bold text-gray-900">87.3%</p>
+              <p class="text-sm text-orange-600">+3.1% so với tháng trước</p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+              <i class="fas fa-percentage text-orange-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card card-hover p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Khách hàng mới</p>
+              <p class="text-3xl font-bold text-gray-900">342</p>
+              <p class="text-sm text-purple-600">+15.7% so với tháng trước</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-user-plus text-purple-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            Doanh thu theo tháng
+          </h3>
+          <canvas id="revenueChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            Tour phổ biến
+          </h3>
+          <canvas id="popularToursChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Hoạt động gần đây
+        </h3>
+        <div class="space-y-4">
+          <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <div class="bg-green-100 p-2 rounded-full">
+              <i class="fas fa-check text-green-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900">
+                Đơn đặt tour #TK2024001 đã được xác nhận
+              </p>
+              <p class="text-xs text-gray-500">2 phút trước</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <div class="bg-blue-100 p-2 rounded-full">
+              <i class="fas fa-plus text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900">
+                Tour mới "Hạ Long - Sapa 4N3Đ" đã được thêm
+              </p>
+              <p class="text-xs text-gray-500">15 phút trước</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <div class="bg-orange-100 p-2 rounded-full">
+              <i class="fas fa-exclamation-triangle text-orange-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900">
+                Tour "Phú Quốc 3N2Đ" sắp hết chỗ (còn 3 chỗ)
+              </p>
+              <p class="text-xs text-gray-500">1 giờ trước</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="/js/dashboard.js"></script>

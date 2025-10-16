@@ -1,0 +1,313 @@
+<div class="flex pt-16">
+  <main class="flex-1 ml-64 p-6">
+    <!-- Bookings Section -->
+    <div id="bookings" class="section">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            Quản lý Đơn đặt tour
+          </h2>
+          <p class="text-gray-600">Theo dõi và xử lý các đơn đặt tour</p>
+        </div>
+        <div class="flex space-x-3">
+          <button
+            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+          >
+            <i class="fas fa-download mr-2"></i>Xuất Excel
+          </button>
+          <button
+            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          >
+            <i class="fas fa-file-pdf mr-2"></i>Xuất PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Booking Filters -->
+      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả trạng thái</option>
+            <option>Chờ xác nhận</option>
+            <option>Đã xác nhận</option>
+            <option>Đã hủy</option>
+            <option>Hoàn thành</option>
+          </select>
+
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả tour</option>
+            <option>Hạ Long - Sapa</option>
+            <option>Phú Quốc</option>
+            <option>Đà Nẵng - Hội An</option>
+          </select>
+
+          <input
+            type="text"
+            placeholder="Tìm theo mã đơn, tên KH..."
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <!-- Bookings Table -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Mã đơn
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Khách hàng
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tour
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Ngày đi
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Số người
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tổng tiền
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Trạng thái
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr class="hover:bg-gray-50">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  #TK2024001
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">
+                      Nguyễn Văn An
+                    </div>
+                    <div class="text-sm text-gray-500">0901234567</div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Hạ Long - Sapa 4N3Đ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  15/12/2024
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4 người
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  18.000.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="status-pending px-2 py-1 text-xs font-medium rounded-full"
+                    >Chờ xác nhận</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Xác nhận
+                  </button>
+                  <button class="text-red-600 hover:text-red-900">Hủy</button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  #TK2024002
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">
+                      Trần Thị Bình
+                    </div>
+                    <div class="text-sm text-gray-500">0912345678</div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Phú Quốc 3N2Đ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  20/12/2024
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  2 người
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  6.400.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="status-confirmed px-2 py-1 text-xs font-medium rounded-full"
+                    >Đã xác nhận</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Sửa
+                  </button>
+                  <button class="text-red-600 hover:text-red-900">Hủy</button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  #TK2024003
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">
+                      Lê Minh Cường
+                    </div>
+                    <div class="text-sm text-gray-500">0923456789</div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Đà Nẵng - Hội An 4N3Đ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  10/12/2024
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  6 người
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  22.800.000 VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="status-completed px-2 py-1 text-xs font-medium rounded-full"
+                    >Hoàn thành</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-purple-600 hover:text-purple-900">
+                    Đánh giá
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div
+          class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200"
+        >
+          <div class="flex-1 flex justify-between sm:hidden">
+            <button
+              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Trước
+            </button>
+            <button
+              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Sau
+            </button>
+          </div>
+          <div
+            class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
+          >
+            <div>
+              <p class="text-sm text-gray-700">
+                Hiển thị
+                <span class="font-medium">1</span>
+                đến
+                <span class="font-medium">10</span>
+                trong
+                <span class="font-medium">97</span>
+                kết quả
+              </p>
+            </div>
+            <div>
+              <nav
+                class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+              >
+                <button
+                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  1
+                </button>
+                <button
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  2
+                </button>
+                <button
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  3
+                </button>
+                <button
+                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  Sau
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="/js/dashboard.js"></script>

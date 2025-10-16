@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 8386;
 const morgan = require("morgan");
 const { engine } = require("express-handlebars");
 const route = require("./routes");
@@ -28,17 +28,19 @@ const hbs = engine({
   helpers: {
     sum: (a, b) => a + b,
   },
+
+  //Điều hướng đến thư mục partials
+  partialsDir: ["./src/resources/views/partials", "./src/resources/views/CRUD"],
 });
 
 app.engine(".hbs", hbs);
 app.set("view engine", ".hbs");
-app.set("views", [
-  "./src/resources/admin/views",
-  "./src/resources/client/views",
-]);
+app.set("views", "./src/resources/views");
 
 route(app);
 
 app.listen(port, () => {
-  console.log(`Example app listening on port http://localhost:${port}`);
+  console.log(
+    `Example app listening on port http://localhost:${port}/admin/dashboard`
+  );
 });
