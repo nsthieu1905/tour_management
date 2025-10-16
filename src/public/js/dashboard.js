@@ -323,38 +323,44 @@ function initCharts() {
 // QUẢN LÝ NAVIGATION & LAYOUT
 // ===========================
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Lấy đường dẫn hiện tại
+// Highlight khi load trang lần đầu
+document.addEventListener("DOMContentLoaded", highlightCurrentPage);
+
+// Highlight khi Turbo load trang mới (không reload)
+document.addEventListener("turbo:load", highlightCurrentPage);
+
+function highlightCurrentPage() {
   const currentPath = window.location.pathname;
+  const sidebarLinks = document.querySelectorAll(".sidebar-item");
 
-  // Lấy tất cả sidebar items
-  const sidebarItems = document.querySelectorAll(".sidebar-item");
+  sidebarLinks.forEach((link) => {
+    const href = link.getAttribute("href");
 
-  sidebarItems.forEach((item) => {
-    const href = item.getAttribute("href");
+    // Xóa highlight cũ
+    link.classList.remove(
+      "bg-gradient-to-r",
+      "from-blue-500",
+      "to-purple-600",
+      "text-white"
+    );
+    link.classList.add("text-gray-700");
 
-    // Kiểm tra nếu href khớp với đường dẫn hiện tại
+    // Thêm highlight cho trang hiện tại
     if (currentPath === href || currentPath.startsWith(href + "/")) {
-      // Thêm class active
-      item.classList.add(
+      link.classList.add(
         "bg-gradient-to-r",
         "from-blue-500",
         "to-purple-600",
         "text-white"
       );
-      item.classList.remove("text-gray-700");
-    } else {
-      // Bỏ class active
-      item.classList.remove(
-        "bg-gradient-to-r",
-        "from-blue-500",
-        "to-purple-600",
-        "text-white"
-      );
-      item.classList.add("text-gray-700");
+      link.classList.remove("text-gray-700");
     }
   });
-});
+  // Khởi tạo lại charts nếu có
+  if (typeof initCharts === "function") {
+    setTimeout(initCharts, 100);
+  }
+}
 
 /**
  * Chuyển đổi chế độ sáng/tối (Dark mode)
