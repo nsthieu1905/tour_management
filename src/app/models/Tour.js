@@ -1,21 +1,54 @@
 const mongoose = require("mongoose");
+const slug = require("mongoose-slug-updater");
+const Schema = mongoose.Schema;
 
-const tourSchema = new mongoose.Schema(
+// Add plugin
+mongoose.plugin(slug);
+
+const tourSchema = new Schema(
   {
-    name: { type: String, required: true, trim: true },
-    slug: { type: String, unique: true, lowercase: true },
-    destination: { type: String, required: true },
-    description: { type: String, required: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      slug: "name",
+      unique: true,
+    },
+    destination: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
     detailedDescription: String,
     duration: {
-      days: { type: Number, required: true },
-      nights: { type: Number, required: true },
+      days: {
+        type: Number,
+        required: true,
+      },
+      nights: {
+        type: Number,
+        required: true,
+      },
     },
-    price: { type: Number, required: true },
+    price: {
+      type: Number,
+      required: true,
+    },
+    tourType: {
+      type: String,
+      enum: ["Tiết kiệm", "Tiêu chuẩn", "Giá tốt", "Cao cấp"],
+    },
     discountPrice: Number,
-    currency: { type: String, default: "VND" },
-    images: [String],
-    thumbnail: String,
+    images: {
+      type: [String],
+      // required: true,
+    },
     category: {
       type: String,
       enum: ["beach", "mountain", "city", "cultural", "adventure", "relax"],
@@ -26,9 +59,18 @@ const tourSchema = new mongoose.Schema(
         title: String,
         activities: [String],
         meals: {
-          breakfast: { type: Boolean, default: false },
-          lunch: { type: Boolean, default: false },
-          dinner: { type: Boolean, default: false },
+          breakfast: {
+            type: Boolean,
+            default: false,
+          },
+          lunch: {
+            type: Boolean,
+            default: false,
+          },
+          dinner: {
+            type: Boolean,
+            default: false,
+          },
         },
         accommodation: String,
       },
@@ -36,11 +78,20 @@ const tourSchema = new mongoose.Schema(
     included: [String],
     excluded: [String],
     capacity: {
-      max: { type: Number, required: true },
-      current: { type: Number, default: 0 },
+      max: {
+        type: Number,
+        // required: true,
+      },
+      current: {
+        type: Number,
+        default: 0,
+      },
       available: Number,
     },
-    departureDate: { type: Date, required: true },
+    // departureDate: {
+    //   type: Date,
+    //   required: true,
+    // },
     returnDate: Date,
     departureDates: [Date],
     status: {
@@ -49,12 +100,21 @@ const tourSchema = new mongoose.Schema(
       default: "active",
     },
     rating: {
-      average: { type: Number, default: 0 },
-      count: { type: Number, default: 0 },
+      average: {
+        type: Number,
+        default: 0,
+      },
+      count: {
+        type: Number,
+        default: 0,
+      },
     },
     highlights: [String],
     requirements: {
-      minAge: { type: Number, default: 0 },
+      minAge: {
+        type: Number,
+        default: 0,
+      },
       maxAge: Number,
       fitnessLevel: {
         type: String,
@@ -63,12 +123,27 @@ const tourSchema = new mongoose.Schema(
       },
       specialRequirements: [String],
     },
-    partnerId: { type: mongoose.Schema.Types.ObjectId, ref: "Partner" },
-    guideId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    partnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Partner",
+    },
+    guideId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     tags: [String],
-    viewCount: { type: Number, default: 0 },
-    bookingCount: { type: Number, default: 0 },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    viewCount: {
+      type: Number,
+      default: 0,
+    },
+    bookingCount: {
+      type: Number,
+      default: 0,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );

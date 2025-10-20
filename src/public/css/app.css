@@ -1,3 +1,4 @@
+@charset "UTF-8";
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 * {
@@ -73,6 +74,9 @@
   color: #1e40af;
 }
 
+/* ===============================
+   Modal - Custom style
+   =============================== */
 .tour-card {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid #e2e8f0;
@@ -118,6 +122,154 @@
 
 .badge-tietkiem {
   background: linear-gradient(135deg, #ffd93d 0%, #ffb830 100%);
+}
+
+.upload-container {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  background: #f9fafb;
+  transition: all 0.3s ease;
+}
+
+.upload-container:hover {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-color: #6366f1;
+  transform: translateY(-2px);
+}
+
+.upload-container i {
+  font-size: 36px;
+  color: #6366f1;
+  margin-bottom: 8px;
+}
+
+.upload-container span {
+  display: block;
+  font-size: 15px;
+  color: #475569;
+}
+
+.image-preview {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s ease;
+}
+
+.image-preview-item:hover {
+  transform: scale(1.05);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-item button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.image-preview-item button:hover {
+  background: rgba(239, 68, 68, 0.8);
+}
+
+.image-preview-item.thumbnail {
+  border: 3px solid #6366f1;
+  position: relative;
+}
+
+.image-preview-item.thumbnail::after {
+  content: "Ảnh đại diện";
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: #6366f1;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.departure-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.departure-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #eef2ff; /* nền tím nhạt */
+  color: #4338ca;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.departure-item:hover {
+  background: #e0e7ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+}
+
+.departure-item button {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.2s;
+}
+
+.departure-item button:hover {
+  color: #b91c1c;
+}
+
+.departure-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.departure-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px #e0e7ff;
 }
 
 * {

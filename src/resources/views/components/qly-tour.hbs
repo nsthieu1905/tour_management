@@ -9,12 +9,21 @@
             Thêm mới, chỉnh sửa và theo dõi các tour du lịch
           </p>
         </div>
-        <button
-          onclick="showAddTourModal()"
-          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
-        >
-          <i class="fas fa-plus mr-2"></i>Thêm tour mới
-        </button>
+        <div class="flex items-center space-x-3">
+          <button
+            onclick="showAddTourModal()"
+            class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <i class="fas fa-plus mr-2"></i>Thêm tour mới
+          </button>
+          <button
+            type="button"
+            onclick="window.location.href='/admin/qly-tour/trash'"
+            class="bg-red-500 text-white px-4 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center"
+          >
+            <i class="fa-solid fa-trash mr-2"></i>Thùng rác
+          </button>
+        </div>
       </div>
 
       <!-- Tour Filters -->
@@ -23,10 +32,11 @@
           <select
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           >
-            <option>Tất cả trạng thái</option>
-            <option>Đang hoạt động</option>
-            <option>Tạm dừng</option>
-            <option>Hết chỗ</option>
+            <option>Tất cả dòng tour</option>
+            <option>Tiết kiệm</option>
+            <option>Tiêu chuẩn</option>
+            <option>Giá tốt</option>
+            <option>Cao cấp</option>
           </select>
 
           <select
@@ -53,96 +63,66 @@
       </div>
 
       <!-- Tours Grid -->
+      {{#if tours.length}}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {{#each tours}}
         <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
-          <div class="h-48 bg-gradient-to-r from-blue-400 to-blue-600 relative">
+          <div class="h-48 relative">
+            <img
+              src="{{thumbnail this.images}}"
+              alt="{{this.name}}"
+              class="w-full h-full object-cover"
+            />
             <div class="absolute top-4 left-4">
-              <span class="tour-badge badge-caocap">
-                <i class="fas fa-gem"></i>
-                Cao cấp
+              <span class="tour-badge {{badgeClass this.tourType}}">
+                <i class="fas {{badgeIcon this.tourType}}"></i>
+                {{this.tourType}}
               </span>
             </div>
             <div class="absolute top-4 right-4">
               <button
-                class="bg-white bg-opacity-20 text-white p-2 rounded-full hover:bg-opacity-30"
+                class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-200 shadow-md hover:shadow-lg"
+                data-id="{{this._id}}"
               >
-                <i class="fas fa-heart"></i>
+                <i class="fas fa-trash"></i>
               </button>
             </div>
             <div class="absolute bottom-4 left-4 text-white">
-              <h3 class="text-xl font-bold">Hạ Long - Sapa</h3>
-              <p class="text-sm opacity-90">4 ngày 3 đêm</p>
+              <h3 class="text-xl font-bold">{{this.name}}</h3>
+              <p class="text-sm opacity-90">
+                {{this.duration.days}} ngày {{this.duration.nights}} đêm
+              </p>
             </div>
           </div>
           <div class="p-6">
             <div class="flex justify-between items-center mb-4">
-              <span class="text-2xl font-bold text-blue-600"
-                >4.500.000 VNĐ</span
-              >
+              <span class="text-2xl font-bold text-blue-600">
+                {{formatPrice this.price}} VND
+              </span>
               <div class="text-right">
                 <p class="text-sm text-gray-600">Còn lại</p>
-                <p class="text-lg font-semibold text-orange-600">12/30 chỗ</p>
+                <p class="text-lg font-semibold text-orange-600">
+                  {{sub this.capacity.max
+                  this.capacity.current}}/{{this.capacity.max}} chỗ
+                </p>
               </div>
             </div>
             <div
               class="flex items-center justify-between text-sm text-gray-600 mb-4"
             >
-              <span><i class="fas fa-calendar mr-1"></i>15/12/2024</span>
-              <span><i class="fas fa-users mr-1"></i>18 đã đặt</span>
-              <span><i class="fas fa-star mr-1"></i>4.8 (24)</span>
-            </div>
-            <div class="flex space-x-2">
-              <button
-                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
-              </button>
-              <button
-                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                <i class="fas fa-eye mr-1"></i>Xem chi tiết
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
-          <div class="h-48 bg-gradient-to-r from-blue-400 to-blue-600 relative">
-            <div class="absolute top-4 left-4">
-              <span class="tour-badge badge-giatot">
-                <i class="fas fa-tag"></i>
-                Giá tốt
+              <span>
+                <i class="fas fa-calendar mr-1"></i>{{formatDate
+                this.departureDates}}
+              </span>
+              <span>
+                <i class="fas fa-users mr-1 text-blue-600"></i
+                >{{this.capacity.current}}
+              </span>
+              <span>
+                <i class="fas fa-star mr-1 text-yellow-400"></i
+                >{{this.rating.average}} ({{this.rating.count}})
               </span>
             </div>
-            <div class="absolute top-4 right-4">
-              <button
-                class="bg-white bg-opacity-20 text-white p-2 rounded-full hover:bg-opacity-30"
-              >
-                <i class="fas fa-heart"></i>
-              </button>
-            </div>
-            <div class="absolute bottom-4 left-4 text-white">
-              <h3 class="text-xl font-bold">Hạ Long - Sapa</h3>
-              <p class="text-sm opacity-90">4 ngày 3 đêm</p>
-            </div>
-          </div>
-          <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-2xl font-bold text-blue-600"
-                >4.500.000 VNĐ</span
-              >
-              <div class="text-right">
-                <p class="text-sm text-gray-600">Còn lại</p>
-                <p class="text-lg font-semibold text-orange-600">12/30 chỗ</p>
-              </div>
-            </div>
-            <div
-              class="flex items-center justify-between text-sm text-gray-600 mb-4"
-            >
-              <span><i class="fas fa-calendar mr-1"></i>15/12/2024</span>
-              <span><i class="fas fa-users mr-1"></i>18 đã đặt</span>
-              <span><i class="fas fa-star mr-1"></i>4.8 (24)</span>
-            </div>
             <div class="flex space-x-2">
               <button
                 class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -157,101 +137,26 @@
             </div>
           </div>
         </div>
-
-        <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
-          <div
-            class="h-48 bg-gradient-to-r from-green-400 to-green-600 relative"
-          >
-            <div class="absolute top-4 left-4">
-              <span class="tour-badge badge-tieuchuan">
-                <i class="fas fa-medal"></i>
-                Tiêu chuẩn
-              </span>
-            </div>
-            <div class="absolute bottom-4 left-4 text-white">
-              <h3 class="text-xl font-bold">Phú Quốc</h3>
-              <p class="text-sm opacity-90">3 ngày 2 đêm</p>
-            </div>
-          </div>
-          <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-2xl font-bold text-green-600"
-                >3.200.000 VNĐ</span
-              >
-              <div class="text-right">
-                <p class="text-sm text-gray-600">Còn lại</p>
-                <p class="text-lg font-semibold text-red-600">3/25 chỗ</p>
-              </div>
-            </div>
-            <div
-              class="flex items-center justify-between text-sm text-gray-600 mb-4"
-            >
-              <span><i class="fas fa-calendar mr-1"></i>20/12/2024</span>
-              <span><i class="fas fa-users mr-1"></i>22 đã đặt</span>
-              <span><i class="fas fa-star mr-1"></i>4.9 (31)</span>
-            </div>
-            <div class="flex space-x-2">
-              <button
-                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
-              </button>
-              <button
-                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                <i class="fas fa-eye mr-1"></i>Xem chi tiết
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
-          <div
-            class="h-48 bg-gradient-to-r from-purple-400 to-purple-600 relative"
-          >
-            <div class="absolute top-4 left-4">
-              <span class="tour-badge badge-tietkiem">
-                <i class="fas fa-crown"></i>
-                Tiết kiệm
-              </span>
-            </div>
-            <div class="absolute bottom-4 left-4 text-white">
-              <h3 class="text-xl font-bold">Đà Nẵng - Hội An</h3>
-              <p class="text-sm opacity-90">4 ngày 3 đêm</p>
-            </div>
-          </div>
-          <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-2xl font-bold text-purple-600"
-                >3.800.000 VNĐ</span
-              >
-              <div class="text-right">
-                <p class="text-sm text-gray-600">Còn lại</p>
-                <p class="text-lg font-semibold text-green-600">18/30 chỗ</p>
-              </div>
-            </div>
-            <div
-              class="flex items-center justify-between text-sm text-gray-600 mb-4"
-            >
-              <span><i class="fas fa-calendar mr-1"></i>25/12/2024</span>
-              <span><i class="fas fa-users mr-1"></i>12 đã đặt</span>
-              <span><i class="fas fa-star mr-1"></i>4.7 (19)</span>
-            </div>
-            <div class="flex space-x-2">
-              <button
-                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
-              </button>
-              <button
-                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                <i class="fas fa-eye mr-1"></i>Xem chi tiết
-              </button>
-            </div>
-          </div>
-        </div>
+        {{/each}}
       </div>
+      {{else}}
+      <!-- Empty State -->
+      <div class="text-center py-20 bg-white rounded-xl shadow-sm">
+        <i class="fas fa-suitcase-rolling text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">
+          Chưa có tour nào được thêm
+        </h3>
+        <p class="text-gray-500 mb-6">
+          Hãy bắt đầu bằng cách thêm tour đầu tiên của bạn.
+        </p>
+        <button
+          onclick="showAddTourModal()"
+          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <i class="fas fa-plus mr-2"></i>Thêm tour đầu tiên
+        </button>
+      </div>
+      {{/if}}
     </div>
   </main>
 </div>

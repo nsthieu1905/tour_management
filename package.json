@@ -25,12 +25,15 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.3",
     "method-override": "^3.0.0",
+    "moment": "^2.30.1",
     "mongoose": "^8.19.1",
     "mongoose-delete": "^1.0.2",
-    "mongoose-slug-updater": "^3.3.0"
+    "mongoose-slug-updater": "^2.4.0",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "morgan": "^1.10.1",

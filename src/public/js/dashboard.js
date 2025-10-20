@@ -415,6 +415,17 @@ function hideAddTourModal() {
     form.reset();
   }
 }
+// Reset form khi submit
+document
+  .getElementById("addTourForm")
+  ?.addEventListener("submit", function (e) {
+    // Nếu bạn đang gửi form qua AJAX thì nên gọi preventDefault()
+    e.preventDefault();
+
+    // Giả sử submit xong (hoặc khi nhận response OK)
+    this.reset(); // Reset form
+    hideAddTourModal(); // Ẩn modal luôn
+  });
 
 // Đóng modal khi click bên ngoài
 document
@@ -435,66 +446,118 @@ document.addEventListener("keydown", function (e) {
   }
 });
 
-// Xử lý submit form thêm tour
-document
-  .querySelector("#addTourModal form")
-  ?.addEventListener("submit", async function (e) {
-    e.preventDefault();
+// Xử lý chọn nhiều ngày khởi hành
+const departureInput = document.getElementById("departureInput");
+const departureList = document.getElementById("departureList");
+const departuresData = document.getElementById("departuresData");
 
-    // Lấy dữ liệu từ form
-    const formData = new FormData(this);
+let departures = [];
 
-    // Hoặc nếu form không có attribute name, lấy bằng cách khác:
-    const tourData = {
-      name: this.querySelector('input[placeholder="Nhập tên tour"]').value,
-      destination: this.querySelector("select").value,
-      days: this.querySelector('input[placeholder="4"]').value,
-      nights: this.querySelector('input[placeholder="3"]').value,
-      price: this.querySelector('input[placeholder="4500000"]').value,
-      description: this.querySelector("textarea").value,
-      departureDate: this.querySelector('input[type="date"]').value,
-      maxSlots: this.querySelector('input[placeholder="30"]').value,
+departureInput.addEventListener("change", () => {
+  const date = departureInput.value;
+  if (date && !departures.includes(date)) {
+    departures.push(date);
+    departures.sort((a, b) => new Date(a) - new Date(b)); // Sắp xếp ngày tháng
+    renderDepartures();
+  }
+  departureInput.value = "";
+});
+
+function renderDepartures() {
+  departureList.innerHTML = "";
+  departures.forEach((date, index) => {
+    // Format lại ngày kiểu: dd/mm/yyyy
+    const formatted = new Date(date).toLocaleDateString("vi-VN");
+    const item = document.createElement("div");
+    item.className = "departure-item";
+    item.innerHTML = `
+      <span>${formatted}</span>
+      <button type="button" onclick="removeDeparture(${index})">✕</button>
+    `;
+    departureList.appendChild(item);
+  });
+
+  departuresData.value = JSON.stringify(departures);
+}
+
+function removeDeparture(index) {
+  departures.splice(index, 1);
+  renderDepartures();
+}
+
+// Xử lý hiển thị ảnh
+const tourImagesInput = document.getElementById("tourImages");
+const imagePreview = document.getElementById("imagePreview");
+const imagesData = document.getElementById("imagesData");
+const thumbnailData = document.getElementById("thumbnailData");
+
+let imagesArray = [];
+
+tourImagesInput.addEventListener("change", () => {
+  const files = Array.from(tourImagesInput.files);
+  files.forEach((file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagesArray.push(e.target.result);
+      renderPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+function renderPreview() {
+  imagePreview.innerHTML = "";
+  imagesArray.forEach((src, index) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-preview-item";
+    if (index === 0) wrapper.classList.add("thumbnail");
+
+    const img = document.createElement("img");
+    img.src = src;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.innerHTML = "✕";
+    removeBtn.onclick = () => {
+      imagesArray.splice(index, 1);
+      renderPreview();
     };
 
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-
-    // Disable button và hiển thị loading
-    submitBtn.disabled = true;
-    submitBtn.innerHTML =
-      '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
-
-    try {
-      const response = await fetch("/admin/qly-tour/add-tour", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(tourData),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        // Thành công
-        alert("✅ Thêm tour thành công!");
-        hideAddTourModal();
-
-        // Reload trang để hiển thị tour mới
-        location.reload();
-      } else {
-        // Lỗi từ server
-        alert("❌ Lỗi: " + (result.message || "Có lỗi xảy ra"));
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("❌ Có lỗi xảy ra khi kết nối server!");
-    } finally {
-      // Reset button
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = originalText;
-    }
+    wrapper.appendChild(img);
+    wrapper.appendChild(removeBtn);
+    imagePreview.appendChild(wrapper);
   });
+
+  // Gán dữ liệu vào input hidden để gửi về server
+  imagesData.value = JSON.stringify(imagesArray);
+  thumbnailData.value = imagesArray.length > 0 ? imagesArray[0] : "";
+}
+
+// Tùy chọn: hỗ trợ kéo thả ảnh
+const uploadContainer = document.getElementById("uploadContainer");
+uploadContainer.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  uploadContainer.style.background =
+    "linear-gradient(135deg, #eef2ff, #e0e7ff)";
+});
+
+uploadContainer.addEventListener("dragleave", () => {
+  uploadContainer.style.background = "#f9fafb";
+});
+
+uploadContainer.addEventListener("drop", (e) => {
+  e.preventDefault();
+  uploadContainer.style.background = "#f9fafb";
+
+  const files = Array.from(e.dataTransfer.files);
+  files.forEach((file) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      imagesArray.push(ev.target.result);
+      renderPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+});
 
 // ===========================
 // QUẢN LÝ NHÂN VIÊN
@@ -951,3 +1014,35 @@ function formatCurrency(amount) {
     }
   }
 })();
+
+// ===========================
+// XOÁ TOUR
+// ===========================
+document.addEventListener("DOMContentLoaded", function () {
+  const deleteButtons = document.querySelectorAll(".delete-tour-btn");
+
+  deleteButtons.forEach((btn) => {
+    btn.addEventListener("click", async function () {
+      const tourId = this.dataset.id;
+      const confirmed = confirm("Bạn có chắc muốn xoá tour này không?");
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/admin/qly-tour/${tourId}`, {
+          method: "DELETE",
+        });
+
+        if (res.ok) {
+          alert("Xoá tour thành công!");
+          window.location.reload();
+        } else {
+          const err = await res.text();
+          alert("Lỗi khi xoá tour: " + err);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Đã có lỗi xảy ra!");
+      }
+    });
+  });
+});
