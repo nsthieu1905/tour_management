@@ -63,100 +63,11 @@
       </div>
 
       <!-- Tours Grid -->
-      {{#if tours.length}}
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {{#each tours}}
-        <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
-          <div class="h-48 relative">
-            <img
-              src="{{thumbnail this.images}}"
-              alt="{{this.name}}"
-              class="w-full h-full object-cover"
-            />
-            <div class="absolute top-4 left-4">
-              <span class="tour-badge {{badgeClass this.tourType}}">
-                <i class="fas {{badgeIcon this.tourType}}"></i>
-                {{this.tourType}}
-              </span>
-            </div>
-            <div class="absolute top-4 right-4">
-              <button
-                class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-200 shadow-md hover:shadow-lg"
-                data-id="{{this._id}}"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-            <div class="absolute bottom-4 left-4 text-white">
-              <h3 class="text-xl font-bold">{{this.name}}</h3>
-              <p class="text-sm opacity-90">
-                {{this.duration.days}} ngày {{this.duration.nights}} đêm
-              </p>
-            </div>
-          </div>
-          <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-2xl font-bold text-blue-600">
-                {{formatPrice this.price}} VND
-              </span>
-              <div class="text-right">
-                <p class="text-sm text-gray-600">Còn lại</p>
-                <p class="text-lg font-semibold text-orange-600">
-                  {{sub this.capacity.max
-                  this.capacity.current}}/{{this.capacity.max}} chỗ
-                </p>
-              </div>
-            </div>
-            <div
-              class="flex items-center justify-between text-sm text-gray-600 mb-4"
-            >
-              <span>
-                <i class="fas fa-calendar mr-1"></i>{{formatDate
-                this.departureDates}}
-              </span>
-              <span>
-                <i class="fas fa-users mr-1 text-blue-600"></i
-                >{{this.capacity.current}}
-              </span>
-              <span>
-                <i class="fas fa-star mr-1 text-yellow-400"></i
-                >{{this.rating.average}} ({{this.rating.count}})
-              </span>
-            </div>
-            <div class="flex space-x-2">
-              <button
-                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
-              </button>
-              <button
-                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                <i class="fas fa-eye mr-1"></i>Xem chi tiết
-              </button>
-            </div>
-          </div>
-        </div>
-        {{/each}}
-      </div>
-      {{else}}
-      <!-- Empty State -->
-      <div class="text-center py-20 bg-white rounded-xl shadow-sm">
-        <i class="fas fa-suitcase-rolling text-6xl text-gray-300 mb-4"></i>
-        <h3 class="text-xl font-semibold text-gray-700 mb-2">
-          Chưa có tour nào được thêm
-        </h3>
-        <p class="text-gray-500 mb-6">
-          Hãy bắt đầu bằng cách thêm tour đầu tiên của bạn.
-        </p>
-        <button
-          onclick="showAddTourModal()"
-          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
-        >
-          <i class="fas fa-plus mr-2"></i>Thêm tour đầu tiên
-        </button>
-      </div>
-      {{/if}}
+
+      <div
+        id="tours-list"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      ></div>
     </div>
   </main>
 </div>
@@ -164,4 +75,5 @@
 <!-- Include Add Tour Modal -->
 {{> add-tour}}
 
-<script src="/js/dashboard.js"></script>
+<script src="/js/utils.js"></script>
+<script type="module" src="/js/qly-tours.js"></script>

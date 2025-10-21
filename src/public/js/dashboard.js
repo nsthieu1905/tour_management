@@ -1,7 +1,7 @@
 // ===========================
 // BIẾN TOÀN CỤC
 // ===========================
-let isDarkMode = false;
+// let isDarkMode = false;
 let currentFilter = "all";
 let currentDepartmentFilter = "all";
 
@@ -366,21 +366,21 @@ function highlightCurrentPage() {
  * Chuyển đổi chế độ sáng/tối (Dark mode)
  * Thay đổi icon và class của body
  */
-function toggleDarkMode() {
-  isDarkMode = !isDarkMode;
-  document.body.classList.toggle("dark-mode");
+// function toggleDarkMode() {
+//   isDarkMode = !isDarkMode;
+//   document.body.classList.toggle("dark-mode");
 
-  const icon = document.querySelector(".fa-moon");
-  if (icon) {
-    if (isDarkMode) {
-      icon.classList.remove("fa-moon");
-      icon.classList.add("fa-sun");
-    } else {
-      icon.classList.remove("fa-sun");
-      icon.classList.add("fa-moon");
-    }
-  }
-}
+//   const icon = document.querySelector(".fa-moon");
+//   if (icon) {
+//     if (isDarkMode) {
+//       icon.classList.remove("fa-moon");
+//       icon.classList.add("fa-sun");
+//     } else {
+//       icon.classList.remove("fa-sun");
+//       icon.classList.add("fa-moon");
+//     }
+//   }
+// }
 
 /**
  * Đăng xuất khỏi hệ thống
@@ -447,117 +447,117 @@ document.addEventListener("keydown", function (e) {
 });
 
 // Xử lý chọn nhiều ngày khởi hành
-const departureInput = document.getElementById("departureInput");
-const departureList = document.getElementById("departureList");
-const departuresData = document.getElementById("departuresData");
+// const departureInput = document.getElementById("departureInput");
+// const departureList = document.getElementById("departureList");
+// const departuresData = document.getElementById("departuresData");
 
-let departures = [];
+// let departures = [];
 
-departureInput.addEventListener("change", () => {
-  const date = departureInput.value;
-  if (date && !departures.includes(date)) {
-    departures.push(date);
-    departures.sort((a, b) => new Date(a) - new Date(b)); // Sắp xếp ngày tháng
-    renderDepartures();
-  }
-  departureInput.value = "";
-});
+// departureInput.addEventListener("change", () => {
+//   const date = departureInput.value;
+//   if (date && !departures.includes(date)) {
+//     departures.push(date);
+//     departures.sort((a, b) => new Date(a) - new Date(b)); // Sắp xếp ngày tháng
+//     renderDepartures();
+//   }
+//   departureInput.value = "";
+// });
 
-function renderDepartures() {
-  departureList.innerHTML = "";
-  departures.forEach((date, index) => {
-    // Format lại ngày kiểu: dd/mm/yyyy
-    const formatted = new Date(date).toLocaleDateString("vi-VN");
-    const item = document.createElement("div");
-    item.className = "departure-item";
-    item.innerHTML = `
-      <span>${formatted}</span>
-      <button type="button" onclick="removeDeparture(${index})">✕</button>
-    `;
-    departureList.appendChild(item);
-  });
+// function renderDepartures() {
+//   departureList.innerHTML = "";
+//   departures.forEach((date, index) => {
+//     // Format lại ngày kiểu: dd/mm/yyyy
+//     const formatted = new Date(date).toLocaleDateString("vi-VN");
+//     const item = document.createElement("div");
+//     item.className = "departure-item";
+//     item.innerHTML = `
+//       <span>${formatted}</span>
+//       <button type="button" onclick="removeDeparture(${index})">✕</button>
+//     `;
+//     departureList.appendChild(item);
+//   });
 
-  departuresData.value = JSON.stringify(departures);
-}
+//   departuresData.value = JSON.stringify(departures);
+// }
 
-function removeDeparture(index) {
-  departures.splice(index, 1);
-  renderDepartures();
-}
+// function removeDeparture(index) {
+//   departures.splice(index, 1);
+//   renderDepartures();
+// }
 
-// Xử lý hiển thị ảnh
-const tourImagesInput = document.getElementById("tourImages");
-const imagePreview = document.getElementById("imagePreview");
-const imagesData = document.getElementById("imagesData");
-const thumbnailData = document.getElementById("thumbnailData");
+// // Xử lý hiển thị ảnh
+// const tourImagesInput = document.getElementById("tourImages");
+// const imagePreview = document.getElementById("imagePreview");
+// const imagesData = document.getElementById("imagesData");
+// const thumbnailData = document.getElementById("thumbnailData");
 
-let imagesArray = [];
+// let imagesArray = [];
 
-tourImagesInput.addEventListener("change", () => {
-  const files = Array.from(tourImagesInput.files);
-  files.forEach((file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imagesArray.push(e.target.result);
-      renderPreview();
-    };
-    reader.readAsDataURL(file);
-  });
-});
+// tourImagesInput.addEventListener("change", () => {
+//   const files = Array.from(tourImagesInput.files);
+//   files.forEach((file) => {
+//     const reader = new FileReader();
+//     reader.onload = (e) => {
+//       imagesArray.push(e.target.result);
+//       renderPreview();
+//     };
+//     reader.readAsDataURL(file);
+//   });
+// });
 
-function renderPreview() {
-  imagePreview.innerHTML = "";
-  imagesArray.forEach((src, index) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "image-preview-item";
-    if (index === 0) wrapper.classList.add("thumbnail");
+// function renderPreview() {
+//   imagePreview.innerHTML = "";
+//   imagesArray.forEach((src, index) => {
+//     const wrapper = document.createElement("div");
+//     wrapper.className = "image-preview-item";
+//     if (index === 0) wrapper.classList.add("thumbnail");
 
-    const img = document.createElement("img");
-    img.src = src;
+//     const img = document.createElement("img");
+//     img.src = src;
 
-    const removeBtn = document.createElement("button");
-    removeBtn.innerHTML = "✕";
-    removeBtn.onclick = () => {
-      imagesArray.splice(index, 1);
-      renderPreview();
-    };
+//     const removeBtn = document.createElement("button");
+//     removeBtn.innerHTML = "✕";
+//     removeBtn.onclick = () => {
+//       imagesArray.splice(index, 1);
+//       renderPreview();
+//     };
 
-    wrapper.appendChild(img);
-    wrapper.appendChild(removeBtn);
-    imagePreview.appendChild(wrapper);
-  });
+//     wrapper.appendChild(img);
+//     wrapper.appendChild(removeBtn);
+//     imagePreview.appendChild(wrapper);
+//   });
 
-  // Gán dữ liệu vào input hidden để gửi về server
-  imagesData.value = JSON.stringify(imagesArray);
-  thumbnailData.value = imagesArray.length > 0 ? imagesArray[0] : "";
-}
+//   // Gán dữ liệu vào input hidden để gửi về server
+//   imagesData.value = JSON.stringify(imagesArray);
+//   thumbnailData.value = imagesArray.length > 0 ? imagesArray[0] : "";
+// }
 
-// Tùy chọn: hỗ trợ kéo thả ảnh
-const uploadContainer = document.getElementById("uploadContainer");
-uploadContainer.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  uploadContainer.style.background =
-    "linear-gradient(135deg, #eef2ff, #e0e7ff)";
-});
+// // Tùy chọn: hỗ trợ kéo thả ảnh
+// const uploadContainer = document.getElementById("uploadContainer");
+// uploadContainer.addEventListener("dragover", (e) => {
+//   e.preventDefault();
+//   uploadContainer.style.background =
+//     "linear-gradient(135deg, #eef2ff, #e0e7ff)";
+// });
 
-uploadContainer.addEventListener("dragleave", () => {
-  uploadContainer.style.background = "#f9fafb";
-});
+// uploadContainer.addEventListener("dragleave", () => {
+//   uploadContainer.style.background = "#f9fafb";
+// });
 
-uploadContainer.addEventListener("drop", (e) => {
-  e.preventDefault();
-  uploadContainer.style.background = "#f9fafb";
+// uploadContainer.addEventListener("drop", (e) => {
+//   e.preventDefault();
+//   uploadContainer.style.background = "#f9fafb";
 
-  const files = Array.from(e.dataTransfer.files);
-  files.forEach((file) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      imagesArray.push(ev.target.result);
-      renderPreview();
-    };
-    reader.readAsDataURL(file);
-  });
-});
+//   const files = Array.from(e.dataTransfer.files);
+//   files.forEach((file) => {
+//     const reader = new FileReader();
+//     reader.onload = (ev) => {
+//       imagesArray.push(ev.target.result);
+//       renderPreview();
+//     };
+//     reader.readAsDataURL(file);
+//   });
+// });
 
 // ===========================
 // QUẢN LÝ NHÂN VIÊN
@@ -981,39 +981,39 @@ function formatCurrency(amount) {
  * Script tự động load của Cloudflare Challenge Platform
  * Tạo iframe ẩn để load script bảo mật của Cloudflare
  */
-(function () {
-  function c() {
-    var b = a.contentDocument || a.contentWindow.document;
-    if (b) {
-      var d = b.createElement("script");
-      d.innerHTML =
-        "window.__CF$cv$params={r:'9654bd9971420387',t:'MTc1MzU0MTc1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
-      b.getElementsByTagName("head")[0].appendChild(d);
-    }
-  }
-  if (document.body) {
-    var a = document.createElement("iframe");
-    a.height = 1;
-    a.width = 1;
-    a.style.position = "absolute";
-    a.style.top = 0;
-    a.style.left = 0;
-    a.style.border = "none";
-    a.style.visibility = "hidden";
-    document.body.appendChild(a);
-    if ("loading" !== document.readyState) c();
-    else if (window.addEventListener)
-      document.addEventListener("DOMContentLoaded", c);
-    else {
-      var e = document.onreadystatechange || function () {};
-      document.onreadystatechange = function (b) {
-        e(b);
-        "loading" !== document.readyState &&
-          ((document.onreadystatechange = e), c());
-      };
-    }
-  }
-})();
+// (function () {
+//   function c() {
+//     var b = a.contentDocument || a.contentWindow.document;
+//     if (b) {
+//       var d = b.createElement("script");
+//       d.innerHTML =
+//         "window.__CF$cv$params={r:'9654bd9971420387',t:'MTc1MzU0MTc1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+//       b.getElementsByTagName("head")[0].appendChild(d);
+//     }
+//   }
+//   if (document.body) {
+//     var a = document.createElement("iframe");
+//     a.height = 1;
+//     a.width = 1;
+//     a.style.position = "absolute";
+//     a.style.top = 0;
+//     a.style.left = 0;
+//     a.style.border = "none";
+//     a.style.visibility = "hidden";
+//     document.body.appendChild(a);
+//     if ("loading" !== document.readyState) c();
+//     else if (window.addEventListener)
+//       document.addEventListener("DOMContentLoaded", c);
+//     else {
+//       var e = document.onreadystatechange || function () {};
+//       document.onreadystatechange = function (b) {
+//         e(b);
+//         "loading" !== document.readyState &&
+//           ((document.onreadystatechange = e), c());
+//       };
+//     }
+//   }
+// })();
 
 // ===========================
 // XOÁ TOUR

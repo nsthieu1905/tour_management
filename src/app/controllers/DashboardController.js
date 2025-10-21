@@ -15,6 +15,7 @@ class DashboardController {
   async qlyTour(req, res, next) {
     try {
       const tours = await Tour.find({}).lean();
+      console.log(tours);
       res.render("components/qly-tour", {
         tours,
         bodyClass: "bg-gray-50 transition-all duration-300",
@@ -31,22 +32,17 @@ class DashboardController {
       return "Cao cấp";
     };
     try {
-      // Giải cấu trúc dữ liệu từ form
-      const { name, destination, description, price, duration, departures } =
-        req.body;
-
-      // Xử lý file ảnh (nếu có)
+      const { price, departureDates } = req.body;
       const imagePaths = req.files?.map((f) => `/uploads/${f.filename}`) || [];
-
-      // Tạo mới tour (ngắn gọn nhờ spread)
-      const tour = new Tour({
-        ...req.body, // lấy toàn bộ dữ liệu form
-        price, // vẫn giữ lại để chắc chắn kiểu đúng
-        departures: departures ? JSON.parse(departures) : [],
+      req.body = {
+        ...req.body,
+        price,
+        departureDates: departureDates ? JSON.parse(departureDates) : [],
         images: imagePaths,
         thumbnail: imagePaths[0] || "",
-        tourType: getTourType(Number(price)), // tự động phân loại tour
-      });
+        tourType: getTourType(Number(price)),
+      };
+      const tour = new Tour(req.body);
 
       await tour.save();
       res.redirect("/admin/qly-tour");
