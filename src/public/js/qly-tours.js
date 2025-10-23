@@ -6,7 +6,7 @@ import {
   formatDate,
   sub,
 } from "./helper.js";
-
+import { modalHandlers, Modal, Notification } from "./utils.js";
 //========================
 // QUẢN LÝ TOUR - qly-tours.js
 //========================
@@ -14,7 +14,9 @@ import {
 // Chờ DOM load xong
 document.addEventListener("DOMContentLoaded", function () {
   initTourManagement();
-  initDeleteTourButtons();
+  if (document.getElementById("tours-list")) getTours();
+  if (document.getElementById("trash-list")) getToursTrash();
+  if (document.getElementById("addTourForm")) createTour();
 });
 
 // ===========================
@@ -22,14 +24,6 @@ document.addEventListener("DOMContentLoaded", function () {
 // ===========================
 
 function initTourManagement() {
-  // Xử lý form submit tour
-  const tourForm = document.querySelector("#tourForm");
-  if (tourForm) {
-    tourForm.addEventListener("submit", function (e) {
-      console.log("Tour form submitted");
-    });
-  }
-
   // Khởi tạo chức năng ngày khởi hành
   initDepartureDates();
 
@@ -37,7 +31,11 @@ function initTourManagement() {
   initTourImagePreview();
 
   // Khởi tạo modal handlers
-  initTourModalHandlers();
+  modalHandlers(() => {
+    departureDates = [];
+    imagesArray = [];
+    renderDepartures();
+  });
 }
 
 // ===========================
@@ -273,120 +271,65 @@ function updateFileInput() {
 // XỬ LÝ MODAL TOUR
 // ===========================
 
-function initTourModalHandlers() {
-  const modal = document.getElementById("addTourModal");
-  if (!modal) return;
+// function modalHandlers() {
+//   const modal = document.getElementById("addTourModal");
+//   if (!modal) return;
 
-  // Expose global functions cho modal
-  window.showAddTourModal = function () {
-    modal.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-  };
+//   // Expose global functions cho modal
+//   window.showAddTourModal = function () {
+//     modal.classList.remove("hidden");
+//     document.body.style.overflow = "hidden";
+//   };
 
-  window.hideAddTourModal = function () {
-    modal.classList.add("hidden");
-    document.body.style.overflow = "auto";
+//   window.hideAddTourModal = function () {
+//     modal.classList.add("hidden");
+//     document.body.style.overflow = "auto";
 
-    // Reset form
-    const form = modal.querySelector("form");
-    if (form) form.reset();
+//     // Reset form
+//     const form = modal.querySelector("form");
+//     if (form) form.reset();
 
-    // Clear previews
-    const preview = document.getElementById("imagePreview");
-    if (preview) preview.innerHTML = "";
+//     // Clear previews
+//     const preview = document.getElementById("imagePreview");
+//     if (preview) preview.innerHTML = "";
 
-    const departureList = document.getElementById("departureList");
-    if (departureList) departureList.innerHTML = "";
+//     const departureList = document.getElementById("departureList");
+//     if (departureList) departureList.innerHTML = "";
 
-    // Reset mảng
-    departureDates = [];
-    imagesArray = [];
-  };
+//     // Reset mảng
+//     departureDates = [];
+//     imagesArray = [];
+//   };
 
-  // Đóng modal khi click bên ngoài
-  modal.addEventListener("click", function (e) {
-    if (e.target === this) {
-      window.hideAddTourModal();
-    }
-  });
+//   // Đóng modal khi click bên ngoài
+//   // modal.addEventListener("click", function (e) {
+//   //   if (e.target === this) {
+//   //     window.hideAddTourModal();
+//   //   }
+//   // });
 
-  // Đóng modal khi nhấn ESC
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
-      window.hideAddTourModal();
-    }
-  });
-}
-
-// ===========================
-// XOÁ TOUR
-// ===========================
-
-function initDeleteTourButtons() {
-  const deleteButtons = document.querySelectorAll(".delete-tour-btn");
-
-  deleteButtons.forEach((btn) => {
-    btn.addEventListener("click", async function () {
-      const tourId = this.dataset.id;
-      const tourName = this.dataset.name || "tour này";
-
-      const confirmed = confirm(`Bạn có chắc muốn xoá ${tourName} không?`);
-      if (!confirmed) return;
-
-      try {
-        const res = await fetch(`/admin/qly-tour/${tourId}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (res.ok) {
-          alert("Xoá tour thành công!");
-
-          const row = this.closest("tr");
-          if (row) {
-            row.style.opacity = "0";
-            setTimeout(() => row.remove(), 300);
-          } else {
-            window.location.reload();
-          }
-        } else {
-          const err = await res.text();
-          alert("Lỗi khi xoá tour: " + err);
-        }
-      } catch (err) {
-        console.error("Delete tour error:", err);
-        alert("Đã có lỗi xảy ra khi xoá tour!");
-      }
-    });
-  });
-}
-
-// ===========================
-// EDIT TOUR (Optional)
-// ===========================
-
-window.editTour = function (tourId) {
-  console.log("Edit tour:", tourId);
-};
-
-window.viewTourDetails = function (tourId) {
-  console.log("View tour:", tourId);
-};
+//   // Đóng modal khi nhấn ESC
+//   document.addEventListener("keydown", function (e) {
+//     if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+//       window.hideAddTourModal();
+//     }
+//   });
+// }
 
 // ===========================
 // LOAD MORE TOURS (Optional)
 // ===========================
 
+// Lấy danh sách tour
 async function getTours() {
   try {
     const res = await fetch("/api/tours");
     const result = await res.json();
     const container = document.getElementById("tours-list");
-
-    if (!result || result.length === 0) {
-      container.innerHTML = `
+    const emptyContainer = document.getElementById("empty-tours-list");
+    if (result.data.length === 0) {
+      container.innerHTML = "";
+      emptyContainer.innerHTML = `
       <div class="text-center py-20 bg-white rounded-xl shadow-sm">
         <i class="fas fa-suitcase-rolling text-6xl text-gray-300 mb-4"></i>
         <h3 class="text-xl font-semibold text-gray-700 mb-2">
@@ -424,7 +367,7 @@ async function getTours() {
             <div class="absolute top-4 right-4">
               <button
                 class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-200 shadow-md hover:shadow-lg"
-                data-id="${tour._id}"
+                data-tour-id="${tour._id}"
               >
                 <i class="fas fa-trash"></i>
               </button>
@@ -467,6 +410,8 @@ async function getTours() {
                 >${tour.rating.average} (${tour.rating.count})
               </span>
             </div>
+
+            <!-- Actions -->
             <div class="flex space-x-2">
               <button
                 class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -485,17 +430,123 @@ async function getTours() {
         )
         .join("");
     }
+    softDeleteTour();
   } catch (error) {
     console.error("Error:", error);
   }
 }
-getTours();
+
+// Lấy danh sách tour trong thùng rác
+async function getToursTrash() {
+  try {
+    const res = await fetch("/api/tours/trash");
+    const result = await res.json();
+    const container = document.getElementById("trash-list");
+    const emptyContainer = document.getElementById("empty-trash-list");
+    if (result.data.length === 0) {
+      container.innerHTML = "";
+      emptyContainer.innerHTML = `
+      <div class="text-center text-gray-500 mt-20">
+        <i class="fa-solid fa-trash text-5xl mb-4 text-gray-400"></i>
+        <p>Không có tour nào trong thùng rác</p>
+        <button
+          onclick="window.location.href='/admin/qly-tour'"
+          class="mt-6 bg-gray-500 text-white px-5 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+        >
+          <i class="fa-solid fa-arrow-left mr-2"></i>Quay lại trang Quản lý Tour
+        </button>
+      </div>
+      `;
+      return;
+    } else {
+      container.innerHTML = result.data
+        .map(
+          (tour) => `
+      <div class="tour-card card-hover rounded-xl shadow-sm overflow-hidden">
+          <div class="h-48 relative">
+            <img
+              src="${thumbnail(tour.images)}"
+              alt="${tour.name}"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute top-4 left-4">
+              <span class="tour-badge ${badgeClass(tour.tourType)}">
+                <i class="fas ${badgeIcon(tour.tourType)}"></i>
+                ${tour.tourType}
+              </span>
+            </div>
+            <div class="absolute bottom-4 left-4 text-white">
+              <h3 class="text-xl font-bold">${tour.name}</h3>
+              <p class="text-sm opacity-90">
+                ${tour.duration.days} ngày ${tour.duration.nights} đêm
+              </p>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-2xl font-bold text-blue-600">
+                ${formatPrice(tour.price)} VND
+              </span>
+              <div class="text-right">
+                <p class="text-sm text-gray-600">ngày xoá</p>
+                <p class="text-lg font-semibold text-gray-600">
+                  <span>
+                <i class="fas fa-calendar mr-1"></i>${formatDate(
+                  tour.deletedAt
+                )}
+              </span>
+                </p>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between text-sm text-gray-600 mb-4"
+            >
+              <span>
+                
+              </span>
+              <span>
+                <i class="fas fa-users mr-1 text-blue-600"></i
+                >${tour.capacity.current}
+              </span>
+              <span>
+                <i class="fas fa-star mr-1 text-yellow-400"></i
+                >${tour.rating.average} (${tour.rating.count})
+              </span>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-2">
+              <button
+                data-restore-id="${tour._id}"
+                class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center"
+              >
+                <i class="fa-solid fa-rotate-left mr-1"></i>Khôi phục
+              </button>
+              <button
+                data-trash-id="${tour._id}"
+                class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
+              >
+                <i class="fa-solid fa-trash-can mr-1"></i>Xoá vĩnh viễn
+              </button>
+            </div>
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    }
+    deleteTour();
+    restoreTour();
+  } catch (error) {
+    next(error);
+  }
+}
 
 // ===========================
 // ADD TOUR
 // ===========================
 
-function createTour() {
+async function createTour() {
   const form = document.getElementById("addTourForm");
 
   form.addEventListener("submit", async (e) => {
@@ -517,37 +568,159 @@ function createTour() {
           formData.append("departureDates[]", date);
         });
       } catch (err) {
-        console.error("Error parsing departure dates:", err);
+        console.log(err);
       }
     }
 
-    console.log("FormData keys:", [...formData.keys()]);
-    console.log("FormData values:", [...formData.values()]);
-
     try {
-      const response = await fetch("/api/tours/add", {
+      const res = await fetch("/api/tours/add", {
         method: "POST",
         body: formData,
       });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        alert(result.message || "Tạo tour thành công!");
-        form.reset();
-        departureDates = []; // Reset mảng
-        renderDepartures(); // Clear UI
+      const result = await res.json();
+      if (res.ok) {
+        Notification.success("Thêm tour thành công!");
         window.hideAddTourModal();
-        getTours(); // Reload danh sách tour
+        getTours();
       } else {
-        alert(result.message || "Có lỗi xảy ra!");
-        console.error(result);
+        Notification.error("Có lỗi xảy ra!");
       }
-    } catch (err) {
-      console.error("Lỗi khi gửi yêu cầu:", err);
-      alert("Đã có lỗi xảy ra!");
+    } catch (error) {
+      next(error);
+      Modal.alert({
+        title: "Lỗi",
+        message: "Đã xảy ra lỗi khi thêm tour!",
+        icon: "fa-exclamation-triangle",
+        iconColor: "red",
+      });
     }
   });
 }
 
-createTour();
+// ===========================
+// SOFT DELETE TOUR
+// ===========================
+
+function softDeleteTour() {
+  const deleteButtons = document.querySelectorAll("[data-tour-id]");
+  deleteButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-tour-id");
+      Modal.confirm({
+        title: "Xóa tour",
+        message: "Bạn có chắc chắn muốn xóa tour này không?",
+        icon: "fa-trash",
+        iconColor: "red",
+        confirmText: "Xóa",
+        confirmColor: "red",
+
+        onConfirm: async () => {
+          try {
+            const res = await fetch(`/api/tours/${id}`, {
+              method: "DELETE",
+            });
+            if (res.ok) {
+              Notification.success("Xoá tour thành công!");
+              getTours();
+            } else {
+              Notification.error("Có lỗi xảy ra!");
+            }
+          } catch (error) {
+            next(error);
+            Modal.alert({
+              title: "Lỗi",
+              message: "Đã xảy ra lỗi khi xóa tour!",
+              icon: "fa-exclamation-triangle",
+              iconColor: "red",
+            });
+          }
+        },
+      });
+    });
+  });
+}
+
+// ===========================
+// DELETE TOUR
+// ===========================
+
+function deleteTour() {
+  const deleteButtons = document.querySelectorAll("[data-trash-id]");
+  deleteButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-trash-id");
+      Modal.confirm({
+        title: "Xóa tour",
+        message: "Bạn có chắc chắn muốn xóa tour này không?",
+        icon: "fa-trash",
+        iconColor: "red",
+        confirmText: "Xóa",
+        confirmColor: "red",
+
+        onConfirm: async () => {
+          try {
+            const res = await fetch(`/api/tours/trash/${id}`, {
+              method: "DELETE",
+            });
+            if (res.ok) {
+              Notification.success("Xoá tour thành công!");
+              getToursTrash();
+            } else {
+              Notification.error("Có lỗi xảy ra!");
+            }
+          } catch (error) {
+            next(error);
+            Modal.alert({
+              title: "Lỗi",
+              message: "Đã xảy ra lỗi khi xóa tour!",
+              icon: "fa-exclamation-triangle",
+              iconColor: "red",
+            });
+          }
+        },
+      });
+    });
+  });
+}
+// ===========================
+// RESTORE TOUR
+// ===========================
+
+function restoreTour() {
+  const deleteButtons = document.querySelectorAll("[data-restore-id]");
+  deleteButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-restore-id");
+      Modal.confirm({
+        title: "Khôi phục tour",
+        message: "Bạn có chắc chắn muốn khôi phục tour này không?",
+        icon: "fa-undo",
+        iconColor: "blue",
+        confirmText: "Khôi phục",
+        confirmColor: "blue",
+
+        onConfirm: async () => {
+          try {
+            const res = await fetch(`/api/tours/trash/restore/${id}`, {
+              method: "PATCH",
+            });
+            if (res.ok) {
+              Notification.success("Khôi phục tour thành công!");
+              getToursTrash();
+            } else {
+              Notification.error("Có lỗi xảy ra!");
+            }
+          } catch (error) {
+            next(error);
+            Modal.alert({
+              title: "Lỗi",
+              message: "Đã xảy ra lỗi khi khôi phục tour!",
+              icon: "fa-exclamation-triangle",
+              iconColor: "red",
+            });
+          }
+        },
+      });
+    });
+  });
+}

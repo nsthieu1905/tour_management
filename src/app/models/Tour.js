@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 const slug = require("mongoose-slug-updater");
 const Schema = mongoose.Schema;
-
-// Add plugin
-mongoose.plugin(slug);
+const mongooseDelete = require("mongoose-delete");
 
 const tourSchema = new Schema(
   {
@@ -15,6 +13,7 @@ const tourSchema = new Schema(
     slug: {
       type: String,
       slug: "name",
+      slugPaddingSize: 5,
       unique: true,
     },
     destination: {
@@ -151,4 +150,10 @@ const tourSchema = new Schema(
   { timestamps: true }
 );
 
+// Add plugin
+mongoose.plugin(slug);
+tourSchema.plugin(mongooseDelete, {
+  overrideMethods: "all",
+  deletedAt: true,
+});
 module.exports = mongoose.model("Tour", tourSchema);

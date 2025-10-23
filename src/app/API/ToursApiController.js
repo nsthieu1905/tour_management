@@ -1,26 +1,35 @@
 const { Tour } = require("../models/index");
+const fs = require("fs");
 
 class TourApiController {
   // [GET] /api/tours
   async findAll(req, res, next) {
     try {
-      const { deleted } = req.query;
-      const filter = {};
-      if (deleted === "true") {
-        filter.deleted = true;
-      } else if (deleted === "false") {
-        filter.deleted = { $ne: true };
-      }
-
-      const tours = await Tour.find(filter).lean();
+      const tours = await Tour.find({}).lean();
       res.json({
         success: true,
         total: tours.length,
-        filterApplied: filter,
         message: "Lấy tours thành công",
         data: tours,
       });
-    } catch (next) {}
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // [GET] api/tours/trash
+  async findTrash(req, res, next) {
+    try {
+      const tours = await Tour.findWithDeleted({ deleted: true }).lean();
+      res.json({
+        success: true,
+        total: tours.length,
+        message: "Lấy tours thành công",
+        data: tours,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 
   // [GET] /api/tours/:id
@@ -65,6 +74,26 @@ class TourApiController {
   async softDelete(req, res, next) {
     try {
       await Tour.delete({ _id: req.params.id });
+      res.json({ success: true, message: "Xoá tour thành công" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // [DELETE] /api/tours/trash/:id
+  async delete(req, res, next) {
+    try {
+      await Tour.deleteOne({ _id: req.params.id });
+      res.json({ success: true, message: "Xoá tour thành công" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // [PATCH] /api/tours/trash/restore/:id
+  async restore(req, res, next) {
+    try {
+      await Tour.restore({ _id: req.params.id });
       res.json({ success: true, message: "Xoá tour thành công" });
     } catch (error) {
       next(error);
