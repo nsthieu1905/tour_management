@@ -1,6 +1,6 @@
 const authRoutes = require("./auth");
 const dashboardRoutes = require("./dashboard");
-const toursApiRoutes = require("./api/tours");
+const toursApiRoutes = require("./API/tours");
 
 function route(app) {
   app.use("/auth", authRoutes);

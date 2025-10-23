@@ -1,19 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const upload = require("../config/multer");
 const dashboardController = require("../app/controllers/DashboardController");
 
 router.get("/dashboard", dashboardController.dashboard);
 
-// Quản lý tour
 router.get("/qly-tour", dashboardController.qlyTour);
-router.post(
-  "/qly-tour/add",
-  upload.array("images"),
-  dashboardController.storeTour
-);
+
 router.get("/qly-tour/trash", dashboardController.trashTour);
-router.delete("/qly-tour/:id", dashboardController.deleteTour);
 
 router.get("/booking-tour", dashboardController.bookingTour);
 

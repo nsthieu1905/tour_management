@@ -40,17 +40,18 @@ class TourApiController {
       return "Cao cấp";
     };
     try {
-      const { price, departures } = req.body;
-      const imagePaths = req.files?.map((f) => `/uploads/${f.filename}`) || [];
-      req.body = {
+      const { price, departureDates } = req.body;
+      const imagePaths = req.files?.map((f) => `/uploads/${f.filename}`) ?? [];
+      const tour = new Tour({
         ...req.body,
-        price,
-        departures: departures ? JSON.parse(departures) : [],
+        price: Number(price),
+        departureDates: Array.isArray(departureDates)
+          ? departureDates
+          : [departureDates],
         images: imagePaths,
         thumbnail: imagePaths[0] || "",
         tourType: getTourType(Number(price)),
-      };
-      const tour = new Tour(req.body);
+      });
       await tour.save();
       res
         .status(201)

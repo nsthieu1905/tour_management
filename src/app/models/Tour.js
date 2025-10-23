@@ -47,7 +47,7 @@ const tourSchema = new Schema(
     discountPrice: Number,
     images: {
       type: [String],
-      // required: true,
+      required: true,
     },
     category: {
       type: String,
@@ -93,7 +93,10 @@ const tourSchema = new Schema(
     //   required: true,
     // },
     returnDate: Date,
-    departureDates: [Date],
+    departureDates: {
+      type: [Date],
+      required: true,
+    },
     status: {
       type: String,
       enum: ["active", "paused", "soldout", "cancelled"],
