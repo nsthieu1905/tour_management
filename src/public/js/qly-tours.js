@@ -659,9 +659,13 @@ function deleteTour() {
 
         onConfirm: async () => {
           try {
-            const res = await fetch(`/api/tours/trash/${id}`, {
+            const url = `/api/tours/trash/${id}`;
+            console.log("URL gọi:", url);
+            const res = await fetch(url, {
               method: "DELETE",
             });
+            const result = await res.json();
+            console.log("Kết quả:", result);
             if (res.ok) {
               Notification.success("Xoá tour thành công!");
               getToursTrash();
@@ -669,6 +673,7 @@ function deleteTour() {
               Notification.error("Có lỗi xảy ra!");
             }
           } catch (error) {
+            console.log(error);
             next(error);
             Modal.alert({
               title: "Lỗi",
