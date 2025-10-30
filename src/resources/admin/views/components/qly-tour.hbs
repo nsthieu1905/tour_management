@@ -1,0 +1,80 @@
+<div class="flex pt-16">
+  <main class="flex-1 ml-64 p-6">
+    <!-- Tours Management Section -->
+    <div id="tours" class="section">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">Quản lý Tour</h2>
+          <p class="text-gray-600">
+            Thêm mới, chỉnh sửa và theo dõi các tour du lịch
+          </p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button
+            onclick="showAddTourModal()"
+            class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <i class="fas fa-plus mr-2"></i>Thêm tour mới
+          </button>
+          <button
+            type="button"
+            onclick="window.location.href='/admin/qly-tour/trash'"
+            class="bg-red-500 text-white px-4 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center"
+          >
+            <i class="fa-solid fa-trash mr-2"></i>Thùng rác
+          </button>
+        </div>
+      </div>
+
+      <!-- Tour Filters -->
+      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả dòng tour</option>
+            <option>Tiết kiệm</option>
+            <option>Tiêu chuẩn</option>
+            <option>Giá tốt</option>
+            <option>Cao cấp</option>
+          </select>
+
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả điểm đến</option>
+            <option>Hà Nội</option>
+            <option>TP.HCM</option>
+            <option>Đà Nẵng</option>
+            <option>Phú Quốc</option>
+          </select>
+
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+
+          <input
+            type="text"
+            placeholder="Tìm kiếm tour..."
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <!-- Tours Grid -->
+
+      <div
+        id="tours-list"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      ></div>
+      <div id="empty-tours-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Include Add Tour Modal -->
+{{> add-tour}}
+
+<script type="module" src="/admin/js/utils.js"></script>
+<script type="module" src="/admin/js/qly-tours.js"></script>

@@ -1,0 +1,69 @@
+<div class="flex pt-16">
+  <main class="flex-1 ml-64 p-6 bg-gray-50 min-h-screen">
+    <!-- Trash Tours Section -->
+    <div id="trash-tours" class="section">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">Thùng rác Tour</h2>
+          <p class="text-gray-600">
+            Các tour đã bị xoá tạm thời khỏi hệ thống. Bạn có thể khôi phục hoặc
+            xoá vĩnh viễn từng tour.
+          </p>
+        </div>
+
+        <!-- Nút quay lại -->
+        <button
+          onclick="window.location.href='/admin/qly-tour'"
+          class="bg-blue-500 text-white px-5 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+        >
+          <i class="fa-solid fa-arrow-left mr-2"></i>Quay lại
+        </button>
+      </div>
+      <!-- Tour Filters -->
+      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả dòng tour</option>
+            <option>Tiết kiệm</option>
+            <option>Tiêu chuẩn</option>
+            <option>Giá tốt</option>
+            <option>Cao cấp</option>
+          </select>
+
+          <select
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Tất cả điểm đến</option>
+            <option>Hà Nội</option>
+            <option>TP.HCM</option>
+            <option>Đà Nẵng</option>
+            <option>Phú Quốc</option>
+          </select>
+
+          <input
+            type="date"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+
+          <input
+            type="text"
+            placeholder="Tìm kiếm tour..."
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <!-- Tours Grid -->
+      <div
+        id="trash-list"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      ></div>
+      <div id="empty-trash-list"></div>
+    </div>
+  </main>
+</div>
+
+<script src="/admin/js/utils.js"></script>
+<script type="module" src="/admin/js/qly-tours.js"></script>

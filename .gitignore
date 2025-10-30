@@ -3,3 +3,4 @@ node_modules
 t.html
 seed.js
 seedtour.js
+.env

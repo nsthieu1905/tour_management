@@ -1,0 +1,269 @@
+<div class="flex pt-16">
+  <main class="flex-1 ml-64 p-6">
+    <!-- Partners Section -->
+    <div id="partners" class="section">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">Quản lý Đối tác</h2>
+          <p class="text-gray-600">Theo dõi và đánh giá hiệu quả hợp tác</p>
+        </div>
+        <button
+          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <i class="fas fa-plus mr-2"></i>Thêm đối tác mới
+        </button>
+      </div>
+
+      <!-- Partner Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Tổng đối tác</p>
+              <p class="text-2xl font-bold text-gray-900">47</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-handshake text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Đối tác hoạt động</p>
+              <p class="text-2xl font-bold text-gray-900">42</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-check-circle text-green-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">
+                Doanh thu từ đối tác
+              </p>
+              <p class="text-2xl font-bold text-gray-900">1.8B VNĐ</p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <i class="fas fa-coins text-yellow-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Đánh giá TB</p>
+              <p class="text-2xl font-bold text-gray-900">4.6/5</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-star text-purple-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partners List -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Đối tác
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Loại hình
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tour cung cấp
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Doanh thu
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Đánh giá
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Trạng thái
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='12' font-weight='bold'%3EHL%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Hạ Long Bay Tours
+                      </div>
+                      <div class="text-sm text-gray-500">halong@tours.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Tour operator
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  12 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  450M VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4.8/5 (156)
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+                    >Hoạt động</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Đánh giá
+                  </button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Hợp đồng
+                  </button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%2310b981'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='12' font-weight='bold'%3EPQ%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Phú Quốc Resort
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        phuquoc@resort.com
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Khách sạn
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  8 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  380M VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4.9/5 (203)
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+                    >Hoạt động</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Đánh giá
+                  </button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Hợp đồng
+                  </button>
+                </td>
+              </tr>
+
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <img
+                      class="h-10 w-10 rounded-full"
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23f59e0b'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='12' font-weight='bold'%3EDN%3C/text%3E%3C/svg%3E"
+                      alt=""
+                    />
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        Đà Nẵng Travel
+                      </div>
+                      <div class="text-sm text-gray-500">danang@travel.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  Lữ hành
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  15 tour
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  320M VNĐ
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  4.7/5 (127)
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800"
+                    >Đánh giá</span
+                  >
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                >
+                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
+                  <button class="text-green-600 hover:text-green-900">
+                    Đánh giá
+                  </button>
+                  <button class="text-orange-600 hover:text-orange-900">
+                    Hợp đồng
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="/admin/js/dashboard.js"></script>

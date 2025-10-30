@@ -1,0 +1,1058 @@
+<!-- Hero Section với AI Search -->
+<section
+  class="text-white py-20 bg-cover bg-center bg-no-repeat"
+  style="background-image: url('images/background_4.jpg')"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h1 class="text-5xl font-bold mb-6">Khám phá thế giới với AI thông minh</h1>
+    <p class="text-xl mb-12 opacity-90">
+      Tìm kiếm tour hoàn hảo với công nghệ AI và trải nghiệm cá nhân hóa
+    </p>
+
+    <!-- Smart Search Box -->
+    <div class="max-w-4xl mx-auto bg-white/70 rounded-2xl p-6 shadow-2xl">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1">
+          <div class="relative">
+            <input
+              type="text"
+              id="aiSearch"
+              placeholder="Tôi muốn đi du lịch..."
+              class="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70"
+            />
+            <button
+              id="voiceSearch"
+              class="absolute right-3 top-3 text-indigo-600 hover:text-indigo-800 voice-search"
+            >
+              <i class="fas fa-microphone text-xl"></i>
+            </button>
+          </div>
+          <div id="aiSuggestions" class="mt-2 text-left hidden">
+            <div class="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+              <i class="fas fa-robot mr-2"></i>AI gợi ý: Dựa trên lịch sử của
+              bạn, có thể bạn thích...
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <select
+            class="px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70"
+          >
+            <option>Tất cả dịch vụ</option>
+            <option>Tour trọn gói</option>
+            <option>Khách sạn</option>
+            <option>Vé máy bay</option>
+            <option>Trải nghiệm</option>
+          </select>
+
+          <button
+            class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors search-animation"
+          >
+            <i class="fas fa-search mr-2"></i>Tìm kiếm
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Filters -->
+      <div class="flex flex-wrap gap-2 mt-4 justify-center">
+        <span
+          class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-200 transition-colors"
+        >
+          <i class="fas fa-fire mr-1"></i>Trending
+        </span>
+        <span
+          class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-green-200 transition-colors"
+        >
+          <i class="fas fa-leaf mr-1"></i>Eco-friendly
+        </span>
+        <span
+          class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-purple-200 transition-colors"
+        >
+          <i class="fas fa-users mr-1"></i>Nhóm bạn
+        </span>
+        <span
+          class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-pink-200 transition-colors"
+        >
+          <i class="fas fa-heart mr-1"></i>Lãng mạn
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Tours với Comparison -->
+<section class="py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center mb-12">
+      <h2 class="text-3xl font-bold text-gray-900">Tours nổi bật</h2>
+      <div class="flex gap-2">
+        <button
+          id="compareBtn"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <i class="fas fa-balance-scale mr-2"></i>So sánh (0)
+        </button>
+        <button
+          class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          <i class="fas fa-filter mr-2"></i>Lọc
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Tour Card 1 -->
+      <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+        <div class="relative">
+          <div
+            class="h-48 bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center"
+          >
+            <i class="fas fa-mountain text-white text-6xl"></i>
+          </div>
+          <div class="absolute top-4 right-4 flex gap-2">
+            <button
+              class="ar-preview text-white p-2 rounded-full hover:scale-110 transition-transform"
+              onclick="showARPreview('Sapa')"
+            >
+              <i class="fas fa-cube"></i>
+            </button>
+            <input
+              type="checkbox"
+              class="compare-checkbox hidden"
+              data-tour="sapa"
+            />
+            <button
+              onclick="toggleCompare(this, 'sapa')"
+              class="bg-white text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <div
+            class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm"
+          >
+            <i class="fas fa-leaf mr-1 text-green-400"></i>Carbon: 2.1 tấn
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-xl font-semibold text-gray-900">Tour Sapa 3N2Đ</h3>
+            <div class="flex items-center">
+              <i class="fas fa-star text-yellow-400"></i>
+              <span class="ml-1 text-sm text-gray-600">4.8 (234)</span>
+            </div>
+          </div>
+
+          <p class="text-gray-600 mb-4">
+            Khám phá vẻ đẹp núi rừng Tây Bắc với ruộng bậc thang và văn hóa dân
+            tộc
+          </p>
+
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-2xl font-bold text-indigo-600">2.890.000đ</div>
+            <div class="text-sm text-gray-500 line-through">3.200.000đ</div>
+          </div>
+
+          <div class="flex gap-2 mb-4">
+            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+              >Trọn gói</span
+            >
+            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs"
+              >Hủy miễn phí</span
+            >
+          </div>
+
+          <button
+            onclick="showTourDetail('sapa')"
+            class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Xem chi tiết
+          </button>
+        </div>
+      </div>
+
+      <!-- Tour Card 2 -->
+      <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+        <div class="relative">
+          <div
+            class="h-48 bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center"
+          >
+            <i class="fas fa-umbrella-beach text-white text-6xl"></i>
+          </div>
+          <div class="absolute top-4 right-4 flex gap-2">
+            <button
+              class="ar-preview text-white p-2 rounded-full hover:scale-110 transition-transform"
+              onclick="showARPreview('Phu Quoc')"
+            >
+              <i class="fas fa-cube"></i>
+            </button>
+            <input
+              type="checkbox"
+              class="compare-checkbox hidden"
+              data-tour="phuquoc"
+            />
+            <button
+              onclick="toggleCompare(this, 'phuquoc')"
+              class="bg-white text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <div
+            class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm"
+          >
+            <i class="fas fa-leaf mr-1 text-yellow-400"></i>Carbon: 3.5 tấn
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-xl font-semibold text-gray-900">Phú Quốc 4N3Đ</h3>
+            <div class="flex items-center">
+              <i class="fas fa-star text-yellow-400"></i>
+              <span class="ml-1 text-sm text-gray-600">4.9 (456)</span>
+            </div>
+          </div>
+
+          <p class="text-gray-600 mb-4">
+            Thiên đường biển đảo với bãi cát trắng và làn nước trong xanh
+          </p>
+
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-2xl font-bold text-indigo-600">4.590.000đ</div>
+            <div class="text-sm text-gray-500 line-through">5.200.000đ</div>
+          </div>
+
+          <div class="flex gap-2 mb-4">
+            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+              >Resort 5*</span
+            >
+            <span
+              class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs"
+              >Trả góp 0%</span
+            >
+          </div>
+
+          <button
+            onclick="showTourDetail('phuquoc')"
+            class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Xem chi tiết
+          </button>
+        </div>
+      </div>
+
+      <!-- Tour Card 3 -->
+      <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+        <div class="relative">
+          <div
+            class="h-48 bg-gradient-to-r from-yellow-400 to-red-500 flex items-center justify-center"
+          >
+            <i class="fas fa-torii-gate text-white text-6xl"></i>
+          </div>
+          <div class="absolute top-4 right-4 flex gap-2">
+            <button
+              class="ar-preview text-white p-2 rounded-full hover:scale-110 transition-transform"
+              onclick="showARPreview('Japan')"
+            >
+              <i class="fas fa-cube"></i>
+            </button>
+            <input
+              type="checkbox"
+              class="compare-checkbox hidden"
+              data-tour="japan"
+            />
+            <button
+              onclick="toggleCompare(this, 'japan')"
+              class="bg-white text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <div
+            class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm"
+          >
+            <i class="fas fa-leaf mr-1 text-red-400"></i>Carbon: 8.2 tấn
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-xl font-semibold text-gray-900">Nhật Bản 6N5Đ</h3>
+            <div class="flex items-center">
+              <i class="fas fa-star text-yellow-400"></i>
+              <span class="ml-1 text-sm text-gray-600">4.7 (189)</span>
+            </div>
+          </div>
+
+          <p class="text-gray-600 mb-4">
+            Trải nghiệm văn hóa Nhật Bản với Tokyo - Osaka - Kyoto
+          </p>
+
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-2xl font-bold text-indigo-600">28.900.000đ</div>
+            <div class="text-sm text-gray-500 line-through">32.000.000đ</div>
+          </div>
+
+          <div class="flex gap-2 mb-4">
+            <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs"
+              >Quốc tế</span
+            >
+            <span
+              class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs"
+              >Visa hỗ trợ</span
+            >
+          </div>
+
+          <button
+            onclick="showTourDetail('japan')"
+            class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Xem chi tiết
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Community Section -->
+<section class="bg-gray-100 py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-3xl font-bold text-gray-900 text-center mb-12">
+      Cộng đồng du lịch
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Community Post 1 -->
+      <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center mb-4">
+          <div
+            class="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold"
+          >
+            AN
+          </div>
+          <div class="ml-3">
+            <h4 class="font-semibold">Anh Nguyễn</h4>
+            <p class="text-sm text-gray-500">2 giờ trước</p>
+          </div>
+        </div>
+
+        <p class="text-gray-700 mb-4">
+          Vừa trở về từ Sapa, cảnh đẹp không thể tả! Chia sẻ một số tips cho mọi
+          người...
+        </p>
+
+        <div class="flex gap-2 mb-4">
+          <div
+            class="w-20 h-20 bg-green-300 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-image text-white text-2xl"></i>
+          </div>
+          <div
+            class="w-20 h-20 bg-blue-300 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-play text-white text-2xl"></i>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-sm text-gray-500">
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-heart mr-1"></i>24 thích
+          </button>
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-comment mr-1"></i>8 bình luận
+          </button>
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-share mr-1"></i>Chia sẻ
+          </button>
+        </div>
+      </div>
+
+      <!-- Community Post 2 -->
+      <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center mb-4">
+          <div
+            class="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold"
+          >
+            LH
+          </div>
+          <div class="ml-3">
+            <h4 class="font-semibold">Linh Hoàng</h4>
+            <p class="text-sm text-gray-500">1 ngày trước</p>
+          </div>
+        </div>
+
+        <p class="text-gray-700 mb-4">
+          Tìm bạn đồng hành đi Phú Quốc tháng sau, chia sẻ chi phí và trải
+          nghiệm!
+        </p>
+
+        <div class="bg-blue-50 p-3 rounded-lg mb-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium">Nhóm: 2/4 người</span>
+            <span class="text-sm text-blue-600">Còn 2 chỗ</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-sm text-gray-500">
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-heart mr-1"></i>12 thích
+          </button>
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-comment mr-1"></i>15 bình luận
+          </button>
+          <button
+            class="bg-indigo-600 text-white px-3 py-1 rounded-full hover:bg-indigo-700"
+          >
+            Tham gia
+          </button>
+        </div>
+      </div>
+
+      <!-- Community Post 3 -->
+      <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center mb-4">
+          <div
+            class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold"
+          >
+            MT
+          </div>
+          <div class="ml-3">
+            <h4 class="font-semibold">Minh Tuấn</h4>
+            <p class="text-sm text-gray-500">3 ngày trước</p>
+          </div>
+        </div>
+
+        <p class="text-gray-700 mb-4">
+          Review chi tiết tour Nhật Bản 6N5Đ - Đáng tiền từng đồng!
+        </p>
+
+        <div class="flex items-center mb-4">
+          <div class="flex text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+          </div>
+          <span class="ml-2 text-sm text-gray-600">5.0/5</span>
+        </div>
+
+        <div class="flex items-center justify-between text-sm text-gray-500">
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-heart mr-1"></i>45 thích
+          </button>
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-comment mr-1"></i>23 bình luận
+          </button>
+          <button class="flex items-center hover:text-indigo-600">
+            <i class="fas fa-bookmark mr-1"></i>Lưu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modals -->
+<!-- Tour Detail Modal -->
+<div id="tourDetailModal" class="modal">
+  <div
+    class="bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+  >
+    <div class="p-6 border-b">
+      <div class="flex justify-between items-center">
+        <h2 id="tourTitle" class="text-2xl font-bold">Chi tiết tour</h2>
+        <button
+          onclick="closeTourDetail()"
+          class="text-gray-500 hover:text-gray-700"
+        >
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <!-- Timeline lịch trình -->
+      <div class="mb-8">
+        <h3 class="text-xl font-semibold mb-4">Lịch trình chi tiết</h3>
+        <div id="tourTimeline" class="space-y-6">
+          <!-- Timeline items will be inserted here -->
+        </div>
+      </div>
+
+      <!-- Map Integration -->
+      <div class="mb-8">
+        <h3 class="text-xl font-semibold mb-4">Bản đồ hành trình</h3>
+        <div
+          class="h-64 bg-gray-200 rounded-lg flex items-center justify-center"
+        >
+          <div class="text-center">
+            <i class="fas fa-map-marked-alt text-4xl text-gray-400 mb-2"></i>
+            <p class="text-gray-500">Bản đồ tương tác sẽ hiển thị tại đây</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviews -->
+      <div class="mb-8">
+        <h3 class="text-xl font-semibold mb-4">Đánh giá từ khách hàng</h3>
+        <div class="space-y-4">
+          <div class="border rounded-lg p-4">
+            <div class="flex items-center mb-2">
+              <div
+                class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold"
+              >
+                H
+              </div>
+              <div class="ml-3">
+                <h4 class="font-semibold">Hương Nguyễn</h4>
+                <div class="flex text-yellow-400 text-sm">
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                </div>
+              </div>
+            </div>
+            <p class="text-gray-700">
+              Tour rất tuyệt vời, hướng dẫn viên nhiệt tình, lịch trình hợp lý!
+            </p>
+            <div class="flex gap-2 mt-2">
+              <div
+                class="w-16 h-16 bg-blue-200 rounded flex items-center justify-center"
+              >
+                <i class="fas fa-image text-blue-600"></i>
+              </div>
+              <div
+                class="w-16 h-16 bg-green-200 rounded flex items-center justify-center"
+              >
+                <i class="fas fa-video text-green-600"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking Section -->
+      <div class="bg-gray-50 rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <div class="text-3xl font-bold text-indigo-600" id="tourPrice">
+              2.890.000đ
+            </div>
+            <div class="text-sm text-gray-500">/ người</div>
+          </div>
+          <div class="text-right">
+            <div class="carbon-meter h-2 w-32 rounded-full mb-1"></div>
+            <div class="text-xs text-gray-500">
+              Carbon footprint: <span id="carbonFootprint">2.1 tấn</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Ngày khởi hành</label
+            >
+            <input
+              type="date"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Số người</label
+            >
+            <select
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option>1 người</option>
+              <option>2 người</option>
+              <option>3 người</option>
+              <option>4+ người</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-2 mb-4">
+          <button
+            class="flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Đặt ngay
+          </button>
+          <button
+            class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Trả góp 0%
+          </button>
+        </div>
+
+        <div class="text-center text-sm text-gray-500">
+          <i class="fas fa-shield-alt mr-1"></i>Hủy miễn phí trong 24h
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison Modal -->
+<div id="comparisonModal" class="modal">
+  <div
+    class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+  >
+    <div class="p-6 border-b">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold">So sánh tours</h2>
+        <button
+          onclick="closeComparison()"
+          class="text-gray-500 hover:text-gray-700"
+        >
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div
+        id="comparisonContent"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        <!-- Comparison cards will be inserted here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AR Preview Modal -->
+<div id="arModal" class="modal">
+  <div class="bg-white rounded-2xl max-w-2xl w-full mx-4">
+    <div class="p-6 border-b">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold">AR Preview</h2>
+        <button
+          onclick="closeARPreview()"
+          class="text-gray-500 hover:text-gray-700"
+        >
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div
+        class="h-96 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center text-white"
+      >
+        <div class="text-center">
+          <i class="fas fa-cube text-6xl mb-4 ar-preview"></i>
+          <h3 class="text-2xl font-bold mb-2" id="arDestination">Điểm đến</h3>
+          <p class="text-lg opacity-90">Trải nghiệm thực tế ảo 360°</p>
+          <button
+            class="mt-4 bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Bắt đầu AR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Smart Travel Planner Section -->
+<section class="py-16 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold mb-4">
+        AI Travel Planner - Lập kế hoạch thông minh
+      </h2>
+      <p class="text-xl opacity-90">
+        Để AI tạo lịch trình hoàn hảo dựa trên sở thích của bạn
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div class="space-y-6">
+        <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6">
+          <h3 class="text-xl font-semibold mb-4">Tạo lịch trình tự động</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2"
+                >Ngân sách dự kiến</label
+              >
+              <div class="flex items-center space-x-4">
+                <input
+                  type="range"
+                  id="budgetSlider"
+                  min="1000000"
+                  max="50000000"
+                  value="10000000"
+                  class="flex-1 h-2 bg-white bg-opacity-30 rounded-lg appearance-none cursor-pointer"
+                />
+                <span id="budgetValue" class="text-lg font-semibold"
+                  >10.000.000đ</span
+                >
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2"
+                >Thời gian du lịch</label
+              >
+              <select
+                class="w-full px-4 py-3 bg-white bg-opacity-20 rounded-lg text-white placeholder-white"
+              >
+                <option value="weekend">Cuối tuần (2-3 ngày)</option>
+                <option value="short">Ngắn hạn (4-7 ngày)</option>
+                <option value="long">Dài hạn (1-2 tuần)</option>
+                <option value="extended">Mở rộng (3+ tuần)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2"
+                >Sở thích du lịch</label
+              >
+              <div class="flex flex-wrap gap-2">
+                <button
+                  class="preference-tag bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm hover:bg-opacity-30 transition-colors"
+                  data-pref="adventure"
+                >
+                  <i class="fas fa-mountain mr-1"></i>Phiêu lưu
+                </button>
+                <button
+                  class="preference-tag bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm hover:bg-opacity-30 transition-colors"
+                  data-pref="culture"
+                >
+                  <i class="fas fa-landmark mr-1"></i>Văn hóa
+                </button>
+                <button
+                  class="preference-tag bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm hover:bg-opacity-30 transition-colors"
+                  data-pref="beach"
+                >
+                  <i class="fas fa-umbrella-beach mr-1"></i>Biển
+                </button>
+                <button
+                  class="preference-tag bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm hover:bg-opacity-30 transition-colors"
+                  data-pref="food"
+                >
+                  <i class="fas fa-utensils mr-1"></i>Ẩm thực
+                </button>
+                <button
+                  class="preference-tag bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm hover:bg-opacity-30 transition-colors"
+                  data-pref="shopping"
+                >
+                  <i class="fas fa-shopping-bag mr-1"></i>Mua sắm
+                </button>
+              </div>
+            </div>
+
+            <button
+              id="generatePlan"
+              class="w-full bg-white text-purple-600 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              <i class="fas fa-magic mr-2"></i>Tạo lịch trình AI
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6">
+        <h3 class="text-xl font-semibold mb-4">Lịch trình được đề xuất</h3>
+        <div id="aiPlanResult" class="space-y-4">
+          <div class="text-center text-white opacity-70 py-8">
+            <i class="fas fa-robot text-4xl mb-4"></i>
+            <p>Nhấn "Tạo lịch trình AI" để bắt đầu</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Live Chat & Virtual Assistant -->
+<section class="py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div
+      class="bg-gradient-to-r from-green-400 to-blue-500 rounded-3xl p-8 text-white"
+    >
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <h2 class="text-3xl font-bold mb-4">Hỗ trợ 24/7 với AI Assistant</h2>
+          <p class="text-lg mb-6 opacity-90">
+            Trợ lý ảo thông minh sẵn sàng giải đáp mọi thắc mắc về du lịch
+          </p>
+
+          <div class="space-y-4">
+            <div class="flex items-center space-x-3">
+              <div
+                class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
+              >
+                <i class="fas fa-check text-sm"></i>
+              </div>
+              <span>Tư vấn điểm đến phù hợp</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div
+                class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
+              >
+                <i class="fas fa-check text-sm"></i>
+              </div>
+              <span>Hỗ trợ đặt chỗ và thanh toán</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div
+                class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
+              >
+                <i class="fas fa-check text-sm"></i>
+              </div>
+              <span>Thông tin thời tiết và giao thông</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6">
+          <div class="h-64 overflow-y-auto mb-4" id="chatMessages">
+            <div class="space-y-3">
+              <div class="flex items-start space-x-2">
+                <div
+                  class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center"
+                >
+                  <i class="fas fa-robot text-white text-sm"></i>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3 max-w-xs">
+                  <p class="text-sm">
+                    Xin chào! Tôi là TravelBot. Bạn cần hỗ trợ gì về du lịch?
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex space-x-2">
+            <input
+              type="text"
+              id="chatInput"
+              placeholder="Nhập câu hỏi..."
+              class="flex-1 px-4 py-2 bg-white bg-opacity-20 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-2 focus:ring-white"
+            />
+            <button
+              id="sendChat"
+              class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Weather & Travel Conditions -->
+<section class="py-16 bg-gray-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-3xl font-bold text-gray-900 text-center mb-12">
+      Thông tin thời tiết & điều kiện du lịch
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-gray-900">Hà Nội</h3>
+          <div class="text-3xl">☀️</div>
+        </div>
+        <div class="text-2xl font-bold text-gray-900 mb-2">28°C</div>
+        <div class="text-sm text-gray-600 mb-4">Nắng, độ ẩm 65%</div>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span>Chất lượng không khí</span>
+            <span class="text-green-600 font-medium">Tốt</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Điều kiện du lịch</span>
+            <span class="text-blue-600 font-medium">Lý tưởng</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-gray-900">TP.HCM</h3>
+          <div class="text-3xl">🌧️</div>
+        </div>
+        <div class="text-2xl font-bold text-gray-900 mb-2">32°C</div>
+        <div class="text-sm text-gray-600 mb-4">Mưa rào, độ ẩm 85%</div>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span>Chất lượng không khí</span>
+            <span class="text-yellow-600 font-medium">Trung bình</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Điều kiện du lịch</span>
+            <span class="text-orange-600 font-medium">Cần lưu ý</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-gray-900">Đà Nẵng</h3>
+          <div class="text-3xl">⛅</div>
+        </div>
+        <div class="text-2xl font-bold text-gray-900 mb-2">30°C</div>
+        <div class="text-sm text-gray-600 mb-4">Nhiều mây, độ ẩm 70%</div>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span>Chất lượng không khí</span>
+            <span class="text-green-600 font-medium">Tốt</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Điều kiện du lịch</span>
+            <span class="text-blue-600 font-medium">Tốt</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-gray-900">Nha Trang</h3>
+          <div class="text-3xl">☀️</div>
+        </div>
+        <div class="text-2xl font-bold text-gray-900 mb-2">29°C</div>
+        <div class="text-sm text-gray-600 mb-4">Nắng đẹp, độ ẩm 60%</div>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span>Chất lượng không khí</span>
+            <span class="text-green-600 font-medium">Rất tốt</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Điều kiện du lịch</span>
+            <span class="text-green-600 font-medium">Xuất sắc</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Loyalty Program & Membership -->
+<section
+  class="py-16 bg-gradient-to-r from-yellow-400 to-orange-500 text-white"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold mb-4">
+        TravelSmart VIP - Chương trình thành viên
+      </h2>
+      <p class="text-xl opacity-90">
+        Tích điểm, nhận ưu đãi và trải nghiệm dịch vụ cao cấp
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div
+        class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6 text-center"
+      >
+        <div
+          class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fas fa-star text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-4">Silver Member</h3>
+        <div class="space-y-2 mb-6">
+          <p class="text-sm opacity-90">✓ Giảm 5% mọi booking</p>
+          <p class="text-sm opacity-90">✓ Tích điểm x1.2</p>
+          <p class="text-sm opacity-90">✓ Hỗ trợ ưu tiên</p>
+        </div>
+        <button
+          class="w-full bg-white text-orange-600 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+        >
+          Miễn phí
+        </button>
+      </div>
+
+      <div
+        class="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-6 text-center border-2 border-white border-opacity-50 transform scale-105"
+      >
+        <div
+          class="w-16 h-16 bg-white bg-opacity-30 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fas fa-crown text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-4">Gold Member</h3>
+        <div class="space-y-2 mb-6">
+          <p class="text-sm opacity-90">✓ Giảm 10% mọi booking</p>
+          <p class="text-sm opacity-90">✓ Tích điểm x1.5</p>
+          <p class="text-sm opacity-90">✓ Hủy miễn phí 48h</p>
+          <p class="text-sm opacity-90">✓ Lounge sân bay</p>
+        </div>
+        <button
+          class="w-full bg-white text-orange-600 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+        >
+          299.000đ/năm
+        </button>
+      </div>
+
+      <div
+        class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6 text-center"
+      >
+        <div
+          class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="fas fa-gem text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-4">Diamond Member</h3>
+        <div class="space-y-2 mb-6">
+          <p class="text-sm opacity-90">✓ Giảm 15% mọi booking</p>
+          <p class="text-sm opacity-90">✓ Tích điểm x2</p>
+          <p class="text-sm opacity-90">✓ Hủy miễn phí 72h</p>
+          <p class="text-sm opacity-90">✓ Concierge 24/7</p>
+          <p class="text-sm opacity-90">✓ Upgrade phòng miễn phí</p>
+        </div>
+        <button
+          class="w-full bg-white text-orange-600 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+        >
+          999.000đ/năm
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Real-time Notifications -->
+<div
+  id="notificationContainer"
+  class="fixed top-20 right-4 z-50 space-y-2"
+></div>
+
+<!-- Floating Action Buttons -->
+<div
+  class="floating-action flex flex-col items-center space-y-3 fixed bottom-6 right-6"
+>
+  <button
+    id="aiAssistant"
+    class="bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+  >
+    <i class="fas fa-robot text-xl"></i>
+  </button>
+  <button
+    id="quickBooking"
+    class="bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700 transition-colors"
+  >
+    <i class="fas fa-calendar-plus text-lg"></i>
+  </button>
+  <button
+    id="emergencyHelp"
+    class="bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-colors"
+  >
+    <i class="fas fa-phone text-lg"></i>
+  </button>
+</div>
+
+<!-- Scripts -->
+<script src="/client/js/home.js"></script>
