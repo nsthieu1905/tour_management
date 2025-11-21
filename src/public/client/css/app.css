@@ -21,7 +21,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -63,7 +64,8 @@
 }
 
 @keyframes voice-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -142,7 +144,8 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -194,5 +197,3 @@ body {
 .price-comparison {
   background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
 }
-
-/*# sourceMappingURL=app.css.map */
