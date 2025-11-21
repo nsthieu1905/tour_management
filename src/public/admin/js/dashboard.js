@@ -630,12 +630,10 @@ function highlightCurrentPage() {
 
 /**
  * Đăng xuất khỏi hệ thống
+ * Delegates to auth-helper.js for centralized logout logic
  */
 function logout() {
-  if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-    alert("Đăng xuất thành công!");
-    // Có thể redirect về trang login: window.location.href = '/login';
-  }
+  logoutHelper.logout();
 }
 
 // ===========================

@@ -1,7 +1,7 @@
 // ===========================
 // CONFIRM THÔNG BÁO
 // ===========================
-const Modal = {
+export const Modal = {
   // Modal xác nhận
   confirm({
     title = "Xác nhận",
@@ -223,7 +223,7 @@ const Modal = {
 // ===========================
 // TOAST
 // ===========================
-const Notification = {
+export const Notification = {
   show(message, type = "success", duration = 3000) {
     const configs = {
       success: { bg: "bg-green-500", icon: "fa-check-circle" },
@@ -276,5 +276,3 @@ const Notification = {
     this.show(message, "info", duration);
   },
 };
-
-export { Modal, Notification };

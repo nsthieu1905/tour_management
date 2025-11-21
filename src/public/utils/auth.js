@@ -1,4 +1,4 @@
-import { validateLoginInput } from "../../utils/validators.js";
+import { validateLoginInput } from "./validators.js";
 
 // ============================================
 // XỬ LÝ LỖI FORM

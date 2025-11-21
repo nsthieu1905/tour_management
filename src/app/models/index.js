@@ -8,6 +8,7 @@ const Activity = require("./Activity");
 const Khuyen_mai = require("./Khuyen_mai");
 const Thong_ke = require("./Thong_ke");
 const Settings = require("./Settings");
+const Session = require("./Session");
 
 module.exports = {
   User,
@@ -20,4 +21,5 @@ module.exports = {
   Khuyen_mai,
   Thong_ke,
   Settings,
+  Session,
 };

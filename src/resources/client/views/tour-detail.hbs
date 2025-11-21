@@ -1,0 +1,1058 @@
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Tour Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      Thái Lan: Bangkok - Pattaya
+    </h1>
+    <p class="text-lg text-gray-600">
+      Khám phá vẻ đẹp hiện đại của Bangkok và thư giãn tại bãi biển Pattaya
+      trong chuyến du lịch 5 ngày 4 đêm đầy thú vị
+    </p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+    <!-- Gallery -->
+    <div class="lg:col-span-2 space-y-8">
+      <div class="relative">
+        <!-- Ảnh đầu tiên - full width -->
+        {{#if tour.images}} {{#if (lookup tour.images 0)}}
+        <div
+          class="w-full h-96 relative group cursor-pointer rounded-2xl overflow-hidden"
+          onclick="openLightbox(0)"
+        >
+          <img
+            src="{{lookup tour.images 0}}"
+            alt="{{tour.name}}"
+            class="w-full h-full object-cover transition duration-300 group-hover:brightness-75"
+          />
+          <div
+            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center"
+          >
+            <div
+              class="text-white opacity-0 group-hover:opacity-100 transition duration-300"
+            >
+              <svg
+                class="w-12 h-12"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        {{/if}}
+
+        <!-- Button xem tất cả -->
+        <button
+          class="absolute top-4 right-4 bg-white bg-opacity-90 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-100 transition duration-200 shadow-lg z-10"
+          onclick="openLightbox(0)"
+        >
+          📷 Xem tất cả ({{tour.images.length}})
+        </button>
+
+        <!-- Ảnh còn lại - grid nhỏ dưới -->
+        <div class="grid grid-cols-4 gap-3 h-24 mt-3">
+          {{#if (lookup tour.images 1)}}
+          <!-- Ảnh 2 -->
+          <div
+            class="relative group cursor-pointer h-full rounded-xl overflow-hidden"
+            onclick="openLightbox(1)"
+          >
+            <img
+              src="{{lookup tour.images 1}}"
+              alt="{{tour.name}} - Ảnh 2"
+              class="w-full h-full object-cover transition duration-300 group-hover:brightness-75"
+            />
+            <div
+              class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-white opacity-0 group-hover:opacity-100 transition duration-300"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          {{/if}} {{#if (lookup tour.images 2)}}
+          <!-- Ảnh 3 -->
+          <div
+            class="relative group cursor-pointer h-full rounded-xl overflow-hidden"
+            onclick="openLightbox(2)"
+          >
+            <img
+              src="{{lookup tour.images 2}}"
+              alt="{{tour.name}} - Ảnh 3"
+              class="w-full h-full object-cover transition duration-300 group-hover:brightness-75"
+            />
+            <div
+              class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-white opacity-0 group-hover:opacity-100 transition duration-300"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          {{/if}} {{#if (lookup tour.images 3)}}
+          <!-- Ảnh 4 -->
+          <div
+            class="relative group cursor-pointer h-full rounded-xl overflow-hidden"
+            onclick="openLightbox(3)"
+          >
+            <img
+              src="{{lookup tour.images 3}}"
+              alt="{{tour.name}} - Ảnh 4"
+              class="w-full h-full object-cover transition duration-300 group-hover:brightness-75"
+            />
+            <div
+              class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center"
+            >
+              <div
+                class="text-white opacity-0 group-hover:opacity-100 transition duration-300"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          {{/if}} {{#if (lookup tour.images 4)}}
+          <!-- Ảnh 5 - nút xem thêm -->
+          <div
+            class="relative group cursor-pointer h-full rounded-xl overflow-hidden bg-gray-800"
+            onclick="openLightbox(4)"
+          >
+            <img
+              src="{{lookup tour.images 4}}"
+              alt="{{tour.name}} - Ảnh 5"
+              class="w-full h-full object-cover transition duration-300 group-hover:brightness-75 opacity-60 group-hover:opacity-100"
+            />
+            <div
+              class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition duration-300 flex items-center justify-center"
+            >
+              <div class="text-white text-center">
+                <div class="text-2xl font-bold">
+                  +{{subtract tour.images.length 4}}
+                </div>
+                <div class="text-xs">Xem thêm</div>
+              </div>
+            </div>
+          </div>
+          {{/if}} {{/if}}
+        </div>
+      </div>
+
+      <!-- Departure Calendar -->
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          Lịch khởi hành tháng 12/2024
+        </h2>
+        <div class="grid grid-cols-7 gap-2 mb-4">
+          <div class="text-center font-semibold text-gray-600 py-2">CN</div>
+          <div class="text-center font-semibold text-gray-600 py-2">T2</div>
+          <div class="text-center font-semibold text-gray-600 py-2">T3</div>
+          <div class="text-center font-semibold text-gray-600 py-2">T4</div>
+          <div class="text-center font-semibold text-gray-600 py-2">T5</div>
+          <div class="text-center font-semibold text-gray-600 py-2">T6</div>
+          <div class="text-center font-semibold text-gray-600 py-2">T7</div>
+        </div>
+        <div class="grid grid-cols-7 gap-2">
+          <div class="calendar-day text-center py-3 text-gray-400">1</div>
+          <div class="calendar-day text-center py-3 text-gray-400">2</div>
+          <div class="calendar-day text-center py-3 text-gray-400">3</div>
+          <div class="calendar-day text-center py-3 text-gray-400">4</div>
+          <div
+            class="calendar-day bg-blue-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-blue-600"
+          >
+            <div class="font-semibold">5</div>
+            <div class="text-xs">6.390k</div>
+          </div>
+          <div class="calendar-day text-center py-3 text-gray-400">6</div>
+          <div class="calendar-day text-center py-3 text-gray-400">7</div>
+          <div class="calendar-day text-center py-3 text-gray-400">8</div>
+          <div class="calendar-day text-center py-3 text-gray-400">9</div>
+          <div class="calendar-day text-center py-3 text-gray-400">10</div>
+          <div class="calendar-day text-center py-3 text-gray-400">11</div>
+          <div
+            class="calendar-day bg-orange-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-orange-600"
+          >
+            <div class="font-semibold">12</div>
+            <div class="text-xs">6.590k</div>
+          </div>
+          <div class="calendar-day text-center py-3 text-gray-400">13</div>
+          <div class="calendar-day text-center py-3 text-gray-400">14</div>
+          <div class="calendar-day text-center py-3 text-gray-400">15</div>
+          <div class="calendar-day text-center py-3 text-gray-400">16</div>
+          <div class="calendar-day text-center py-3 text-gray-400">17</div>
+          <div class="calendar-day text-center py-3 text-gray-400">18</div>
+          <div
+            class="calendar-day bg-blue-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-blue-600"
+          >
+            <div class="font-semibold">19</div>
+            <div class="text-xs">6.390k</div>
+          </div>
+          <div class="calendar-day text-center py-3 text-gray-400">20</div>
+          <div class="calendar-day text-center py-3 text-gray-400">21</div>
+          <div class="calendar-day text-center py-3 text-gray-400">22</div>
+          <div class="calendar-day text-center py-3 text-gray-400">23</div>
+          <div class="calendar-day text-center py-3 text-gray-400">24</div>
+          <div class="calendar-day text-center py-3 text-gray-400">25</div>
+          <div
+            class="calendar-day bg-orange-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-orange-600"
+          >
+            <div class="font-semibold">26</div>
+            <div class="text-xs">6.790k</div>
+          </div>
+          <div class="calendar-day text-center py-3 text-gray-400">27</div>
+          <div class="calendar-day text-center py-3 text-gray-400">28</div>
+          <div class="calendar-day text-center py-3 text-gray-400">29</div>
+          <div class="calendar-day text-center py-3 text-gray-400">30</div>
+          <div class="calendar-day text-center py-3 text-gray-400">31</div>
+        </div>
+      </div>
+
+      <!-- Highlights -->
+      <div class="bg-blue-50 rounded-2xl p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          ✨ Điểm nhấn của chương trình
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex items-start space-x-3 animate-fade-in">
+            <div class="text-2xl">🏯</div>
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-2">Khám phá Bangkok</h3>
+              <p class="text-gray-600">
+                Tham quan Cung điện Hoàng gia, Chùa Phật Vàng và chợ nổi Damnoen
+                Saduak
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3 animate-fade-in">
+            <div class="text-2xl">🏖️</div>
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-2">
+                Thư giãn tại Pattaya
+              </h3>
+              <p class="text-gray-600">
+                Tắm biển, tham quan đảo Coral và thưởng thức show Alcazar nổi
+                tiếng
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3 animate-fade-in">
+            <div class="text-2xl">🍽️</div>
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-2">Ẩm thực đặc sắc</h3>
+              <p class="text-gray-600">
+                Thưởng thức buffet hải sản, Tom Yum Kung và các món ăn truyền
+                thống Thái
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3 animate-fade-in">
+            <div class="text-2xl">🛍️</div>
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-2">
+                Mua sắm thỏa thích
+              </h3>
+              <p class="text-gray-600">
+                Ghé thăm Platinum Mall, MBK Center và chợ đêm Chatuchak
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Info -->
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          📋 Thông tin thêm về chuyến đi
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="text-center">
+            <div class="text-3xl mb-2">✈️</div>
+            <h3 class="font-semibold text-gray-900 mb-2">Vận chuyển</h3>
+            <p class="text-sm text-gray-600">
+              Máy bay khứ hồi, xe du lịch đời mới
+            </p>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl mb-2">🏨</div>
+            <h3 class="font-semibold text-gray-900 mb-2">Khách sạn</h3>
+            <p class="text-sm text-gray-600">
+              Khách sạn 4-5 sao, vị trí trung tâm
+            </p>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl mb-2">🍽️</div>
+            <h3 class="font-semibold text-gray-900 mb-2">Ăn uống</h3>
+            <p class="text-sm text-gray-600">
+              Buffet sáng, các bữa chính theo tour
+            </p>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl mb-2">👨‍💼</div>
+            <h3 class="font-semibold text-gray-900 mb-2">Hướng dẫn viên</h3>
+            <p class="text-sm text-gray-600">
+              HDV tiếng Việt nhiều kinh nghiệm
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Itinerary -->
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          📅 Lịch trình chi tiết
+        </h2>
+        <div class="space-y-4">
+          <div class="border border-gray-200 rounded-xl">
+            <button
+              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
+              onclick="toggleAccordion('day1')"
+            >
+              <div class="flex items-center space-x-3">
+                <span
+                  class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold"
+                  >Ngày 1</span
+                >
+                <span class="font-semibold">TP.HCM - Bangkok</span>
+              </div>
+              <svg
+                id="day1-icon"
+                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </button>
+            <div id="day1" class="hidden p-4 pt-0 text-gray-600">
+              <p>
+                ✈️ <strong>06:00:</strong> Tập trung tại sân bay Tân Sơn Nhất
+              </p>
+              <p>✈️ <strong>08:30:</strong> Bay thẳng đến Bangkok</p>
+              <p>🏯 <strong>14:00:</strong> Tham quan Cung điện Hoàng gia</p>
+              <p>🛶 <strong>16:30:</strong> Đi thuyền trên sông Chao Phraya</p>
+              <p>
+                🍽️ <strong>19:00:</strong> Dùng bữa tối tại nhà hàng địa phương
+              </p>
+              <p>🏨 <strong>21:00:</strong> Nhận phòng khách sạn, nghỉ ngơi</p>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl">
+            <button
+              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
+              onclick="toggleAccordion('day2')"
+            >
+              <div class="flex items-center space-x-3">
+                <span
+                  class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold"
+                  >Ngày 2</span
+                >
+                <span class="font-semibold">Bangkok - Pattaya</span>
+              </div>
+              <svg
+                id="day2-icon"
+                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </button>
+            <div id="day2" class="hidden p-4 pt-0 text-gray-600">
+              <p>🍽️ <strong>07:00:</strong> Buffet sáng tại khách sạn</p>
+              <p>🛶 <strong>08:30:</strong> Tham quan chợ nổi Damnoen Saduak</p>
+              <p>🚌 <strong>13:00:</strong> Di chuyển đến Pattaya</p>
+              <p>
+                🏖️ <strong>16:00:</strong> Tự do tắm biển tại bãi biển Pattaya
+              </p>
+              <p>
+                🍽️ <strong>19:00:</strong> Buffet hải sản tại nhà hàng ven biển
+              </p>
+              <p>🎭 <strong>21:00:</strong> Xem show Alcazar nổi tiếng</p>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl">
+            <button
+              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
+              onclick="toggleAccordion('day3')"
+            >
+              <div class="flex items-center space-x-3">
+                <span
+                  class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold"
+                  >Ngày 3</span
+                >
+                <span class="font-semibold">Pattaya - Đảo Coral</span>
+              </div>
+              <svg
+                id="day3-icon"
+                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </button>
+            <div id="day3" class="hidden p-4 pt-0 text-gray-600">
+              <p>🍽️ <strong>07:00:</strong> Buffet sáng tại khách sạn</p>
+              <p>🛥️ <strong>08:30:</strong> Đi tàu cao tốc ra đảo Coral</p>
+              <p>🤿 <strong>10:00:</strong> Lặn ngắm san hô, tắm biển</p>
+              <p>🍽️ <strong>12:00:</strong> Buffet trưa trên đảo</p>
+              <p>🏖️ <strong>14:00:</strong> Tự do nghỉ ngơi, chụp ảnh</p>
+              <p>🛥️ <strong>16:30:</strong> Trở về Pattaya</p>
+              <p>🛍️ <strong>19:00:</strong> Tự do mua sắm tại Walking Street</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Important Information -->
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          ⚠️ Những thông tin cần lưu ý
+        </h2>
+        <div class="space-y-4">
+          <div class="border border-gray-200 rounded-xl">
+            <button
+              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
+              onclick="toggleAccordion('include')"
+            >
+              <span class="font-semibold text-green-600"
+                >✅ Giá tour bao gồm</span
+              >
+              <svg
+                id="include-icon"
+                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </button>
+            <div id="include" class="hidden p-4 pt-0 text-gray-600">
+              <ul class="space-y-2">
+                <li>• Vé máy bay khứ hồi TP.HCM - Bangkok</li>
+                <li>• Khách sạn 4-5 sao (2 người/phòng)</li>
+                <li>• Các bữa ăn theo chương trình</li>
+                <li>• Xe du lịch đời mới có máy lạnh</li>
+                <li>• Hướng dẫn viên tiếng Việt</li>
+                <li>• Vé tham quan các điểm trong chương trình</li>
+                <li>• Bảo hiểm du lịch</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl">
+            <button
+              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
+              onclick="toggleAccordion('exclude')"
+            >
+              <span class="font-semibold text-red-600"
+                >❌ Giá tour không bao gồm</span
+              >
+              <svg
+                id="exclude-icon"
+                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </button>
+            <div id="exclude" class="hidden p-4 pt-0 text-gray-600">
+              <ul class="space-y-2">
+                <li>• Hộ chiếu (còn hạn ít nhất 6 tháng)</li>
+                <li>• Chi phí cá nhân: giặt ủi, điện thoại, internet</li>
+                <li>• Tiền tip cho HDV và tài xế</li>
+                <li>• Các bữa ăn ngoài chương trình</li>
+                <li>• Phụ thu phòng đơn: 1.200.000đ</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl">
+            <button
+              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
+              onclick="toggleAccordion('cancel')"
+            >
+              <span class="font-semibold text-orange-600"
+                >📋 Chính sách hủy tour</span
+              >
+              <svg
+                id="cancel-icon"
+                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </button>
+            <div id="cancel" class="hidden p-4 pt-0 text-gray-600">
+              <ul class="space-y-2">
+                <li>• Hủy trước 30 ngày: không mất phí</li>
+                <li>• Hủy từ 15-29 ngày: mất 50% tiền tour</li>
+                <li>• Hủy từ 7-14 ngày: mất 70% tiền tour</li>
+                <li>• Hủy dưới 7 ngày: mất 100% tiền tour</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Card -->
+    <div class="lg:col-span-1">
+      <div
+        class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 lg:sticky lg:top-24"
+      >
+        <!-- Price Section -->
+        <div class="text-center mb-6 relative">
+          <div
+            class="absolute -top-3 -right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse"
+          >
+            🔥 Hot Deal
+          </div>
+          <div class="text-sm text-gray-500 mb-2">Giá từ</div>
+          <div class="text-3xl font-bold text-orange-500 mb-1">6.390.000đ</div>
+          <div class="text-sm text-gray-500 line-through">7.200.000đ</div>
+          <div class="text-xs text-green-600 font-semibold">
+            Tiết kiệm 810.000đ
+          </div>
+        </div>
+
+        <!-- Guest Counter -->
+        <div class="mb-4 p-3 bg-gray-50 rounded-xl">
+          <div class="text-sm text-gray-600 mb-2">Số lượng khách</div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <button
+                onclick="changeGuests(-1)"
+                class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-200"
+              >
+                -
+              </button>
+              <span id="guest-count" class="font-semibold">2</span>
+              <button
+                onclick="changeGuests(1)"
+                class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition duration-200"
+              >
+                +
+              </button>
+            </div>
+            <div class="text-sm text-gray-600">
+              Tổng:
+              <span id="total-price" class="font-bold text-orange-500"
+                >12.780.000đ</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <button
+          onclick="openBookingModal()"
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition duration-200 mb-4 shadow-lg"
+        >
+          🎯 Chọn ngày khởi hành
+        </button>
+
+        <div class="space-y-3 text-sm mb-4">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Mã tour:</span>
+            <span class="font-semibold text-blue-600">TL001</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Thời gian:</span>
+            <span class="font-semibold">5 ngày 4 đêm</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Khởi hành:</span>
+            <span class="font-semibold">TP.HCM</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Còn lại:</span>
+            <span class="font-semibold text-red-500">8 chỗ</span>
+          </div>
+        </div>
+
+        <!-- Rating -->
+        <div
+          class="flex items-center justify-center space-x-2 mb-4 p-3 bg-yellow-50 rounded-xl"
+        >
+          <div class="flex text-yellow-400">⭐⭐⭐⭐⭐</div>
+          <span class="text-sm font-semibold">4.8/5</span>
+          <span class="text-xs text-gray-600">(124 đánh giá)</span>
+        </div>
+
+        <button
+          onclick="openContactModal()"
+          class="w-full border-2 border-orange-500 text-orange-500 py-2 px-4 rounded-xl font-semibold hover:bg-orange-50 transition duration-200 mb-3"
+        >
+          📞 Liên hệ tư vấn
+        </button>
+
+        <button
+          onclick="addToWishlist()"
+          class="w-full border border-gray-300 text-gray-600 py-2 px-4 rounded-xl font-semibold hover:bg-gray-50 transition duration-200 flex items-center justify-center space-x-2"
+        >
+          <span id="wishlist-icon">🤍</span>
+          <span id="wishlist-text">Yêu thích</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+    <!-- Left Column -->
+    <div class="lg:col-span-2 space-y-8"></div>
+  </div>
+
+  <!-- Customer Reviews -->
+  <div class="mb-12">
+    <h2 class="text-2xl font-bold text-gray-900 mb-8">
+      💬 Đánh giá từ khách hàng
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div class="review-card text-white rounded-2xl p-6">
+        <div class="flex items-center mb-4">
+          <div
+            class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl"
+          >
+            👨
+          </div>
+          <div class="ml-3">
+            <div class="font-semibold">Anh Minh</div>
+            <div class="text-sm opacity-90">TP.HCM</div>
+          </div>
+          <div class="ml-auto text-yellow-300">⭐⭐⭐⭐⭐</div>
+        </div>
+        <p class="text-sm opacity-90">
+          "Tour rất tuyệt vời! HDV nhiệt tình, lịch trình hợp lý. Gia đình tôi
+          rất hài lòng với chuyến đi này."
+        </p>
+        <div class="text-xs opacity-75 mt-3">2 tuần trước</div>
+      </div>
+
+      <div class="review-card text-white rounded-2xl p-6">
+        <div class="flex items-center mb-4">
+          <div
+            class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl"
+          >
+            👩
+          </div>
+          <div class="ml-3">
+            <div class="font-semibold">Chị Lan</div>
+            <div class="text-sm opacity-90">Hà Nội</div>
+          </div>
+          <div class="ml-auto text-yellow-300">⭐⭐⭐⭐⭐</div>
+        </div>
+        <p class="text-sm opacity-90">
+          "Khách sạn đẹp, đồ ăn ngon. Đặc biệt show Alcazar rất ấn tượng. Sẽ đi
+          tour với VietTravel lần nữa!"
+        </p>
+        <div class="text-xs opacity-75 mt-3">1 tháng trước</div>
+      </div>
+
+      <div class="review-card text-white rounded-2xl p-6">
+        <div class="flex items-center mb-4">
+          <div
+            class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl"
+          >
+            👨
+          </div>
+          <div class="ml-3">
+            <div class="font-semibold">Anh Tuấn</div>
+            <div class="text-sm opacity-90">Đà Nẵng</div>
+          </div>
+          <div class="ml-auto text-yellow-300">⭐⭐⭐⭐⭐</div>
+        </div>
+        <p class="text-sm opacity-90">
+          "Giá cả hợp lý, dịch vụ tốt. Đảo Coral rất đẹp, nước trong xanh. Cảm
+          ơn VietTravel!"
+        </p>
+        <div class="text-xs opacity-75 mt-3">3 tuần trước</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other Tours -->
+  <div class="mb-12">
+    <h2 class="text-2xl font-bold text-gray-900 mb-8">
+      🌟 Các chương trình tour khác
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        class="tour-card bg-white rounded-2xl shadow-md overflow-hidden transition duration-200 hover:shadow-lg"
+      >
+        <img
+          src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop"
+          alt="Singapore"
+          class="w-full h-48 object-cover"
+        />
+        <div class="p-6">
+          <h3 class="font-bold text-lg text-gray-900 mb-2">
+            Singapore - Malaysia
+          </h3>
+          <p class="text-gray-600 text-sm mb-4">
+            4 ngày 3 đêm khám phá đảo quốc sư tử
+          </p>
+          <div class="flex items-center justify-between">
+            <div class="text-orange-500 font-bold text-xl">8.990.000đ</div>
+            <button
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition duration-200"
+            >
+              Xem chi tiết
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="tour-card bg-white rounded-2xl shadow-md overflow-hidden transition duration-200 hover:shadow-lg"
+      >
+        <img
+          src="https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=400&h=250&fit=crop"
+          alt="Japan"
+          class="w-full h-48 object-cover"
+        />
+        <div class="p-6">
+          <h3 class="font-bold text-lg text-gray-900 mb-2">
+            Nhật Bản: Tokyo - Osaka
+          </h3>
+          <p class="text-gray-600 text-sm mb-4">6 ngày 5 đêm mùa hoa anh đào</p>
+          <div class="flex items-center justify-between">
+            <div class="text-orange-500 font-bold text-xl">25.990.000đ</div>
+            <button
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition duration-200"
+            >
+              Xem chi tiết
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="tour-card bg-white rounded-2xl shadow-md overflow-hidden transition duration-200 hover:shadow-lg"
+      >
+        <img
+          src="https://images.unsplash.com/photo-1528127269322-539801943592?w=400&h=250&fit=crop"
+          alt="Korea"
+          class="w-full h-48 object-cover"
+        />
+        <div class="p-6">
+          <h3 class="font-bold text-lg text-gray-900 mb-2">
+            Hàn Quốc: Seoul - Jeju
+          </h3>
+          <p class="text-gray-600 text-sm mb-4">
+            5 ngày 4 đêm khám phá xứ sở kim chi
+          </p>
+          <div class="flex items-center justify-between">
+            <div class="text-orange-500 font-bold text-xl">12.990.000đ</div>
+            <button
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition duration-200"
+            >
+              Xem chi tiết
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Floating Action Button -->
+<div class="floating-btn">
+  <button
+    onclick="openBookingModal()"
+    class="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-full shadow-2xl hover:from-orange-600 hover:to-red-600 transition duration-300"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5-6m0 0h15M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6"
+      ></path>
+    </svg>
+  </button>
+</div>
+
+<!-- Lightbox Modal -->
+<div
+  id="lightbox"
+  class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex items-center justify-center"
+>
+  <div class="relative max-w-4xl max-h-full p-4">
+    <button
+      onclick="closeLightbox()"
+      class="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 transition duration-200 z-10"
+    >
+      ×
+    </button>
+    <img
+      id="lightbox-img"
+      src=""
+      alt=""
+      class="max-w-full max-h-full object-contain rounded-lg"
+    />
+    <div class="absolute bottom-4 left-4 right-4 text-white text-center">
+      <div id="lightbox-caption" class="text-lg font-semibold mb-2">
+        {{tour.name}}
+      </div>
+      <div class="text-sm opacity-75 mb-4">
+        <span id="lightbox-counter">1 / {{tour.images.length}}</span>
+      </div>
+      <div class="flex justify-center space-x-2">
+        <button
+          onclick="prevImage()"
+          class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition duration-200"
+        >
+          ← Trước
+        </button>
+        <button
+          onclick="nextImage()"
+          class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition duration-200"
+        >
+          Sau →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Modal -->
+<div
+  id="booking-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 animate-fade-in">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-bold text-gray-900">Đặt tour ngay</h3>
+      <button
+        onclick="closeBookingModal()"
+        class="text-gray-400 hover:text-gray-600 text-2xl"
+      >
+        ×
+      </button>
+    </div>
+
+    <form onsubmit="submitBooking(event)" class="space-y-4">
+      <div>
+        <label
+          for="customer-name"
+          class="block text-sm font-semibold text-gray-700 mb-2"
+          >Họ và tên</label
+        >
+        <input
+          type="text"
+          id="customer-name"
+          required
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      <div>
+        <label
+          for="customer-phone"
+          class="block text-sm font-semibold text-gray-700 mb-2"
+          >Số điện thoại</label
+        >
+        <input
+          type="tel"
+          id="customer-phone"
+          required
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      <div>
+        <label
+          for="customer-email"
+          class="block text-sm font-semibold text-gray-700 mb-2"
+          >Email</label
+        >
+        <input
+          type="email"
+          id="customer-email"
+          required
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      <div>
+        <label
+          for="departure-date"
+          class="block text-sm font-semibold text-gray-700 mb-2"
+          >Ngày khởi hành</label
+        >
+        <select
+          id="departure-date"
+          required
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="">Chọn ngày khởi hành</option>
+          <option value="2024-12-05">05/12/2024 - 6.390.000đ</option>
+          <option value="2024-12-12">12/12/2024 - 6.590.000đ</option>
+          <option value="2024-12-19">19/12/2024 - 6.390.000đ</option>
+          <option value="2024-12-26">26/12/2024 - 6.790.000đ</option>
+        </select>
+      </div>
+
+      <div class="bg-gray-50 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm text-gray-600">Số khách:</span>
+          <span id="modal-guest-count" class="font-semibold">2</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-600">Tổng tiền:</span>
+          <span id="modal-total-price" class="font-bold text-orange-500"
+            >12.780.000đ</span
+          >
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition duration-200"
+      >
+        🎯 Xác nhận đặt tour
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Contact Modal -->
+<div
+  id="contact-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 animate-fade-in">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-bold text-gray-900">Liên hệ tư vấn</h3>
+      <button
+        onclick="closeContactModal()"
+        class="text-gray-400 hover:text-gray-600 text-2xl"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div class="flex items-center space-x-4 p-4 bg-blue-50 rounded-xl">
+        <div class="text-2xl">📞</div>
+        <div>
+          <div class="font-semibold text-gray-900">Hotline 24/7</div>
+          <div class="text-blue-600 font-bold">1900 1234</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4 p-4 bg-green-50 rounded-xl">
+        <div class="text-2xl">💬</div>
+        <div>
+          <div class="font-semibold text-gray-900">Chat Zalo</div>
+          <div class="text-green-600 font-bold">0901 234 567</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4 p-4 bg-orange-50 rounded-xl">
+        <div class="text-2xl">📧</div>
+        <div>
+          <div class="font-semibold text-gray-900">Email</div>
+          <div class="text-orange-600 font-bold">info@viettravel.com</div>
+        </div>
+      </div>
+
+      <button
+        onclick="closeContactModal()"
+        class="w-full bg-gray-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-gray-700 transition duration-200"
+      >
+        Đóng
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="/client/js/tour-detail.js"></script>

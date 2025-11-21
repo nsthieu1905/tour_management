@@ -5,9 +5,17 @@ import {
   formatPrice,
   formatDate,
   sub,
-} from "./helper.js";
+} from "../../utils/helpers.js";
 import { modalHandlers } from "./utils.js";
 import { Modal, Notification } from "../../utils/modal.js";
+import {
+  apiCall,
+  apiGet,
+  apiPost,
+  apiDelete,
+  apiPatch,
+} from "../../utils/api.js";
+
 //========================
 // QUẢN LÝ TOUR - qly-tours.js
 //========================
@@ -122,6 +130,10 @@ function initTourImagePreview() {
   // Xử lý khi chọn file
   tourImages.addEventListener("change", function (e) {
     const files = Array.from(this.files);
+    if (files.length === 0) return;
+
+    let loadedCount = 0;
+
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -129,7 +141,13 @@ function initTourImagePreview() {
           src: e.target.result,
           file: file,
         });
-        renderImagePreview();
+        loadedCount++;
+        // Chỉ render khi tất cả files đã load xong
+        if (loadedCount === files.length) {
+          renderImagePreview();
+          // Reset input file để có thể chọn lại file
+          tourImages.value = "";
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -324,7 +342,10 @@ function updateFileInput() {
 // Lấy danh sách tour
 async function getTours() {
   try {
-    const res = await fetch("/api/tours");
+    const res = await apiGet("/api/tours");
+
+    if (!res) return;
+
     const result = await res.json();
     const container = document.getElementById("tours-list");
     const emptyContainer = document.getElementById("empty-tours-list");
@@ -421,6 +442,7 @@ async function getTours() {
               </button>
               <button
                 class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                onclick="window.open('/tour/${tour._id}', '_blank')"
               >
                 <i class="fas fa-eye mr-1"></i>Xem chi tiết
               </button>
@@ -440,7 +462,10 @@ async function getTours() {
 // Lấy danh sách tour trong thùng rác
 async function getToursTrash() {
   try {
-    const res = await fetch("/api/tours/trash");
+    const res = await apiGet("/api/tours/trash");
+
+    if (!res) return;
+
     const result = await res.json();
     const container = document.getElementById("trash-list");
     const emptyContainer = document.getElementById("empty-trash-list");
@@ -573,11 +598,21 @@ async function createTour() {
       }
     }
 
-    try {
-      const res = await fetch("/api/tours/add", {
-        method: "POST",
-        body: formData,
+    // Thêm ảnh từ imagesArray vào FormData
+    if (imagesArray.length > 0) {
+      // Xóa images cũ nếu có từ input file
+      formData.delete("images");
+
+      // Thêm từng ảnh từ imagesArray
+      imagesArray.forEach((item) => {
+        formData.append("images", item.file);
       });
+    }
+
+    try {
+      const res = await apiPost("/api/tours/add", formData);
+
+      if (!res) return;
       const result = await res.json();
       if (res.ok) {
         Notification.success("Thêm tour thành công!");
@@ -617,9 +652,9 @@ function softDeleteTour() {
 
         onConfirm: async () => {
           try {
-            const res = await fetch(`/api/tours/${id}`, {
-              method: "DELETE",
-            });
+            const res = await apiDelete(`/api/tours/${id}`);
+
+            if (!res) return;
             if (res.ok) {
               Notification.success("Xoá tour thành công!");
               getTours();
@@ -661,9 +696,9 @@ function deleteTour() {
         onConfirm: async () => {
           try {
             const url = `/api/tours/trash/${id}`;
-            const res = await fetch(url, {
-              method: "DELETE",
-            });
+            const res = await apiDelete(url);
+
+            if (!res) return;
             const result = await res.json();
             if (res.ok) {
               Notification.success("Xoá tour thành công!");
@@ -705,9 +740,10 @@ function restoreTour() {
 
         onConfirm: async () => {
           try {
-            const res = await fetch(`/api/tours/trash/restore/${id}`, {
-              method: "PATCH",
-            });
+            const res = await apiPatch(`/api/tours/trash/restore/${id}`);
+
+            if (!res) return;
+
             if (res.ok) {
               Notification.success("Khôi phục tour thành công!");
               getToursTrash();

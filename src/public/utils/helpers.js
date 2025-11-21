@@ -1,22 +1,20 @@
-import moment from "https://cdn.jsdelivr.net/npm/moment@2.29.4/+esm";
-
-function sum(a, b) {
+const sum = (a, b) => {
   return a + b;
-}
+};
 
-function sub(a, b) {
+const sub = (a, b) => {
   return a - b;
-}
+};
 
-function eq(a, b) {
+const eq = (a, b) => {
   return a === b;
-}
+};
 
-function thumbnail(images) {
+const thumbnail = (images) => {
   return images && images.length > 0 ? images[0] : "/uploads/default.jpg";
-}
+};
 
-function badgeClass(type) {
+const badgeClass = (type) => {
   switch (type) {
     case "Giá tốt":
       return "badge-giatot";
@@ -29,9 +27,9 @@ function badgeClass(type) {
     default:
       return "";
   }
-}
+};
 
-function badgeIcon(type) {
+const badgeIcon = (type) => {
   switch (type) {
     case "Giá tốt":
       return "fa-tag";
@@ -44,22 +42,26 @@ function badgeIcon(type) {
     default:
       return "fa-ticket";
   }
-}
+};
 
-function formatPrice(price) {
+const formatPrice = (price) => {
   if (isNaN(price)) return "0";
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
+};
 
-function formatDate(date) {
+const formatDate = (date) => {
   if (!date) return "";
-  const value = Array.isArray(date) ? date[0] : date; // nếu là mảng thì lấy phần tử đầu tiên
-  return moment(value).format("DD/MM/YYYY");
-}
+  const value = Array.isArray(date) ? date[0] : date;
+  const d = new Date(value);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 export {
-  sub,
   sum,
+  sub,
   eq,
   thumbnail,
   badgeClass,
