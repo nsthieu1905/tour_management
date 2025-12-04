@@ -39,6 +39,9 @@ function initTourManagement() {
   // Khởi tạo preview ảnh tour
   initTourImagePreview();
 
+  // Khởi tạo sinh trường lịch trình
+  initItineraryGenerator();
+
   // Khởi tạo modal handlers
   modalHandlers(() => {
     departureDates = [];
@@ -114,6 +117,83 @@ window.removeDeparture = function (index) {
   departureDates.splice(index, 1);
   renderDepartures();
 };
+
+// ===========================
+// SINH TRƯỜNG LỊCH TRÌNH CHI TIẾT
+// ===========================
+
+function initItineraryGenerator() {
+  const daysInput = document.querySelector('input[name="duration[days]"]');
+  const itineraryFields = document.getElementById("itineraryFields");
+
+  if (!daysInput || !itineraryFields) return;
+
+  // Lắng nghe sự thay đổi số ngày
+  daysInput.addEventListener("change", () => {
+    generateItineraryFields(daysInput.value);
+  });
+
+  // Lắng nghe sự thay đổi khi người dùng gõ
+  daysInput.addEventListener("input", () => {
+    generateItineraryFields(daysInput.value);
+  });
+}
+
+function generateItineraryFields(days) {
+  const itineraryFields = document.getElementById("itineraryFields");
+  const container = document.getElementById("itineraryContainer");
+
+  if (!itineraryFields) return;
+
+  // Nếu không có số ngày hoặc bằng 0, ẩn container
+  if (!days || days <= 0) {
+    container.style.display = "none";
+    itineraryFields.innerHTML = "";
+    return;
+  }
+
+  container.style.display = "block";
+  const daysNum = parseInt(days);
+  itineraryFields.innerHTML = "";
+
+  // Tạo các textarea cho từng ngày
+  for (let i = 1; i <= daysNum; i++) {
+    const fieldGroup = document.createElement("div");
+    fieldGroup.className = "mb-4";
+    fieldGroup.innerHTML = `
+      <div class="border border-gray-300 rounded-lg p-4">
+        <label class="block text-sm font-semibold text-gray-900 mb-3">
+          Ngày ${i}
+        </label>
+        
+        <div class="mb-3">
+          <label class="block text-xs font-medium text-gray-600 mb-1">
+            Điểm du lịch
+          </label>
+          <input 
+            type="text"
+            name="itinerary[${i - 1}][destinations]"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 text-sm"
+            placeholder="VD: TP.HCM - Bangkok, Chợ Đồng Xuân - Hồ Hoàn Kiếm..."
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">
+            Mô tả lịch trình
+          </label>
+          <textarea 
+            name="itinerary[${i - 1}][description]"
+            rows="3"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 text-sm"
+            placeholder="Nhập chi tiết hoạt động, thời gian, ăn uống... cho ngày ${i}"
+          ></textarea>
+        </div>
+      </div>
+    `;
+    itineraryFields.appendChild(fieldGroup);
+  }
+}
 
 // ===========================
 // XỬ LÝ PREVIEW ẢNH TOUR
@@ -394,14 +474,14 @@ async function getTours() {
                 <i class="fas fa-trash"></i>
               </button>
             </div>
-            <div class="absolute bottom-4 left-4 text-white">
-              <h3 class="text-xl font-bold">${tour.name}</h3>
-              <p class="text-sm opacity-90">
+          </div>
+          <div class="p-6">
+            <div class="mb-3">
+              <h3 class="text-xl font-bold text-gray-900">${tour.name}</h3>
+              <p class="text-sm text-gray-600">
                 ${tour.duration.days} ngày ${tour.duration.nights} đêm
               </p>
             </div>
-          </div>
-          <div class="p-6">
             <div class="flex justify-between items-center mb-4">
               <span class="text-2xl font-bold text-blue-600">
                 ${formatPrice(tour.price)} VND
@@ -501,14 +581,14 @@ async function getToursTrash() {
                 ${tour.tourType}
               </span>
             </div>
-            <div class="absolute bottom-4 left-4 text-white">
-              <h3 class="text-xl font-bold">${tour.name}</h3>
-              <p class="text-sm opacity-90">
+          </div>
+          <div class="p-6">
+            <div class="mb-3">
+              <h3 class="text-xl font-bold text-gray-900">${tour.name}</h3>
+              <p class="text-sm text-gray-600">
                 ${tour.duration.days} ngày ${tour.duration.nights} đêm
               </p>
             </div>
-          </div>
-          <div class="p-6">
             <div class="flex justify-between items-center mb-4">
               <span class="text-2xl font-bold text-blue-600">
                 ${formatPrice(tour.price)} VND
@@ -597,6 +677,38 @@ async function createTour() {
         console.log(err);
       }
     }
+
+    // Xử lý itinerary từ form
+    // const itineraryInputs = document.querySelectorAll(
+    //   'input[name^="itinerary["], textarea[name^="itinerary["]'
+    // );
+    // if (itineraryInputs.length > 0) {
+    //   // Xóa itinerary cũ từ formData
+    //   formData.delete("itinerary");
+
+    //   // Tạo mảng itinerary từ form inputs
+    //   const itinerary = {};
+    //   itineraryInputs.forEach((input) => {
+    //     const match = input.name.match(/itinerary\[(\d+)\]\[(\w+)\]/);
+    //     if (match) {
+    //       const dayIndex = match[1];
+    //       const fieldName = match[2];
+
+    //       if (!itinerary[dayIndex]) {
+    //         itinerary[dayIndex] = {
+    //           day: parseInt(dayIndex) + 1,
+    //           destinations: "",
+    //           description: "",
+    //         };
+    //       }
+    //       itinerary[dayIndex][fieldName] = input.value;
+    //     }
+    //   });
+
+    //   // Thêm itinerary vào formData dưới dạng JSON string
+    //   const itineraryArray = Object.values(itinerary);
+    //   formData.append("itinerary", JSON.stringify(itineraryArray));
+    // }
 
     // Thêm ảnh từ imagesArray vào FormData
     if (imagesArray.length > 0) {

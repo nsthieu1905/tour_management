@@ -2,13 +2,284 @@
 let currentImageIndex = 0;
 let guestCount = 2;
 let isWishlisted = false;
+let currentMonthDisplay = null; // Track current month in calendar display
+let departureDates = []; // Will be populated from template
+
+// Initialize departure dates from tour data (populated by template)
+function initializeDepartureDates() {
+  const calendarGrid = document.getElementById("calendar-grid");
+  if (!calendarGrid) {
+    console.warn("calendar-grid not found");
+    return;
+  }
+
+  let departureDatesData = calendarGrid.dataset.departures;
+
+  // Try to parse data attribute
+  if (!departureDatesData) {
+    console.warn("No departure dates data attribute found");
+    return;
+  }
+
+  try {
+    let parsed = JSON.parse(departureDatesData);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      console.warn("Departure dates is not a valid array");
+      return;
+    }
+
+    // Normalize data - handle both cases:
+    // 1. Array of date strings: ["2025-12-07", "2025-12-10"]
+    // 2. Array of objects: [{date: "2025-12-07", price: 5390000}]
+    departureDates = parsed
+      .map((item, idx) => {
+        if (typeof item === "string") {
+          // Case 1: date string only
+          return {
+            date: item,
+            price: 0, // Will show 0K
+          };
+        } else if (typeof item === "object" && item.date) {
+          // Case 2: object with date and price
+          return {
+            date: item.date,
+            price: item.price || 0,
+          };
+        }
+        return null;
+      })
+      .filter((d) => d !== null);
+
+    if (departureDates.length === 0) {
+      console.warn("No valid departure dates after normalization");
+      return;
+    }
+
+    // Get unique months
+    const uniqueMonths = [];
+    const seenMonths = new Set();
+
+    departureDates.forEach((dept) => {
+      const date = new Date(dept.date);
+      if (isNaN(date.getTime())) {
+        console.warn("Invalid date:", dept.date);
+        return;
+      }
+
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      const monthKey = `${month}/${year}`;
+
+      if (!seenMonths.has(monthKey)) {
+        seenMonths.add(monthKey);
+        uniqueMonths.push({
+          monthKey,
+          date,
+          label: `Tháng ${month}/${year}`,
+        });
+      }
+    });
+
+    if (uniqueMonths.length === 0) {
+      console.warn("No valid months found");
+      return;
+    }
+
+    // Render month picker
+    renderMonthPicker(uniqueMonths);
+
+    // Set first month as default
+    currentMonthDisplay = {
+      month: uniqueMonths[0].date.getMonth(),
+      year: uniqueMonths[0].date.getFullYear(),
+    };
+    renderCalendar();
+  } catch (error) {
+    console.error(error);
+  }
+} // Render month picker buttons
+function renderMonthPicker(months) {
+  const monthList = document.getElementById("month-list");
+  if (!monthList) return;
+
+  monthList.innerHTML = "";
+
+  months.forEach((monthData, index) => {
+    const btn = document.createElement("button");
+    btn.className = `month-picker-btn w-full text-left px-4 py-3 rounded-lg border-2 transition duration-200 ${
+      index === 0
+        ? "border-blue-500 bg-blue-50"
+        : "border-gray-300 hover:border-blue-500"
+    }`;
+    btn.textContent = monthData.label;
+    btn.setAttribute("data-month", monthData.monthKey);
+    btn.onclick = () => selectMonth(monthData.monthKey);
+
+    monthList.appendChild(btn);
+  });
+}
+
+// Render calendar for current month
+function renderCalendar() {
+  if (!currentMonthDisplay) return;
+
+  const calendarGrid = document.getElementById("calendar-grid");
+  calendarGrid.innerHTML = "";
+
+  const { month, year } = currentMonthDisplay;
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+
+  // Update month title
+  const monthTitle = document.getElementById("current-month");
+  const monthNames = [
+    "Tháng 1",
+    "Tháng 2",
+    "Tháng 3",
+    "Tháng 4",
+    "Tháng 5",
+    "Tháng 6",
+    "Tháng 7",
+    "Tháng 8",
+    "Tháng 9",
+    "Tháng 10",
+    "Tháng 11",
+    "Tháng 12",
+  ];
+  monthTitle.textContent = `${monthNames[month]}/${year}`;
+
+  // Add empty cells for days before month starts
+  for (let i = 0; i < startingDayOfWeek; i++) {
+    const emptyCell = document.createElement("div");
+    emptyCell.className = "text-center py-3 text-gray-400";
+    calendarGrid.appendChild(emptyCell);
+  }
+
+  // Add day cells
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
+
+    // Find departure for this day
+    // Handle different date formats: ISO string or plain date string
+    const departure = departureDates.find((d) => {
+      const dDate = new Date(d.date);
+      const dDateStr = `${dDate.getUTCFullYear()}-${String(
+        dDate.getUTCMonth() + 1
+      ).padStart(2, "0")}-${String(dDate.getUTCDate()).padStart(2, "0")}`;
+      return dDateStr === dateStr;
+    });
+
+    const dayCell = document.createElement("div");
+
+    if (departure) {
+      dayCell.className =
+        "bg-blue-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-blue-600 transition duration-200";
+      const priceDisplay =
+        departure.price > 0
+          ? `<div class="text-xs">${formatPrice(departure.price)}</div>`
+          : "";
+      dayCell.innerHTML = `
+        <div class="font-semibold">${day}</div>
+        ${priceDisplay}
+      `;
+      dayCell.onclick = () => selectDepartureDate(departure);
+    } else {
+      dayCell.className = "text-center py-3 text-gray-400";
+      dayCell.textContent = day;
+    }
+
+    calendarGrid.appendChild(dayCell);
+  }
+}
+
+// Format price to K
+function formatPrice(price) {
+  if (!price) return "0";
+  return (Math.floor(price / 1000) + "k").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// Select departure month
+function selectMonth(monthYear) {
+  const [month, year] = monthYear.split("/");
+  currentMonthDisplay = {
+    month: parseInt(month) - 1,
+    year: parseInt(year),
+  };
+
+  // Update active button
+  document.querySelectorAll(".month-picker-btn").forEach((btn) => {
+    btn.classList.remove("border-blue-500", "bg-blue-50");
+    btn.classList.add("border-gray-300");
+    if (btn.dataset.month === monthYear) {
+      btn.classList.add("border-blue-500", "bg-blue-50");
+      btn.classList.remove("border-gray-300");
+    }
+  });
+
+  renderCalendar();
+}
+
+// Navigate months
+function prevMonth() {
+  if (!currentMonthDisplay) return;
+  if (currentMonthDisplay.month === 0) {
+    currentMonthDisplay.month = 11;
+    currentMonthDisplay.year--;
+  } else {
+    currentMonthDisplay.month--;
+  }
+  renderCalendar();
+}
+
+function nextMonth() {
+  if (!currentMonthDisplay) return;
+  if (currentMonthDisplay.month === 11) {
+    currentMonthDisplay.month = 0;
+    currentMonthDisplay.year++;
+  } else {
+    currentMonthDisplay.month++;
+  }
+  renderCalendar();
+}
+
+// Select departure date
+function selectDepartureDate(departure) {
+  console.log("Selected departure:", departure);
+  // Store selected date and show in booking form if needed
+  localStorage.setItem("selectedDepartureDate", JSON.stringify(departure));
+}
+
+// Initialize calendar on page load
+document.addEventListener("DOMContentLoaded", initializeDepartureDates);
+
+// Keyboard navigation for lightbox
+document.addEventListener("keydown", function (event) {
+  const lightbox = document.getElementById("lightbox");
+  if (lightbox.classList.contains("hidden")) return;
+
+  if (event.key === "ArrowRight") {
+    nextImage();
+  } else if (event.key === "ArrowLeft") {
+    prevImage();
+  } else if (event.key === "Escape") {
+    closeLightbox();
+  }
+});
 
 // Progress bar on scroll
 window.addEventListener("scroll", function () {
+  const progressBar = document.getElementById("progress-bar");
+  if (!progressBar) return; // Skip if progress bar doesn't exist
+
   const scrollTop = window.pageYOffset;
   const docHeight = document.body.offsetHeight - window.innerHeight;
   const scrollPercent = (scrollTop / docHeight) * 100;
-  document.getElementById("progress-bar").style.width = scrollPercent + "%";
+  progressBar.style.width = scrollPercent + "%";
 
   // Show/hide mini tour info in header
   const miniInfo = document.getElementById("mini-tour-info");
@@ -66,16 +337,45 @@ function addToWishlist() {
 
 // Lightbox functionality
 function openLightbox(index) {
-  currentImageIndex = index;
-  const lightbox = document.getElementById("lightbox");
-  const img = document.getElementById("lightbox-img");
-  const caption = document.getElementById("lightbox-caption");
+  // Find actual image index in filtered images array
+  const allImages = document.querySelectorAll(".lightbox-thumb");
+  let filteredIndex = 0;
 
-  img.src = images[index].src;
-  img.alt = images[index].caption;
-  caption.textContent = images[index].caption;
+  for (let i = 0; i < allImages.length; i++) {
+    if (allImages[i].getAttribute("data-original-index") == index) {
+      filteredIndex = i;
+      break;
+    }
+  }
+
+  currentImageIndex = filteredIndex;
+  const lightbox = document.getElementById("lightbox");
   lightbox.classList.remove("hidden");
   document.body.style.overflow = "hidden";
+
+  // Update display
+  updateLightboxDisplay();
+
+  // Highlight active thumbnail
+  document.querySelectorAll(".lightbox-thumb").forEach((thumb) => {
+    if (thumb.getAttribute("data-original-index") == index) {
+      thumb.classList.add("border-white");
+    } else {
+      thumb.classList.remove("border-white");
+    }
+  });
+
+  // Scroll thumbnail into view
+  const activeThumbnail = document.querySelector(
+    `[data-original-index="${index}"]`
+  );
+  if (activeThumbnail) {
+    activeThumbnail.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }
 }
 
 function closeLightbox() {
@@ -85,12 +385,41 @@ function closeLightbox() {
 
 function nextImage() {
   currentImageIndex = (currentImageIndex + 1) % images.length;
-  openLightbox(currentImageIndex);
+  updateLightboxDisplay();
 }
 
 function prevImage() {
   currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
-  openLightbox(currentImageIndex);
+  updateLightboxDisplay();
+}
+
+function updateLightboxDisplay() {
+  if (!images || !images[currentImageIndex]) return;
+
+  const img = document.getElementById("lightbox-img");
+  const caption = document.getElementById("lightbox-caption");
+  const counter = document.getElementById("lightbox-counter");
+
+  img.src = images[currentImageIndex].src;
+  img.alt = images[currentImageIndex].caption;
+  caption.textContent = images[currentImageIndex].caption;
+  counter.textContent = currentImageIndex + 1 + " / " + images.length;
+
+  // Highlight active thumbnail
+  const allThumbs = document.querySelectorAll(".lightbox-thumb");
+  if (allThumbs.length > 0 && allThumbs[currentImageIndex]) {
+    allThumbs.forEach((thumb) => {
+      thumb.classList.remove("border-white");
+    });
+    allThumbs[currentImageIndex].classList.add("border-white");
+
+    // Scroll thumbnail into view
+    allThumbs[currentImageIndex].scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }
 }
 
 // Modal functionality

@@ -1,13 +1,89 @@
+{{!--
+<style>
+  /* Lightbox animations */
+  #lightbox {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  #lightbox-img {
+    animation: zoomIn 0.3s ease-in-out;
+  }
+
+  @keyframes zoomIn {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Thumbnail hover effect */
+  .lightbox-thumb {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .lightbox-thumb:hover {
+    transform: scale(1.05);
+  }
+
+  .lightbox-thumb.border-white {
+    border-color: white;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+
+  /* Hide scrollbar for thumbnails */
+  #lightbox-thumbnails::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  #lightbox-thumbnails::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+
+  #lightbox-thumbnails::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+  }
+
+  #lightbox-thumbnails::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Firefox scrollbar */
+  #lightbox-thumbnails {
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+    scrollbar-width: thin;
+  }
+
+  /* Keyboard navigation */
+  @media (hover: hover) {
+    #lightbox button:hover {
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+  }
+</style>
+--}}
+
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <!-- Tour Header -->
   <div class="mb-8">
     <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-      Thái Lan: Bangkok - Pattaya
+      {{tour.name}}
     </h1>
-    <p class="text-lg text-gray-600">
-      Khám phá vẻ đẹp hiện đại của Bangkok và thư giãn tại bãi biển Pattaya
-      trong chuyến du lịch 5 ngày 4 đêm đầy thú vị
-    </p>
+    <p class="text-lg text-gray-600">{{tour.description}}</p>
   </div>
 
   <!-- Main Content -->
@@ -51,12 +127,14 @@
         {{/if}}
 
         <!-- Button xem tất cả -->
+        {{!--
         <button
           class="absolute top-4 right-4 bg-white bg-opacity-90 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-100 transition duration-200 shadow-lg z-10"
           onclick="openLightbox(0)"
         >
           📷 Xem tất cả ({{tour.images.length}})
         </button>
+        --}}
 
         <!-- Ảnh còn lại - grid nhỏ dưới -->
         <div class="grid grid-cols-4 gap-3 h-24 mt-3">
@@ -187,70 +265,77 @@
 
       <!-- Departure Calendar -->
       <div class="bg-white rounded-2xl shadow-md p-6">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">
-          Lịch khởi hành tháng 12/2024
-        </h2>
-        <div class="grid grid-cols-7 gap-2 mb-4">
-          <div class="text-center font-semibold text-gray-600 py-2">CN</div>
-          <div class="text-center font-semibold text-gray-600 py-2">T2</div>
-          <div class="text-center font-semibold text-gray-600 py-2">T3</div>
-          <div class="text-center font-semibold text-gray-600 py-2">T4</div>
-          <div class="text-center font-semibold text-gray-600 py-2">T5</div>
-          <div class="text-center font-semibold text-gray-600 py-2">T6</div>
-          <div class="text-center font-semibold text-gray-600 py-2">T7</div>
-        </div>
-        <div class="grid grid-cols-7 gap-2">
-          <div class="calendar-day text-center py-3 text-gray-400">1</div>
-          <div class="calendar-day text-center py-3 text-gray-400">2</div>
-          <div class="calendar-day text-center py-3 text-gray-400">3</div>
-          <div class="calendar-day text-center py-3 text-gray-400">4</div>
-          <div
-            class="calendar-day bg-blue-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-blue-600"
-          >
-            <div class="font-semibold">5</div>
-            <div class="text-xs">6.390k</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Lịch khởi hành</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Month Picker (Left) -->
+          <div class="md:col-span-1">
+            <h3 class="font-semibold text-gray-900 mb-4">Chọn tháng</h3>
+            <div class="space-y-2 max-h-96 overflow-y-auto" id="month-list">
+              <!-- Populated by JavaScript -->
+            </div>
           </div>
-          <div class="calendar-day text-center py-3 text-gray-400">6</div>
-          <div class="calendar-day text-center py-3 text-gray-400">7</div>
-          <div class="calendar-day text-center py-3 text-gray-400">8</div>
-          <div class="calendar-day text-center py-3 text-gray-400">9</div>
-          <div class="calendar-day text-center py-3 text-gray-400">10</div>
-          <div class="calendar-day text-center py-3 text-gray-400">11</div>
-          <div
-            class="calendar-day bg-orange-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-orange-600"
-          >
-            <div class="font-semibold">12</div>
-            <div class="text-xs">6.590k</div>
+
+          <!-- Calendar Days (Right) -->
+          <div class="md:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <button
+                onclick="prevMonth()"
+                class="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                ←
+              </button>
+              <h3
+                class="font-semibold text-gray-900 text-lg"
+                id="current-month"
+              >
+                {{#if tour.departureDates}} {{#with (lookup tour.departureDates
+                0)}} {{formatMonthYear this.date}} {{/with}} {{/if}}
+              </h3>
+              <button
+                onclick="nextMonth()"
+                class="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                →
+              </button>
+            </div>
+
+            <div class="grid grid-cols-7 gap-2 mb-4">
+              <div class="text-center font-semibold text-gray-600 py-2 text-sm">
+                T2
+              </div>
+              <div class="text-center font-semibold text-gray-600 py-2 text-sm">
+                T3
+              </div>
+              <div class="text-center font-semibold text-gray-600 py-2 text-sm">
+                T4
+              </div>
+              <div class="text-center font-semibold text-gray-600 py-2 text-sm">
+                T5
+              </div>
+              <div class="text-center font-semibold text-gray-600 py-2 text-sm">
+                T6
+              </div>
+              <div class="text-center font-semibold text-gray-600 py-2 text-sm">
+                T7
+              </div>
+              <div class="text-center font-semibold text-gray-600 py-2 text-sm">
+                CN
+              </div>
+            </div>
+
+            <div
+              class="grid grid-cols-7 gap-2"
+              id="calendar-grid"
+              data-departures="{{json tour.departureDates}}"
+            >
+              <!-- Populated by JavaScript -->
+            </div>
+
+            <p class="text-red-500 text-sm mt-4 text-center">
+              Quý khách vui lòng chọn ngày phù hợp
+            </p>
           </div>
-          <div class="calendar-day text-center py-3 text-gray-400">13</div>
-          <div class="calendar-day text-center py-3 text-gray-400">14</div>
-          <div class="calendar-day text-center py-3 text-gray-400">15</div>
-          <div class="calendar-day text-center py-3 text-gray-400">16</div>
-          <div class="calendar-day text-center py-3 text-gray-400">17</div>
-          <div class="calendar-day text-center py-3 text-gray-400">18</div>
-          <div
-            class="calendar-day bg-blue-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-blue-600"
-          >
-            <div class="font-semibold">19</div>
-            <div class="text-xs">6.390k</div>
-          </div>
-          <div class="calendar-day text-center py-3 text-gray-400">20</div>
-          <div class="calendar-day text-center py-3 text-gray-400">21</div>
-          <div class="calendar-day text-center py-3 text-gray-400">22</div>
-          <div class="calendar-day text-center py-3 text-gray-400">23</div>
-          <div class="calendar-day text-center py-3 text-gray-400">24</div>
-          <div class="calendar-day text-center py-3 text-gray-400">25</div>
-          <div
-            class="calendar-day bg-orange-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-orange-600"
-          >
-            <div class="font-semibold">26</div>
-            <div class="text-xs">6.790k</div>
-          </div>
-          <div class="calendar-day text-center py-3 text-gray-400">27</div>
-          <div class="calendar-day text-center py-3 text-gray-400">28</div>
-          <div class="calendar-day text-center py-3 text-gray-400">29</div>
-          <div class="calendar-day text-center py-3 text-gray-400">30</div>
-          <div class="calendar-day text-center py-3 text-gray-400">31</div>
         </div>
       </div>
 
@@ -346,23 +431,25 @@
       <!-- Itinerary -->
       <div class="bg-white rounded-2xl shadow-md p-6">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">
-          📅 Lịch trình chi tiết
+          Lịch trình chi tiết
         </h2>
+        {{#if tour.itinerary}}
         <div class="space-y-4">
+          {{#each tour.itinerary as |item index|}}
           <div class="border border-gray-200 rounded-xl">
             <button
               class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
-              onclick="toggleAccordion('day1')"
+              onclick="toggleAccordion('itinerary-day-{{item.day}}')"
             >
               <div class="flex items-center space-x-3">
                 <span
                   class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold"
-                  >Ngày 1</span
+                  >Ngày {{item.day}}</span
                 >
-                <span class="font-semibold">TP.HCM - Bangkok</span>
+                <span class="font-semibold">{{item.destinations}}</span>
               </div>
               <svg
-                id="day1-icon"
+                id="itinerary-day-{{item.day}}-icon"
                 class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
                 fill="none"
                 stroke="currentColor"
@@ -376,99 +463,20 @@
                 ></path>
               </svg>
             </button>
-            <div id="day1" class="hidden p-4 pt-0 text-gray-600">
-              <p>
-                ✈️ <strong>06:00:</strong> Tập trung tại sân bay Tân Sơn Nhất
-              </p>
-              <p>✈️ <strong>08:30:</strong> Bay thẳng đến Bangkok</p>
-              <p>🏯 <strong>14:00:</strong> Tham quan Cung điện Hoàng gia</p>
-              <p>🛶 <strong>16:30:</strong> Đi thuyền trên sông Chao Phraya</p>
-              <p>
-                🍽️ <strong>19:00:</strong> Dùng bữa tối tại nhà hàng địa phương
-              </p>
-              <p>🏨 <strong>21:00:</strong> Nhận phòng khách sạn, nghỉ ngơi</p>
-            </div>
-          </div>
-
-          <div class="border border-gray-200 rounded-xl">
-            <button
-              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
-              onclick="toggleAccordion('day2')"
+            <div
+              id="itinerary-day-{{item.day}}"
+              class="hidden p-4 pt-0 text-gray-600"
             >
-              <div class="flex items-center space-x-3">
-                <span
-                  class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold"
-                  >Ngày 2</span
-                >
-                <span class="font-semibold">Bangkok - Pattaya</span>
-              </div>
-              <svg
-                id="day2-icon"
-                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
-            </button>
-            <div id="day2" class="hidden p-4 pt-0 text-gray-600">
-              <p>🍽️ <strong>07:00:</strong> Buffet sáng tại khách sạn</p>
-              <p>🛶 <strong>08:30:</strong> Tham quan chợ nổi Damnoen Saduak</p>
-              <p>🚌 <strong>13:00:</strong> Di chuyển đến Pattaya</p>
-              <p>
-                🏖️ <strong>16:00:</strong> Tự do tắm biển tại bãi biển Pattaya
-              </p>
-              <p>
-                🍽️ <strong>19:00:</strong> Buffet hải sản tại nhà hàng ven biển
-              </p>
-              <p>🎭 <strong>21:00:</strong> Xem show Alcazar nổi tiếng</p>
+              <p>{{item.description}}</p>
             </div>
           </div>
-
-          <div class="border border-gray-200 rounded-xl">
-            <button
-              class="w-full text-left p-4 hover:bg-gray-50 transition duration-200 flex items-center justify-between"
-              onclick="toggleAccordion('day3')"
-            >
-              <div class="flex items-center space-x-3">
-                <span
-                  class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold"
-                  >Ngày 3</span
-                >
-                <span class="font-semibold">Pattaya - Đảo Coral</span>
-              </div>
-              <svg
-                id="day3-icon"
-                class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
-            </button>
-            <div id="day3" class="hidden p-4 pt-0 text-gray-600">
-              <p>🍽️ <strong>07:00:</strong> Buffet sáng tại khách sạn</p>
-              <p>🛥️ <strong>08:30:</strong> Đi tàu cao tốc ra đảo Coral</p>
-              <p>🤿 <strong>10:00:</strong> Lặn ngắm san hô, tắm biển</p>
-              <p>🍽️ <strong>12:00:</strong> Buffet trưa trên đảo</p>
-              <p>🏖️ <strong>14:00:</strong> Tự do nghỉ ngơi, chụp ảnh</p>
-              <p>🛥️ <strong>16:30:</strong> Trở về Pattaya</p>
-              <p>🛍️ <strong>19:00:</strong> Tự do mua sắm tại Walking Street</p>
-            </div>
-          </div>
+          {{/each}}
         </div>
+        {{else}}
+        <div class="text-gray-500 text-center py-6">
+          Chưa có lịch trình chi tiết
+        </div>
+        {{/if}}
       </div>
 
       <!-- Important Information -->
@@ -590,13 +598,17 @@
       >
         <!-- Price Section -->
         <div class="text-center mb-6 relative">
+          {{!--
           <div
             class="absolute -top-3 -right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse"
           >
             🔥 Hot Deal
           </div>
+          --}}
           <div class="text-sm text-gray-500 mb-2">Giá từ</div>
-          <div class="text-3xl font-bold text-orange-500 mb-1">6.390.000đ</div>
+          <div class="text-3xl font-bold text-orange-500 mb-1">
+            {{tour.price}}
+          </div>
           <div class="text-sm text-gray-500 line-through">7.200.000đ</div>
           <div class="text-xs text-green-600 font-semibold">
             Tiết kiệm 810.000đ
@@ -614,7 +626,7 @@
               >
                 -
               </button>
-              <span id="guest-count" class="font-semibold">2</span>
+              <span id="guest-count" class="font-semibold">1</span>
               <button
                 onclick="changeGuests(1)"
                 class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition duration-200"
@@ -625,7 +637,7 @@
             <div class="text-sm text-gray-600">
               Tổng:
               <span id="total-price" class="font-bold text-orange-500"
-                >12.780.000đ</span
+                >{{tour.price}}đ</span
               >
             </div>
           </div>
@@ -645,7 +657,9 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">Thời gian:</span>
-            <span class="font-semibold">5 ngày 4 đêm</span>
+            <span class="font-semibold"
+              >{{tour.duration.days}} ngày {{tour.duration.nights}} đêm</span
+            >
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">Khởi hành:</span>
@@ -662,8 +676,10 @@
           class="flex items-center justify-center space-x-2 mb-4 p-3 bg-yellow-50 rounded-xl"
         >
           <div class="flex text-yellow-400">⭐⭐⭐⭐⭐</div>
-          <span class="text-sm font-semibold">4.8/5</span>
-          <span class="text-xs text-gray-600">(124 đánh giá)</span>
+          <span class="text-sm font-semibold">{{tour.rating.average}}/5</span>
+          <span class="text-xs text-gray-600"
+            >({{tour.rating.count}} đánh giá)</span
+          >
         </div>
 
         <button
@@ -691,6 +707,7 @@
   </div>
 
   <!-- Customer Reviews -->
+  {{!--
   <div class="mb-12">
     <h2 class="text-2xl font-bold text-gray-900 mb-8">
       💬 Đánh giá từ khách hàng
@@ -757,90 +774,50 @@
       </div>
     </div>
   </div>
+  --}}
 
   <!-- Other Tours -->
+  {{!--
   <div class="mb-12">
     <h2 class="text-2xl font-bold text-gray-900 mb-8">
       🌟 Các chương trình tour khác
     </h2>
+    {{#if otherTours}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {{#each otherTours as |otherTour|}}
       <div
         class="tour-card bg-white rounded-2xl shadow-md overflow-hidden transition duration-200 hover:shadow-lg"
       >
         <img
-          src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop"
-          alt="Singapore"
+          src="{{#if otherTour.images}}{{lookup otherTour.images 0}}{{else}}https://via.placeholder.com/400x250{{/if}}"
+          alt="{{otherTour.name}}"
           class="w-full h-48 object-cover"
         />
         <div class="p-6">
           <h3 class="font-bold text-lg text-gray-900 mb-2">
-            Singapore - Malaysia
+            {{otherTour.name}}
           </h3>
-          <p class="text-gray-600 text-sm mb-4">
-            4 ngày 3 đêm khám phá đảo quốc sư tử
-          </p>
+          <p class="text-gray-600 text-sm mb-4">{{otherTour.description}}</p>
           <div class="flex items-center justify-between">
-            <div class="text-orange-500 font-bold text-xl">8.990.000đ</div>
-            <button
+            <div class="text-orange-500 font-bold text-xl">
+              {{otherTour.price}}đ
+            </div>
+            <a
+              href="/tours/{{otherTour._id}}"
               class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition duration-200"
             >
               Xem chi tiết
-            </button>
+            </a>
           </div>
         </div>
       </div>
-
-      <div
-        class="tour-card bg-white rounded-2xl shadow-md overflow-hidden transition duration-200 hover:shadow-lg"
-      >
-        <img
-          src="https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=400&h=250&fit=crop"
-          alt="Japan"
-          class="w-full h-48 object-cover"
-        />
-        <div class="p-6">
-          <h3 class="font-bold text-lg text-gray-900 mb-2">
-            Nhật Bản: Tokyo - Osaka
-          </h3>
-          <p class="text-gray-600 text-sm mb-4">6 ngày 5 đêm mùa hoa anh đào</p>
-          <div class="flex items-center justify-between">
-            <div class="text-orange-500 font-bold text-xl">25.990.000đ</div>
-            <button
-              class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition duration-200"
-            >
-              Xem chi tiết
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div
-        class="tour-card bg-white rounded-2xl shadow-md overflow-hidden transition duration-200 hover:shadow-lg"
-      >
-        <img
-          src="https://images.unsplash.com/photo-1528127269322-539801943592?w=400&h=250&fit=crop"
-          alt="Korea"
-          class="w-full h-48 object-cover"
-        />
-        <div class="p-6">
-          <h3 class="font-bold text-lg text-gray-900 mb-2">
-            Hàn Quốc: Seoul - Jeju
-          </h3>
-          <p class="text-gray-600 text-sm mb-4">
-            5 ngày 4 đêm khám phá xứ sở kim chi
-          </p>
-          <div class="flex items-center justify-between">
-            <div class="text-orange-500 font-bold text-xl">12.990.000đ</div>
-            <button
-              class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition duration-200"
-            >
-              Xem chi tiết
-            </button>
-          </div>
-        </div>
-      </div>
+      {{/each}}
     </div>
+    {{else}}
+    <p class="text-gray-600 text-center py-8">Không có tour khác khả dụng</p>
+    {{/if}}
   </div>
+  --}}
 </main>
 
 <!-- Floating Action Button -->
@@ -863,43 +840,62 @@
 <!-- Lightbox Modal -->
 <div
   id="lightbox"
-  class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex items-center justify-center"
+  class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col items-center justify-between p-4"
 >
-  <div class="relative max-w-4xl max-h-full p-4">
+  <!-- Close button -->
+  <button
+    onclick="closeLightbox()"
+    class="absolute top-6 right-6 text-white text-3xl hover:text-gray-300 transition duration-200 z-10"
+  >
+    ×
+  </button>
+
+  <!-- Main image container with fixed height -->
+  <div class="flex items-center justify-center w-full h-[70vh] mt-12">
     <button
-      onclick="closeLightbox()"
-      class="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 transition duration-200 z-10"
+      onclick="prevImage()"
+      class="absolute left-4 text-white text-5xl hover:text-gray-300 transition duration-200 hover:scale-110 z-20"
     >
-      ×
+      ❮
     </button>
     <img
       id="lightbox-img"
       src=""
       alt=""
-      class="max-w-full max-h-full object-contain rounded-lg"
+      class="max-w-full max-h-full object-contain"
     />
-    <div class="absolute bottom-4 left-4 right-4 text-white text-center">
-      <div id="lightbox-caption" class="text-lg font-semibold mb-2">
-        {{tour.name}}
-      </div>
-      <div class="text-sm opacity-75 mb-4">
-        <span id="lightbox-counter">1 / {{tour.images.length}}</span>
-      </div>
-      <div class="flex justify-center space-x-2">
-        <button
-          onclick="prevImage()"
-          class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition duration-200"
-        >
-          ← Trước
-        </button>
-        <button
-          onclick="nextImage()"
-          class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition duration-200"
-        >
-          Sau →
-        </button>
-      </div>
+    <button
+      onclick="nextImage()"
+      class="absolute right-4 text-white text-5xl hover:text-gray-300 transition duration-200 hover:scale-110 z-20"
+    >
+      ❯
+    </button>
+  </div>
+
+  <!-- Counter and title -->
+  <div class="text-white text-center mt-4 mb-4">
+    <div id="lightbox-caption" class="text-lg font-semibold mb-2">
+      {{tour.name}}
     </div>
+    <div class="text-sm opacity-75">
+      <span id="lightbox-counter">1 / {{tour.images.length}}</span>
+    </div>
+  </div>
+
+  <!-- Thumbnails with scroll -->
+  <div
+    class="flex gap-3 overflow-x-auto pb-4 w-full justify-center px-4 scrollbar-hide"
+    id="lightbox-thumbnails"
+  >
+    {{#each tour.images as |image idx|}} {{#if image}}
+    <img
+      src="{{image}}"
+      alt="Thumbnail {{idx}}"
+      onclick="openLightbox({{idx}})"
+      class="h-20 w-24 object-cover rounded cursor-pointer hover:opacity-75 transition duration-200 border-2 border-transparent lightbox-thumb flex-shrink-0"
+      data-original-index="{{idx}}"
+    />
+    {{/if}} {{/each}}
   </div>
 </div>
 
@@ -1054,5 +1050,19 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Initialize images array for lightbox - filter out empty images
+  const images = [
+    {{#each tour.images as |image idx|}}
+      {{#if image}}
+      {
+        src: "{{image}}",
+        caption: "{{../tour.name}}"
+      }{{#unless @last}},{{/unless}}
+      {{/if}}
+    {{/each}}
+  ];
+</script>
 
 <script src="/client/js/tour-detail.js"></script>

@@ -39,17 +39,6 @@
             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             placeholder="Nhập tên điểm đến"
           />
-          {{!--
-          <select
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          >
-            <option>Chọn điểm đến</option>
-            <option>Hà Nội</option>
-            <option>TP.HCM</option>
-            <option>Đà Nẵng</option>
-            <option>Phú Quốc</option>
-          </select>
-          --}}
         </div>
       </div>
 
@@ -99,6 +88,14 @@
           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           placeholder="Nhập mô tả chi tiết về tour..."
         ></textarea>
+      </div>
+
+      <!-- Lịch trình chi tiết -->
+      <div id="itineraryContainer">
+        <label class="block text-sm font-medium text-gray-700 mb-4"
+          >Lịch trình chi tiết</label
+        >
+        <div id="itineraryFields"></div>
       </div>
 
       <div class="gap-4"></div>
@@ -153,9 +150,6 @@
         </div>
 
         <div id="imagePreview" class="image-preview"></div>
-
-        {{!-- <input type="hidden" name="imagesTours" id="imagesData" />
-        <input type="hidden" name="thumbnail" id="thumbnailData" /> --}}
       </div>
 
       <div class="flex justify-end space-x-3 pt-4">
@@ -176,6 +170,3 @@
     </form>
   </div>
 </div>
-
-<script type="module" src="/admin/js/utils.js"></script>
-<script type="module" src="/admin/js/qly-tours.js"></script>

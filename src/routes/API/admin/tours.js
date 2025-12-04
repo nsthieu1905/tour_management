@@ -7,7 +7,7 @@ const {
   authenticate,
 } = require("../../../middleware/authMiddleware");
 
-router.delete("/trash/:id", tourApiController.delete);
+router.delete("/trash/:id", tourApiController.forceDelete);
 router.patch("/trash/restore/:id", tourApiController.restore);
 router.get("/trash", tourApiController.findTrash);
 router.post("/add", upload.array("images"), tourApiController.create);

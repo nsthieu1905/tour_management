@@ -320,7 +320,7 @@ async function checkAndRefreshToken() {
 }
 
 // Kiểm tra token mỗi 30 giây
-if (window.location.pathname.startsWith("/admin")) {
-  setInterval(checkAndRefreshToken, 30000);
-  checkAndRefreshToken();
-}
+// if (window.location.pathname.startsWith("/admin")) {
+//   setInterval(checkAndRefreshToken, 30000);
+//   checkAndRefreshToken();
+// }

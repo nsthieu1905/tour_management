@@ -51,8 +51,22 @@ const formatPrice = (price) => {
 
 const formatDate = (date) => {
   if (!date) return "";
-  const value = Array.isArray(date) ? date[0] : date;
+
+  // Handle array of dates or array of {date, price} objects
+  let value = Array.isArray(date) ? date[0] : date;
+
+  // If it's an object with a date property, extract the date
+  if (typeof value === "object" && value !== null && value.date) {
+    value = value.date;
+  }
+
   const d = new Date(value);
+
+  // Check if date is valid
+  if (isNaN(d.getTime())) {
+    return "";
+  }
+
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();

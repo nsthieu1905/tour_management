@@ -21,8 +21,7 @@
 }
 
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
   }
   50% {
@@ -64,8 +63,7 @@
 }
 
 @keyframes voice-pulse {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
   }
   50% {
@@ -144,8 +142,7 @@ body {
 }
 
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
   }
   50% {
@@ -197,3 +194,78 @@ body {
 .price-comparison {
   background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
 }
+
+/* Lightbox animations */
+#lightbox {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+#lightbox-img {
+  animation: zoomIn 0.3s ease-in-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* Thumbnail hover effect */
+.lightbox-thumb {
+  transition: all 0.2s ease-in-out;
+}
+
+.lightbox-thumb:hover {
+  transform: scale(1.05);
+}
+
+.lightbox-thumb.border-white {
+  border-color: white;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Hide scrollbar for thumbnails */
+#lightbox-thumbnails::-webkit-scrollbar {
+  height: 4px;
+}
+
+#lightbox-thumbnails::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+#lightbox-thumbnails::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+#lightbox-thumbnails::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Firefox scrollbar */
+#lightbox-thumbnails {
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+  scrollbar-width: thin;
+}
+
+/* Keyboard navigation */
+@media (hover: hover) {
+  #lightbox button:hover {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+  }
+}
+
+/*# sourceMappingURL=app.css.map */

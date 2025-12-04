@@ -78,6 +78,36 @@ const hbs = engine({
     or: (a, b) => {
       return a || b;
     },
+
+    // Format month year
+    formatMonthYear: (date) => {
+      if (!date) return "";
+      const d = new Date(date);
+      return d.toLocaleDateString("vi-VN", {
+        month: "2-digit",
+        year: "numeric",
+      });
+    },
+
+    // Get month year string
+    getMonthYear: (date) => {
+      if (!date) return "";
+      const d = new Date(date);
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const year = d.getFullYear();
+      return `${month}/${year}`;
+    },
+
+    // Check if new month - simplified version
+    isNewMonth: (departure, idx) => {
+      // idx is 0-based from {{@index}}
+      return idx === 0 ? true : false; // Let JavaScript handle the logic
+    },
+
+    // Convert to JSON
+    json: (obj) => {
+      return JSON.stringify(obj);
+    },
   },
 
   //Điều hướng đến thư mục partials

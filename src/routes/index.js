@@ -1,7 +1,8 @@
 // Admin
-const dashboardRoutes = require("./admin/dashboard");
+const siteRoutes = require("./admin/site");
 const authRoutes = require("./API/admin/auth");
 const toursApiRoutes = require("./API/admin/tours");
+const couponApiRoutes = require("./API/admin/coupon");
 
 // Client
 const homeRoutes = require("./client/home");
@@ -9,8 +10,9 @@ const homeRoutes = require("./client/home");
 function route(app) {
   // Admin
   app.use("/auth", authRoutes);
-  app.use("/admin", dashboardRoutes);
+  app.use("/admin", siteRoutes);
   app.use("/api/tours", toursApiRoutes);
+  app.use("/api/coupons", couponApiRoutes);
 
   // Client
   app.use("/", homeRoutes);

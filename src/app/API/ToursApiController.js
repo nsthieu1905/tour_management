@@ -66,19 +66,88 @@ const create = async (req, res, next) => {
     return "Cao cấp";
   };
   try {
-    const { price, departureDates } = req.body;
+    let { price, departureDates, itinerary } = req.body;
     const imagePaths = req.files?.map((f) => `/uploads/${f.filename}`) ?? [];
-    const tour = new Tour({
-      ...req.body,
+
+    // Xử lý itinerary từ form fields
+    let parsedItinerary = [];
+
+    if (itinerary) {
+      if (Array.isArray(itinerary)) {
+        // Lọc bỏ các phần tử là string (JSON string không cần)
+        parsedItinerary = itinerary
+          .filter((item) => typeof item === "object" && item !== null)
+          .map((item, index) => ({
+            day: index + 1,
+            destinations: item.destinations || "",
+            description: item.description || "",
+          }));
+      } else if (typeof itinerary === "string") {
+        try {
+          parsedItinerary = JSON.parse(itinerary);
+        } catch (e) {
+          console.error("Failed to parse itinerary:", e.message);
+          parsedItinerary = [];
+        }
+      }
+    }
+
+    // Xử lý departureDates - chuyển từ array string thành array objects {date, price}
+    let parsedDepartureDates = [];
+    if (departureDates) {
+      if (typeof departureDates === "string") {
+        try {
+          // Nếu là JSON string
+          departureDates = JSON.parse(departureDates);
+        } catch (e) {
+          // Nếu là single date
+          departureDates = [departureDates];
+        }
+      }
+
+      if (Array.isArray(departureDates)) {
+        parsedDepartureDates = departureDates.map((item) => {
+          // Nếu item là object có date và price
+          if (typeof item === "object" && item.date && item.price) {
+            return {
+              date: new Date(item.date),
+              price: Number(item.price),
+            };
+          }
+          // Nếu item chỉ là date string, dùng price mặc định
+          return {
+            date: new Date(item),
+            price: Number(price),
+          };
+        });
+      }
+    }
+
+    const tourData = {
+      name: req.body.name,
+      description: req.body.description,
+      destination: req.body.destination,
+      duration: req.body.duration,
+      capacity: req.body.capacity,
       price: Number(price),
-      departureDates: Array.isArray(departureDates)
-        ? departureDates
-        : [departureDates],
+      departureDates:
+        parsedDepartureDates.length > 0
+          ? parsedDepartureDates
+          : [
+              {
+                date: new Date(),
+                price: Number(price),
+              },
+            ],
+      itinerary: parsedItinerary,
       images: imagePaths,
       thumbnail: imagePaths[0] || "",
       tourType: getTourType(Number(price)),
-    });
+    };
+
+    const tour = new Tour(tourData);
     const result = await tour.save();
+
     if (!result)
       return res
         .status(404)
@@ -88,6 +157,7 @@ const create = async (req, res, next) => {
       .status(201)
       .json({ success: true, message: "Tạo tour thành công", data: tour });
   } catch (error) {
+    console.error(error);
     next(error);
   }
 };
@@ -108,7 +178,7 @@ const softDelete = async (req, res, next) => {
 };
 
 // [DELETE] /api/tours/trash/:id
-const deleteApi = async (req, res, next) => {
+const forceDelete = async (req, res, next) => {
   try {
     const tour = await Tour.findOneWithDeleted({ _id: req.params.id }).lean();
 
@@ -159,6 +229,75 @@ const restore = async (req, res, next) => {
   }
 };
 
+// [GET] /tour/:id
+const tourDetail = async (req, res, next) => {
+  try {
+    const tour = await Tour.findById(req.params.id).lean();
+
+    if (!tour) {
+      return res.status(404).render("error", {
+        message: "Tour không tồn tại",
+        bodyClass: "bg-gray-50",
+      });
+    }
+
+    // Parse stringified arrays nếu cần
+    if (typeof tour.highlights === "string") {
+      tour.highlights = tour.highlights.split("\n").filter((h) => h.trim());
+    }
+
+    if (typeof tour.includes === "string") {
+      tour.includes = tour.includes.split("\n").filter((i) => i.trim());
+    }
+
+    if (typeof tour.excludes === "string") {
+      tour.excludes = tour.excludes.split("\n").filter((e) => e.trim());
+    }
+
+    if (typeof tour.cancellationPolicy === "string") {
+      tour.cancellationPolicy = tour.cancellationPolicy
+        .split("\n")
+        .filter((p) => p.trim());
+    }
+
+    // Normalize departureDates - handle both old format (array of dates) and new format (array of {date, price})
+    if (tour.departureDates && Array.isArray(tour.departureDates)) {
+      tour.departureDates = tour.departureDates
+        .map((item) => {
+          if (typeof item === "string" || item instanceof Date) {
+            // Old format: just date
+            return {
+              date: new Date(item),
+              price: tour.price || 0,
+            };
+          } else if (typeof item === "object" && item.date) {
+            // New format: {date, price}
+            return {
+              date: new Date(item.date),
+              price: item.price || tour.price || 0,
+            };
+          }
+          return null;
+        })
+        .filter((d) => d !== null);
+    }
+
+    // Get other tours
+    const otherTours = await Tour.find({ _id: { $ne: tour._id } })
+      .limit(3)
+      .lean();
+
+    res.render("tour-detail", {
+      tour,
+      otherTours,
+      // layout: false,
+      bodyClass: "bg-gray-50",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Helpers
 function deleteImages(images) {
   if (!images || images.length === 0) return;
@@ -182,6 +321,7 @@ module.exports = {
   findOne,
   create,
   softDelete,
-  delete: deleteApi,
+  forceDelete,
+  tourDetail,
   restore,
 };

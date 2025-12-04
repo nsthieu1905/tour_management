@@ -74,6 +74,22 @@ const tourSchema = new Schema(
         accommodation: String,
       },
     ],
+    itinerary: [
+      {
+        day: {
+          type: Number,
+          required: true,
+        },
+        destinations: {
+          type: String,
+          required: true,
+        },
+        description: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
     included: [String],
     excluded: [String],
     capacity: {
@@ -92,10 +108,18 @@ const tourSchema = new Schema(
     //   required: true,
     // },
     returnDate: Date,
-    departureDates: {
-      type: [Date],
-      required: true,
-    },
+    departureDates: [
+      {
+        date: {
+          type: Date,
+          required: true,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     status: {
       type: String,
       enum: ["active", "paused", "soldout", "cancelled"],
@@ -150,7 +174,6 @@ const tourSchema = new Schema(
   { timestamps: true }
 );
 
-// Add plugin
 mongoose.plugin(slug);
 tourSchema.plugin(mongooseDelete, {
   overrideMethods: "all",
