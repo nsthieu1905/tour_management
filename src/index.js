@@ -31,13 +31,11 @@ app.use(cookieParser());
 const hbs = engine({
   extname: ".hbs",
   helpers: {
-    // Format price
     formatPrice: (price) => {
       if (!price || isNaN(price)) return "0";
       return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     },
 
-    // Format date
     formatDate: (date) => {
       if (!date) return "";
       const d = Array.isArray(date) ? date[0] : date;
@@ -49,24 +47,20 @@ const hbs = engine({
       });
     },
 
-    // Get thumbnail image
     thumbnail: (images) => {
       return images && images.length > 0 ? images[0] : "/uploads/default.jpg";
     },
 
-    // Simple math operations
     add: (a, b) => a + b,
     subtract: (a, b) => a - b,
     multiply: (a, b) => a * b,
     divide: (a, b) => (b !== 0 ? a / b : 0),
 
-    // Slice array
     slice: (arr, start, end) => {
       if (!Array.isArray(arr)) return [];
       return arr.slice(start, end);
     },
 
-    // Equality check
     eq: (a, b) => a === b,
     lte: (a, b) => a <= b,
     gte: (a, b) => a >= b,
@@ -79,32 +73,6 @@ const hbs = engine({
       return a || b;
     },
 
-    // Format month year
-    formatMonthYear: (date) => {
-      if (!date) return "";
-      const d = new Date(date);
-      return d.toLocaleDateString("vi-VN", {
-        month: "2-digit",
-        year: "numeric",
-      });
-    },
-
-    // Get month year string
-    getMonthYear: (date) => {
-      if (!date) return "";
-      const d = new Date(date);
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const year = d.getFullYear();
-      return `${month}/${year}`;
-    },
-
-    // Check if new month - simplified version
-    isNewMonth: (departure, idx) => {
-      // idx is 0-based from {{@index}}
-      return idx === 0 ? true : false; // Let JavaScript handle the logic
-    },
-
-    // Convert to JSON
     json: (obj) => {
       return JSON.stringify(obj);
     },

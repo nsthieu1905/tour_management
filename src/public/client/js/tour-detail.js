@@ -233,6 +233,9 @@ function prevMonth() {
   } else {
     currentMonthDisplay.month--;
   }
+
+  // Update active month button
+  updateActiveMonthButton();
   renderCalendar();
 }
 
@@ -244,7 +247,26 @@ function nextMonth() {
   } else {
     currentMonthDisplay.month++;
   }
+
+  // Update active month button
+  updateActiveMonthButton();
   renderCalendar();
+}
+
+// Update active month button highlight
+function updateActiveMonthButton() {
+  const month = currentMonthDisplay.month + 1;
+  const year = currentMonthDisplay.year;
+  const monthKey = `${month}/${year}`;
+
+  document.querySelectorAll(".month-picker-btn").forEach((btn) => {
+    btn.classList.remove("border-blue-500", "bg-blue-50");
+    btn.classList.add("border-gray-300");
+    if (btn.dataset.month === monthKey) {
+      btn.classList.add("border-blue-500", "bg-blue-50");
+      btn.classList.remove("border-gray-300");
+    }
+  });
 }
 
 // Select departure date
@@ -254,8 +276,30 @@ function selectDepartureDate(departure) {
   localStorage.setItem("selectedDepartureDate", JSON.stringify(departure));
 }
 
+// Initialize page - populate lightbox thumbnails
+function initializeLightboxThumbnails() {
+  const container = document.getElementById("lightbox-thumbnails");
+  if (!container || !images || images.length === 0) return;
+
+  container.innerHTML = ""; // Clear placeholder
+
+  images.forEach((image, idx) => {
+    const img = document.createElement("img");
+    img.src = image.src;
+    img.alt = image.caption;
+    img.className =
+      "h-20 w-24 object-cover rounded cursor-pointer hover:opacity-75 transition duration-200 border-2 border-white flex-shrink-0 lightbox-thumb";
+    img.setAttribute("data-original-index", idx);
+    img.onclick = (e) => {
+      e.stopPropagation();
+      openLightbox(idx);
+    };
+    container.appendChild(img);
+  });
+}
+
 // Initialize calendar on page load
-document.addEventListener("DOMContentLoaded", initializeDepartureDates);
+// (handled in DOMContentLoaded event below)
 
 // Keyboard navigation for lightbox
 document.addEventListener("keydown", function (event) {
@@ -325,11 +369,19 @@ function addToWishlist() {
   const text = document.getElementById("wishlist-text");
 
   if (isWishlisted) {
-    icon.textContent = "❤️";
+    // Fill the heart with red color
+    icon.setAttribute("fill", "currentColor");
+    icon.setAttribute("stroke", "currentColor");
+    icon.classList.add("text-red-500");
+    icon.classList.remove("text-gray-600");
     text.textContent = "Đã yêu thích";
     showNotification("Đã thêm vào danh sách yêu thích! 💖", "success");
   } else {
-    icon.textContent = "🤍";
+    // Outline heart with gray color
+    icon.setAttribute("fill", "none");
+    icon.setAttribute("stroke", "currentColor");
+    icon.classList.remove("text-red-500");
+    icon.classList.add("text-gray-600");
     text.textContent = "Yêu thích";
     showNotification("Đã xóa khỏi danh sách yêu thích", "info");
   }
@@ -337,45 +389,16 @@ function addToWishlist() {
 
 // Lightbox functionality
 function openLightbox(index) {
-  // Find actual image index in filtered images array
-  const allImages = document.querySelectorAll(".lightbox-thumb");
-  let filteredIndex = 0;
+  // Ensure index is valid
+  if (!images || index < 0 || index >= images.length) return;
 
-  for (let i = 0; i < allImages.length; i++) {
-    if (allImages[i].getAttribute("data-original-index") == index) {
-      filteredIndex = i;
-      break;
-    }
-  }
-
-  currentImageIndex = filteredIndex;
+  currentImageIndex = index;
   const lightbox = document.getElementById("lightbox");
   lightbox.classList.remove("hidden");
   document.body.style.overflow = "hidden";
 
   // Update display
   updateLightboxDisplay();
-
-  // Highlight active thumbnail
-  document.querySelectorAll(".lightbox-thumb").forEach((thumb) => {
-    if (thumb.getAttribute("data-original-index") == index) {
-      thumb.classList.add("border-white");
-    } else {
-      thumb.classList.remove("border-white");
-    }
-  });
-
-  // Scroll thumbnail into view
-  const activeThumbnail = document.querySelector(
-    `[data-original-index="${index}"]`
-  );
-  if (activeThumbnail) {
-    activeThumbnail.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
-    });
-  }
 }
 
 function closeLightbox() {
@@ -407,13 +430,16 @@ function updateLightboxDisplay() {
 
   // Highlight active thumbnail
   const allThumbs = document.querySelectorAll(".lightbox-thumb");
-  if (allThumbs.length > 0 && allThumbs[currentImageIndex]) {
-    allThumbs.forEach((thumb) => {
-      thumb.classList.remove("border-white");
-    });
-    allThumbs[currentImageIndex].classList.add("border-white");
+  allThumbs.forEach((thumb, idx) => {
+    if (idx === currentImageIndex) {
+      thumb.classList.add("ring-2", "ring-yellow-400");
+    } else {
+      thumb.classList.remove("ring-2", "ring-yellow-400");
+    }
+  });
 
-    // Scroll thumbnail into view
+  // Scroll thumbnail into view
+  if (allThumbs.length > currentImageIndex) {
     allThumbs[currentImageIndex].scrollIntoView({
       behavior: "smooth",
       block: "nearest",
@@ -511,16 +537,6 @@ document.querySelectorAll(".calendar-day").forEach((day) => {
   });
 });
 
-// Keyboard navigation for lightbox
-document.addEventListener("keydown", function (e) {
-  const lightbox = document.getElementById("lightbox");
-  if (!lightbox.classList.contains("hidden")) {
-    if (e.key === "Escape") closeLightbox();
-    if (e.key === "ArrowLeft") prevImage();
-    if (e.key === "ArrowRight") nextImage();
-  }
-});
-
 // Close modals when clicking outside
 document.addEventListener("click", function (e) {
   const bookingModal = document.getElementById("booking-modal");
@@ -534,6 +550,9 @@ document.addEventListener("click", function (e) {
 
 // Initialize page
 document.addEventListener("DOMContentLoaded", function () {
+  initializeDepartureDates();
+  initializeLightboxThumbnails();
+
   // Show welcome message
   setTimeout(() => {
     showNotification("Chào mừng bạn đến với VietTravel! 🌏", "info");
