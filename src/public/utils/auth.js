@@ -251,7 +251,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email: username,
+            username: username,
             password: password,
             rememberMe: rememberMe,
           }),
@@ -315,7 +315,7 @@ async function checkAndRefreshToken() {
       }
     }
   } catch (error) {
-    // Bỏ qua lỗi
+    console.error(error);
   }
 }
 

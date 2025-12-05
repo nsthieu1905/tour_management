@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-// [GET] /auth/login
+// [GET] /auth/admin
 const login = (req, res) => {
   const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
 
@@ -9,7 +9,7 @@ const login = (req, res) => {
       jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
       return res.redirect("/admin/qly-tour");
     } catch (error) {
-      // Token không hợp lệ, cho phép đăng nhập lại
+      console.error(error);
     }
   }
 
@@ -25,7 +25,34 @@ const register = (req, res) => {
   });
 };
 
+// [GET] /client/login
+const clientLogin = (req, res) => {
+  const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
+
+  if (accessToken) {
+    try {
+      const decoded = jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
+      return res.redirect("/");
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  res.render("auth/login-client", {
+    bodyClass: "bg-gray-50 transition-all duration-300",
+  });
+};
+
+// [GET] /client/register
+const clientRegister = (req, res) => {
+  res.render("auth/register", {
+    bodyClass: "bg-gray-50 transition-all duration-300",
+  });
+};
+
 module.exports = {
   login,
   register,
+  clientLogin,
+  clientRegister,
 };

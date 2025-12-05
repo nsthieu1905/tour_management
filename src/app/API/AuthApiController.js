@@ -17,13 +17,13 @@ const generateRefreshToken = (userId) => {
   });
 };
 
-// [POST] auth/login
+// [POST] auth/login - Admin login only
 const login = async (req, res) => {
   try {
-    const { email, password, rememberMe } = req.body;
+    const { username, password, rememberMe } = req.body;
 
     // Validate input format
-    const validation = validateLoginInput(email, password);
+    const validation = validateLoginInput(username, password);
     if (!validation.isValid) {
       return res.status(400).json({
         success: false,
@@ -32,15 +32,15 @@ const login = async (req, res) => {
       });
     }
 
-    // Tìm user theo email
-    const user = await User.findOne({ email });
+    // Tìm user theo email (sử dụng email field cho admin)
+    const user = await User.findOne({ email: username });
 
     // So sánh password nếu user tồn tại
     const isPasswordValid = user ? await user.comparePassword(password) : false;
 
     // Validate credentials (email có tồn tại, password đúng, account status)
     const credentialsValidation = validateCredentials(
-      email,
+      username,
       password,
       user,
       isPasswordValid
@@ -48,7 +48,15 @@ const login = async (req, res) => {
     if (!credentialsValidation.isValid) {
       return res.status(401).json({
         success: false,
-        message: "Email hoặc mật khẩu không chính xác",
+        message: "Tên đăng nhập hoặc mật khẩu không chính xác",
+      });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Tài khoản này không có quyền truy cập hệ thống quản trị.",
+        error: "INVALID_ROLE",
       });
     }
 
@@ -145,6 +153,138 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
+  }
+};
+
+// [POST] auth/client-login
+const clientLogin = async (req, res) => {
+  try {
+    const { email, password, rememberMe } = req.body;
+
+    // Validate input format
+    const validation = validateLoginInput(email, password);
+    if (!validation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Lỗi định dạng",
+        errors: validation.errors,
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    // So sánh password nếu user tồn tại
+    const isPasswordValid = user ? await user.comparePassword(password) : false;
+
+    const credentialsValidation = validateCredentials(
+      email,
+      password,
+      user,
+      isPasswordValid
+    );
+    if (!credentialsValidation.isValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Email hoặc mật khẩu không chính xác",
+      });
+    }
+
+    // Cập nhật metadata
+    user.metadata.lastLogin = new Date();
+    user.metadata.loginCount += 1;
+    await user.save();
+
+    // Tạo tokens
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Convert AUTH_TOKEN_EXP to milliseconds for maxAge
+    const accessExpiresInStr = process.env.AUTH_TOKEN_EXP;
+    let accessMaxAgeMs = 60 * 1000;
+
+    if (accessExpiresInStr.endsWith("s")) {
+      accessMaxAgeMs = parseInt(accessExpiresInStr) * 1000;
+    } else if (accessExpiresInStr.endsWith("m")) {
+      accessMaxAgeMs = parseInt(accessExpiresInStr) * 60 * 1000;
+    } else if (accessExpiresInStr.endsWith("h")) {
+      accessMaxAgeMs = parseInt(accessExpiresInStr) * 60 * 60 * 1000;
+    } else if (accessExpiresInStr.endsWith("d")) {
+      accessMaxAgeMs = parseInt(accessExpiresInStr) * 24 * 60 * 60 * 1000;
+    }
+
+    // Convert REFRESH_TOKEN_EXP to milliseconds for maxAge
+    const refreshExpiresInStr = process.env.REFRESH_TOKEN_EXP;
+    let refreshMaxAgeMs = 7 * 24 * 60 * 60 * 1000;
+
+    if (refreshExpiresInStr.endsWith("s")) {
+      refreshMaxAgeMs = parseInt(refreshExpiresInStr) * 1000;
+    } else if (refreshExpiresInStr.endsWith("m")) {
+      refreshMaxAgeMs = parseInt(refreshExpiresInStr) * 60 * 1000;
+    } else if (refreshExpiresInStr.endsWith("h")) {
+      refreshMaxAgeMs = parseInt(refreshExpiresInStr) * 60 * 60 * 1000;
+    } else if (refreshExpiresInStr.endsWith("d")) {
+      refreshMaxAgeMs = parseInt(refreshExpiresInStr) * 24 * 60 * 60 * 1000;
+    }
+
+    // Lưu access token vào cookie
+    const accessCookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    };
+
+    // Lưu refresh token vào cookie
+    const refreshCookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    };
+
+    // Chỉ set maxAge nếu check "remember me" -> persistent cookie
+    if (rememberMe) {
+      accessCookieOptions.maxAge = accessMaxAgeMs;
+      refreshCookieOptions.maxAge = refreshMaxAgeMs;
+    }
+
+    res.cookie(process.env.AUTH_TOKEN_NAME, accessToken, accessCookieOptions);
+    res.cookie(
+      process.env.REFRESH_TOKEN_NAME,
+      refreshToken,
+      refreshCookieOptions
+    );
+
+    // Lưu refresh token vào db
+    const expiresAt = new Date(Date.now() + refreshMaxAgeMs);
+    const userAgent = req.headers["user-agent"] || "Unknown";
+    const ipAddress = req.ip || req.connection.remoteAddress || "Unknown";
+
+    const session = await Session.create({
+      userId: user._id,
+      refreshToken,
+      deviceInfo: {
+        userAgent,
+        ipAddress,
+        deviceType: userAgent.includes("Mobile") ? "mobile" : "desktop",
+      },
+      expiresAt,
+      isActive: true,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Đăng nhập thành công",
+      rememberMe: rememberMe,
+      data: {
+        accessToken,
+        user: user.toJSON(),
+      },
+    });
+  } catch (error) {
+    console.error("Client login error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -368,8 +508,93 @@ const checkToken = (req, res) => {
   }
 };
 
+// [POST] auth/register
+const register = async (req, res) => {
+  try {
+    const { fullName, email, phone, password, passwordConfirm } = req.body;
+
+    // Validate required fields
+    if (!fullName || !email || !password || !passwordConfirm) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng điền đầy đủ thông tin",
+        errors: {
+          fullName: !fullName ? "Họ và tên là bắt buộc" : null,
+          email: !email ? "Email là bắt buộc" : null,
+          password: !password ? "Mật khẩu là bắt buộc" : null,
+          passwordConfirm: !passwordConfirm
+            ? "Xác nhận mật khẩu là bắt buộc"
+            : null,
+        },
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Email không hợp lệ",
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Mật khẩu phải có ít nhất 6 ký tự",
+      });
+    }
+
+    // Check password match
+    if (password !== passwordConfirm) {
+      return res.status(400).json({
+        success: false,
+        message: "Mật khẩu xác nhận không khớp",
+      });
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email đã được đăng ký",
+      });
+    }
+
+    // Create new user with role = 'customer' by default
+    const newUser = new User({
+      fullName: fullName.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone || null,
+      password: password,
+      role: "customer", // Default role for new registrations
+      status: "active",
+    });
+
+    await newUser.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Đăng ký thành công",
+      data: {
+        user: newUser.toJSON(),
+      },
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
+  }
+};
+
 module.exports = {
   login,
+  clientLogin,
+  register,
   refreshToken,
   logout,
   getCurrentUser,

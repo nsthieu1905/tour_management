@@ -57,12 +57,145 @@
         <button class="text-gray-700 hover:text-indigo-600">
           <i class="fas fa-bell text-xl"></i>
         </button>
-        <button
-          class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          Đăng nhập
-        </button>
+
+        <!-- Login/User Section -->
+        <div id="authSection">
+          <!-- Login Button (shown when not logged in) -->
+          <button
+            id="loginBtn"
+            onclick="window.location.href='/client/auth/login'"
+            class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Đăng nhập
+          </button>
+
+          <!-- User Menu (shown when logged in) -->
+          <div id="userSection" class="hidden flex items-center space-x-3">
+            <div>
+              <p
+                id="userFullName"
+                class="text-sm font-medium text-gray-900"
+              ></p>
+              <p class="text-xs text-gray-500">Khách hàng</p>
+            </div>
+            <div class="relative">
+              <button
+                id="userMenuBtn"
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 text-white flex items-center justify-center font-bold text-sm hover:shadow-lg transition-shadow"
+                onclick="toggleUserMenuClient()"
+              >
+                <span id="userAvatar">U</span>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div
+                id="userMenuClient"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 hidden z-50"
+              >
+                <div class="px-4 py-3 border-b border-gray-100">
+                  <p
+                    id="userFullNameDropdown"
+                    class="text-sm font-medium text-gray-900"
+                  ></p>
+                  <p id="userEmailDropdown" class="text-xs text-gray-500"></p>
+                </div>
+                <a
+                  href="#"
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                >
+                  <i class="fas fa-user"></i>
+                  <span>Hồ sơ cá nhân</span>
+                </a>
+                <a
+                  href="#"
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                >
+                  <i class="fas fa-bookmark"></i>
+                  <span>Đơn hàng của tôi</span>
+                </a>
+                <a
+                  href="#"
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                >
+                  <i class="fas fa-heart"></i>
+                  <span>Yêu thích</span>
+                </a>
+                <button
+                  onclick="handleClientLogout()"
+                  class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
+                >
+                  <i class="fas fa-sign-out-alt"></i>
+                  <span>Đăng xuất</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </header>
+
+<script type="module" src="/utils/auth-helper-client.js"></script>
+
+<script>
+  /**
+   * Load user info on page load
+   */
+  async function loadUserInfo() {
+    try {
+      const isLoggedIn = await clientAuthHelper.isLoggedIn();
+      const user = await clientAuthHelper.getCurrentUser();
+
+      if (isLoggedIn && user) {
+        // Show user section, hide login button
+        document.getElementById("loginBtn").classList.add("hidden");
+        document.getElementById("userSection").classList.remove("hidden");
+
+        // Fill user info
+        const firstName = user.fullName.split(" ")[0];
+        document.getElementById("userFullName").textContent = user.fullName;
+        document.getElementById("userFullNameDropdown").textContent =
+          user.fullName;
+        document.getElementById("userEmailDropdown").textContent = user.email;
+        document.getElementById("userAvatar").textContent = firstName
+          .charAt(0)
+          .toUpperCase();
+      } else {
+        // Show login button, hide user section
+        document.getElementById("loginBtn").classList.remove("hidden");
+        document.getElementById("userSection").classList.add("hidden");
+      }
+    } catch (error) {
+      console.error("Load user info error:", error);
+    }
+  }
+
+  /**
+   * Toggle user dropdown menu
+   */
+  function toggleUserMenuClient() {
+    const menu = document.getElementById("userMenuClient");
+    menu.classList.toggle("hidden");
+
+    // Close menu when clicking outside
+    document.addEventListener("click", function closeMenu(e) {
+      const btn = document.getElementById("userMenuBtn");
+      const menu = document.getElementById("userMenuClient");
+      if (!btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.add("hidden");
+        document.removeEventListener("click", closeMenu);
+      }
+    });
+  }
+
+  /**
+   * Handle logout
+   */
+  async function handleClientLogout() {
+    await clientAuthHelper.logout();
+  }
+
+  // Load user info when page loads
+  document.addEventListener("DOMContentLoaded", loadUserInfo);
+</script>
