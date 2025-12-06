@@ -113,7 +113,7 @@ function setupRealtimeValidation() {
       if (this.value) {
         const result = validateLoginInput("", this.value);
         if (!result.errors.password) {
-          showFieldField("password", null);
+          showFieldError("password", null);
         }
       }
     });

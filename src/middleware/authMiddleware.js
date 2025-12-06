@@ -24,7 +24,7 @@ const authenticateFromCookie = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Không tìm thấy token xác thực",
+        message: "Không tìm thấy token xác thực1",
       });
     }
 
@@ -94,7 +94,7 @@ const authenticate = async (req, res, next) => {
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: "Không tìm thấy token xác thực",
+        message: "Không tìm thấy token xác thực12",
       });
     }
 

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const couponController = require("../../../app/API/CouponController");
-const protectAdminRoutes = require("../../../middleware/protectAdminRoutes");
+const couponController = require("../../app/API/CouponController");
+const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
 
 // Áp dụng middleware bảo vệ cho tất cả API routes
 router.use(protectAdminRoutes);

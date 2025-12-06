@@ -362,29 +362,78 @@ function changeGuests(change) {
   document.getElementById("modal-total-price").textContent = totalPrice + "đ";
 }
 
-// Wishlist functionality
-function addToWishlist() {
-  isWishlisted = !isWishlisted;
-  const icon = document.getElementById("wishlist-icon");
-  const text = document.getElementById("wishlist-text");
+// Initialize wishlist - check if tour is already favorited
+async function initializeWishlist() {
+  try {
+    // Get tour ID from button
+    const btn = document.querySelector('[onclick*="addToWishlist"]');
+    if (!btn) return;
 
-  if (isWishlisted) {
-    // Fill the heart with red color
-    icon.setAttribute("fill", "currentColor");
-    icon.setAttribute("stroke", "currentColor");
-    icon.classList.add("text-red-500");
-    icon.classList.remove("text-gray-600");
-    text.textContent = "Đã yêu thích";
-    showNotification("Đã thêm vào danh sách yêu thích! 💖", "success");
-  } else {
-    // Outline heart with gray color
-    icon.setAttribute("fill", "none");
-    icon.setAttribute("stroke", "currentColor");
-    icon.classList.remove("text-red-500");
-    icon.classList.add("text-gray-600");
-    text.textContent = "Yêu thích";
-    showNotification("Đã xóa khỏi danh sách yêu thích", "info");
+    // Extract tour ID from onclick attribute
+    const onclickAttr = btn.getAttribute("onclick");
+    const tourIdMatch = onclickAttr.match(/addToWishlist\('([^']+)'\)/);
+    if (!tourIdMatch) return;
+
+    const tourId = tourIdMatch[1];
+
+    // Check if tour is favorited
+    const isFavorited = await favoriteHelper.checkIsFavorited(tourId);
+
+    if (isFavorited) {
+      isWishlisted = true;
+      const icon = document.getElementById("wishlist-icon");
+      const text = document.getElementById("wishlist-text");
+
+      if (icon && text) {
+        icon.setAttribute("fill", "currentColor");
+        icon.setAttribute("stroke", "currentColor");
+        icon.classList.add("text-red-500");
+        icon.classList.remove("text-gray-600");
+        text.textContent = "Đã yêu thích";
+      }
+    }
+  } catch (error) {
+    console.error("Initialize wishlist error:", error);
   }
+}
+
+// Wishlist functionality
+function addToWishlist(tourId) {
+  // Toggle favorite via API
+  favoriteHelper
+    .toggleFavorite(tourId)
+    .then((result) => {
+      const icon = document.getElementById("wishlist-icon");
+      const text = document.getElementById("wishlist-text");
+
+      if (result.success) {
+        isWishlisted = result.isFavorited;
+
+        if (isWishlisted) {
+          // Fill the heart with red color
+          icon.setAttribute("fill", "currentColor");
+          icon.setAttribute("stroke", "currentColor");
+          icon.classList.add("text-red-500");
+          icon.classList.remove("text-gray-600");
+          text.textContent = "Đã yêu thích";
+          showNotification("Đã thêm vào danh sách yêu thích! 💖", "success");
+        } else {
+          // Outline heart with gray color
+          icon.setAttribute("fill", "none");
+          icon.setAttribute("stroke", "currentColor");
+          icon.classList.remove("text-red-500");
+          icon.classList.add("text-gray-600");
+          text.textContent = "Yêu thích";
+          showNotification("Đã xóa khỏi danh sách yêu thích", "info");
+        }
+      } else {
+        showNotification("Lỗi: " + result.message, "error");
+      }
+    })
+    .catch((error) => {
+      console.error("Error toggling favorite:", error);
+      showNotification("Có lỗi xảy ra khi cập nhật yêu thích", "error");
+    });
 }
 
 // Lightbox functionality
@@ -552,6 +601,7 @@ document.addEventListener("click", function (e) {
 document.addEventListener("DOMContentLoaded", function () {
   initializeDepartureDates();
   initializeLightboxThumbnails();
+  initializeWishlist(); // Check if tour is already favorited
 
   // Show welcome message
   setTimeout(() => {

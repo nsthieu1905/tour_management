@@ -1,12 +1,14 @@
 // Admin
 const siteRoutes = require("./admin/site");
-const authRoutes = require("./API/admin/auth");
-const toursApiRoutes = require("./API/admin/tours");
-const couponApiRoutes = require("./API/admin/coupon");
+const authRoutes = require("./admin/auth");
+const toursApiRoutes = require("./admin/tours");
+const couponApiRoutes = require("./admin/coupon");
+const usersApiRoutes = require("./admin/users");
 
 // Client
 const homeRoutes = require("./client/home");
 const clientAuthRoutes = require("./client/auth");
+const favoriteRoutes = require("./client/favorites");
 
 function route(app) {
   // Admin
@@ -14,9 +16,11 @@ function route(app) {
   app.use("/admin", siteRoutes);
   app.use("/api/tours", toursApiRoutes);
   app.use("/api/coupons", couponApiRoutes);
+  app.use("/api/users", usersApiRoutes);
 
   // Client
   app.use("/client/auth", clientAuthRoutes);
+  app.use("/api/favorites", favoriteRoutes);
   app.use("/", homeRoutes);
 }
 

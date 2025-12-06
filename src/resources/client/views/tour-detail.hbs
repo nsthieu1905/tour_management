@@ -783,7 +783,7 @@
         </button>
 
         <button
-          onclick="addToWishlist()"
+          onclick="addToWishlist('{{tour._id}}')"
           class="w-full border border-gray-300 text-gray-600 py-2 px-4 rounded-xl font-semibold hover:bg-gray-50 transition duration-200 flex items-center justify-center space-x-2"
         >
           <svg
@@ -1160,4 +1160,5 @@
   ];
 </script>
 
+<script src="/utils/favorite-helper.js"></script>
 <script src="/client/js/tour-detail.js"></script>

@@ -1,0 +1,116 @@
+<!-- Favorites Page -->
+<div class="min-h-screen bg-gray-50 pt-24 pb-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">
+        <i class="fas fa-heart text-red-500 mr-3"></i>Danh sách yêu thích
+      </h1>
+    </div>
+
+    {{#if favorites}}
+    <!-- Tours Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {{#each favorites}}
+      <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+        <div class="relative">
+          <!-- Tour Image -->
+          <div class="relative overflow-hidden h-48 bg-gray-200">
+            <img
+              src="{{thumbnail images}}"
+              alt="{{name}}"
+              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            />
+            <div
+              class="absolute top-3 right-3 bg-white rounded-full p-2 cursor-pointer hover:bg-red-50 transition-colors"
+              onclick="handleRemoveFavorite('{{_id}}')"
+            >
+              <i class="fas fa-heart text-red-500 text-lg"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tour Info -->
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-xl font-semibold text-gray-900">{{name}}</h3>
+          </div>
+
+          <p class="text-gray-600 mb-4 text-sm">
+            {{duration.days}} ngày {{duration.nights}} đêm
+          </p>
+
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-2xl font-bold text-indigo-600">
+              {{formatPrice price}} VND
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-star text-yellow-400"></i>
+              <span class="ml-1 text-sm text-gray-600"
+                >{{rating.average}} ({{rating.count}})</span
+              >
+            </div>
+          </div>
+
+          <button
+            class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+            onclick="window.location.href='/tours/{{_id}}'"
+          >
+            Xem chi tiết
+          </button>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <!-- Empty State -->
+    <div class="text-center py-12">
+      <div
+        class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-200 mb-4"
+      >
+        <i class="fas fa-heart-broken text-gray-400 text-3xl"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">
+        Chưa có tour yêu thích
+      </h2>
+      <p class="text-gray-600 mb-6">
+        Khám phá và thêm các tour yêu thích của bạn vào đây
+      </p>
+      <a
+        href="/"
+        class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
+      >
+        <i class="fas fa-search mr-2"></i>Tìm tours
+      </a>
+    </div>
+    {{/if}}
+  </div>
+</div>
+
+<script src="/utils/favorite-helper.js"></script>
+
+<script>
+  /**
+   * Remove tour from favorites and reload page
+   */
+  async function handleRemoveFavorite(tourId) {
+    console.log("Removing favorite for tour:", tourId);
+    if (confirm("Bạn chắc chắn muốn bỏ thích tour này?")) {
+      try {
+        const result = await favoriteHelper.toggleFavorite(tourId);
+        console.log("Toggle favorite result:", result);
+        if (result.success) {
+          // Show success message
+          alert("Đã bỏ thích tour. Tải lại trang...");
+          // Reload page to update list
+          window.location.reload();
+        } else {
+          alert("Lỗi: " + result.message);
+        }
+      } catch (error) {
+        console.error("Error removing favorite:", error);
+        alert("Có lỗi xảy ra khi bỏ thích tour");
+      }
+    }
+  }
+</script>

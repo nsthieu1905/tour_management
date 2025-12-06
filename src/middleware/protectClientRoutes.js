@@ -1,13 +1,12 @@
 // - Verify access_token từ cookie
-//  - Nếu access_token hết hạn nhưng refresh_token còn hạn -> tạo access_token mới
-// - Nếu không có refresh_token hoặc hết hạn -> redirect login
-// - Kiểm tra role = 'admin', nếu không là admin -> không đủ quyền/ redirect forbidden
+// - Nếu access_token hết hạn nhưng refresh_token còn hạn -> tạo access_token mới
+// - Nếu không có refresh_token hoặc hết hạn -> redirect /
 
 const jwt = require("jsonwebtoken");
 const { User } = require("../app/models/index");
 const { generateAccessToken } = require("../app/API/AuthApiController");
 
-const protectAdminRoutes = async (req, res, next) => {
+const protectClientRoutes = async (req, res, next) => {
   try {
     const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
     const refreshToken = req.cookies[process.env.REFRESH_TOKEN_NAME];
@@ -17,16 +16,8 @@ const protectAdminRoutes = async (req, res, next) => {
         const decoded = jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
 
         const user = await User.findById(decoded.userId);
-        // Kiểm tra user có role admin hay không
         if (!user) {
-          return res.redirect("/auth/admin");
-        }
-
-        if (user.role !== "admin") {
-          return res.status(403).render("auth/forbidden", {
-            message: "Bạn không đủ quyền truy cập.",
-            layout: false,
-          });
+          return res.redirect("/");
         }
 
         req.userId = decoded.userId;
@@ -39,9 +30,9 @@ const protectAdminRoutes = async (req, res, next) => {
         return next();
       } catch (error) {
         if (error.name === "TokenExpiredError") {
-          // Access token hết hạn, cố refresh
+          // Access token hết hạn và không có refresh token
           if (!refreshToken) {
-            return res.redirect("/auth/admin");
+            return res.redirect("/");
           }
 
           try {
@@ -53,14 +44,7 @@ const protectAdminRoutes = async (req, res, next) => {
 
             const user = await User.findById(decodedRefresh.userId);
             if (!user) {
-              return res.redirect("/auth/admin");
-            }
-
-            if (user.role !== "admin") {
-              return res.status(403).render("auth/forbidden", {
-                message: "Bạn không đủ quyền truy cập.",
-                layout: false,
-              });
+              return res.redirect("/");
             }
 
             const newAccessToken = generateAccessToken(decodedRefresh.userId);
@@ -96,16 +80,16 @@ const protectAdminRoutes = async (req, res, next) => {
             };
             return next();
           } catch (refreshError) {
-            return res.redirect("/auth/admin");
+            return res.redirect("/");
           }
         } else {
-          return res.redirect("/auth/admin");
+          return res.redirect("/");
         }
       }
     } else {
       // Không có access token
       if (!refreshToken) {
-        return res.redirect("/auth/admin");
+        return res.redirect("/");
       }
 
       try {
@@ -118,14 +102,7 @@ const protectAdminRoutes = async (req, res, next) => {
 
         const user = await User.findById(decodedRefresh.userId);
         if (!user) {
-          return res.redirect("/auth/admin");
-        }
-
-        if (user.role !== "admin") {
-          return res.status(403).render("auth/forbidden", {
-            message: "Bạn không đủ quyền truy cập.",
-            layout: false,
-          });
+          return res.redirect("/");
         }
 
         const newAccessToken = generateAccessToken(decodedRefresh.userId);
@@ -159,12 +136,12 @@ const protectAdminRoutes = async (req, res, next) => {
         };
         return next();
       } catch (refreshError) {
-        return res.redirect("/auth/admin");
+        return res.redirect("/");
       }
     }
   } catch (error) {
-    return res.redirect("/auth/admin");
+    return res.redirect("/");
   }
 };
 
-module.exports = protectAdminRoutes;
+module.exports = protectClientRoutes;

@@ -96,7 +96,7 @@ const clientAuthHelper = {
 
   getCurrentUser: async function () {
     try {
-      const response = await fetch("/auth/current-user", {
+      const response = await fetch("/api/users/current-user", {
         method: "GET",
         credentials: "include",
       });

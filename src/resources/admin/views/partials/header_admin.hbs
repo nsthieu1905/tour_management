@@ -48,8 +48,7 @@
       <!-- User Menu -->
       <div class="flex items-center space-x-3">
         <div>
-          <p class="text-sm font-medium text-gray-900">Admin User</p>
-          <p class="text-xs text-gray-500">Quản trị viên</p>
+          <p id="userFullName" class="text-sm font-medium text-gray-900"></p>
         </div>
         <div class="relative">
           <button
@@ -57,7 +56,7 @@
             class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 text-white flex items-center justify-center font-bold text-sm hover:shadow-lg transition-shadow"
             onclick="toggleUserMenu()"
           >
-            AD
+            <i class="fas fa-user"></i>
           </button>
 
           <!-- Dropdown Menu -->
@@ -66,8 +65,11 @@
             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 hidden z-50"
           >
             <div class="px-4 py-3 border-b border-gray-100">
-              <p class="text-sm font-medium text-gray-900">Admin User</p>
-              <p class="text-xs text-gray-500">admin@example.com</p>
+              <p
+                id="userFullNameDropdown"
+                class="text-sm font-medium text-gray-900"
+              ></p>
+              <p id="userEmailDropdown" class="text-xs text-gray-500"></p>
             </div>
             <button
               onclick="handleLogout()"
@@ -86,6 +88,31 @@
 <script type="module" src="/utils/auth-helper.js"></script>
 
 <script>
+  /**
+   * Load user info on page load
+   */
+  async function getCurrentUser() {
+    try {
+      const response = await fetch("/api/users/current-user", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const user = data.data.user;
+
+        // Fill user info
+        document.getElementById("userFullName").textContent = user.fullName;
+        document.getElementById("userFullNameDropdown").textContent =
+          user.fullName;
+        document.getElementById("userEmailDropdown").textContent = user.email;
+      }
+    } catch (error) {
+      console.error("Load user info error:", error);
+    }
+  }
+
   /**
    * Toggle user dropdown menu
    */
@@ -110,4 +137,7 @@
   async function handleLogout() {
     await logoutHelper.logout();
   }
+
+  // Load user info when page loads
+  document.addEventListener("DOMContentLoaded", getCurrentUser);
 </script>
