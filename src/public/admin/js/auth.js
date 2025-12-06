@@ -1,4 +1,5 @@
 import { validateLoginInput } from "../../utils/validators.js";
+import { Notification } from "../../utils/modal.js";
 
 // ============================================
 // XỬ LÝ LỖI FORM
@@ -153,45 +154,45 @@ function hideLoadingState() {
 }
 
 // Hiển thị thông báo (toast notification)
-function showNotification(message, type = "info") {
-  const notification = document.createElement("div");
-  notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+// function showNotification(message, type = "info") {
+//   const notification = document.createElement("div");
+//   notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
 
-  const bgColor =
-    type === "success"
-      ? "bg-green-500"
-      : type === "error"
-      ? "bg-red-500"
-      : "bg-blue-500";
-  notification.classList.add(bgColor, "text-white");
+//   const bgColor =
+//     type === "success"
+//       ? "bg-green-500"
+//       : type === "error"
+//       ? "bg-red-500"
+//       : "bg-blue-500";
+//   notification.classList.add(bgColor, "text-white");
 
-  notification.innerHTML = `
-        <div class="flex items-center space-x-3">
-            <i class="fas fa-${
-              type === "success"
-                ? "check-circle"
-                : type === "error"
-                ? "exclamation-circle"
-                : "info-circle"
-            }"></i>
-            <span>${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
+//   notification.innerHTML = `
+//         <div class="flex items-center space-x-3">
+//             <i class="fas fa-${
+//               type === "success"
+//                 ? "check-circle"
+//                 : type === "error"
+//                 ? "exclamation-circle"
+//                 : "info-circle"
+//             }"></i>
+//             <span>${message}</span>
+//             <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+//                 <i class="fas fa-times"></i>
+//             </button>
+//         </div>
+//     `;
 
-  document.body.appendChild(notification);
+//   document.body.appendChild(notification);
 
-  setTimeout(() => {
-    notification.classList.remove("translate-x-full");
-  }, 100);
+//   setTimeout(() => {
+//     notification.classList.remove("translate-x-full");
+//   }, 100);
 
-  setTimeout(() => {
-    notification.classList.add("translate-x-full");
-    setTimeout(() => notification.remove(), 300);
-  }, 5000);
-}
+//   setTimeout(() => {
+//     notification.classList.add("translate-x-full");
+//     setTimeout(() => notification.remove(), 300);
+//   }, 5000);
+// }
 
 // ============================================
 // CHUYỂN TRANG
@@ -273,7 +274,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Đăng nhập thành công
         hideLoadingState();
-        showNotification("Đăng nhập thành công!", "success");
+        Notification.success("Đăng nhập thành công!");
 
         setTimeout(() => {
           window.location.href = "/admin/dashboard";
@@ -284,43 +285,3 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-
-// ============================================
-// TỰ ĐỘNG LÀM MỚI TOKEN KHI HẾT HẠN
-// ============================================
-
-// Kiểm tra và làm mới token nếu hết hạn
-async function checkAndRefreshToken() {
-  try {
-    const response = await fetch("/auth/check-token", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    const data = await response.json();
-
-    // Nếu token hết hạn, thử làm mới
-    if (data.expired) {
-      const refreshResponse = await fetch("/auth/refresh", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      // Nếu làm mới không thành công, chuyển hướng về trang đăng nhập
-      if (!refreshResponse.ok) {
-        window.location.href = "/auth/admin";
-      }
-    }
-  } catch (error) {
-    // Bỏ qua lỗi
-  }
-}
-
-// Kiểm tra token mỗi 30 giây
-// if (window.location.pathname.startsWith("/admin")) {
-//   setInterval(checkAndRefreshToken, 30000);
-//   checkAndRefreshToken();
-// }

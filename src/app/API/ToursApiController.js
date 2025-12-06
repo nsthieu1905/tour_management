@@ -3,27 +3,31 @@ const path = require("path");
 const fs = require("fs-extra");
 
 // [GET] /api/tours
-const findAll = async (req, res, next) => {
+const findAll = async (req, res) => {
   try {
     const tours = await Tour.find({}).lean();
-    if (!tours)
+    if (!tours || tours.length === 0)
       return res
         .status(404)
         .json({ success: false, message: "Không tìm thấy tour" });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       total: tours.length,
       message: "Lấy tours thành công",
       data: tours,
     });
   } catch (error) {
-    next(error);
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
   }
 };
 
 // [GET] api/tours/trash
-const findTrash = async (req, res, next) => {
+const findTrash = async (req, res) => {
   try {
     const tours = await Tour.findWithDeleted({ deleted: true }).lean();
     if (!tours)
@@ -31,19 +35,23 @@ const findTrash = async (req, res, next) => {
         .status(404)
         .json({ success: false, message: "Không tìm thấy tour" });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       total: tours.length,
       message: "Lấy tours thành công",
       data: tours,
     });
   } catch (error) {
-    next(error);
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
   }
 };
 
 // [GET] /api/tours/:id
-const findOne = async (req, res, next) => {
+const findOne = async (req, res) => {
   try {
     const tour = await Tour.findById(req.params.id).lean();
     if (!tour)
@@ -51,14 +59,22 @@ const findOne = async (req, res, next) => {
         .status(404)
         .json({ success: false, message: "Không tìm thấy tour" });
 
-    res
-      .status(200)
-      .json({ success: true, message: "Đều lệ thành công", data: tour });
-  } catch (next) {}
+    return res.status(200).json({
+      success: true,
+      message: "Lấy tour thành công",
+      data: tour,
+    });
+  } catch (next) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
+  }
 };
 
 //[POST] /api/tours/add
-const create = async (req, res, next) => {
+const create = async (req, res) => {
   const getTourType = (price) => {
     if (price <= 2000000) return "Tiết kiệm";
     if (price > 2000000 && price <= 4000000) return "Tiêu chuẩn";
@@ -149,36 +165,50 @@ const create = async (req, res, next) => {
     const result = await tour.save();
 
     if (!result)
-      return res
-        .status(404)
-        .json({ success: false, message: "Tạo tour thất bại" });
+      return res.status(404).json({
+        success: false,
+        message: "Tạo tour thất bại",
+      });
 
-    res
-      .status(201)
-      .json({ success: true, message: "Tạo tour thành công", data: tour });
+    return res.status(201).json({
+      success: true,
+      message: "Tạo tour thành công",
+      data: tour,
+    });
   } catch (error) {
     console.error(error);
-    next(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
   }
 };
 
 // [DELETE] /api/tours/:id
-const softDelete = async (req, res, next) => {
+const softDelete = async (req, res) => {
   try {
     const result = await Tour.delete({ _id: req.params.id });
     if (!result)
-      return res
-        .status(404)
-        .json({ success: false, message: "Xoá tour thất bại" });
+      return res.status(404).json({
+        success: false,
+        message: "Xoá tour thất bại",
+      });
 
-    res.status(200).json({ success: true, message: "Xoá tour thành công" });
+    return res.status(200).json({
+      success: true,
+      message: "Xoá tour thành công",
+    });
   } catch (error) {
-    next(error);
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
   }
 };
 
 // [DELETE] /api/tours/trash/:id
-const forceDelete = async (req, res, next) => {
+const forceDelete = async (req, res) => {
   try {
     const tour = await Tour.findOneWithDeleted({ _id: req.params.id }).lean();
 
@@ -191,9 +221,10 @@ const forceDelete = async (req, res, next) => {
 
     const result = await Tour.deleteOne({ _id: req.params.id });
     if (!result)
-      return res
-        .status(404)
-        .json({ success: false, message: "Xoá tour thất bại" });
+      return res.status(404).json({
+        success: false,
+        message: "Xoá tour thất bại",
+      });
 
     if (tour.images && tour.images.length > 0) {
       try {
@@ -202,42 +233,51 @@ const forceDelete = async (req, res, next) => {
         console.log(error);
       }
     }
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Xoá tour và ảnh thành công",
     });
   } catch (error) {
     console.log(error);
-    next(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
   }
 };
 
 // [PATCH] /api/tours/trash/restore/:id
-const restore = async (req, res, next) => {
+const restore = async (req, rest) => {
   try {
     const result = await Tour.restore({ _id: req.params.id });
     if (!result)
-      return res
-        .status(404)
-        .json({ success: false, message: "Khôi phục tour thất bại" });
+      return res.status(404).json({
+        success: false,
+        message: "Khôi phục tour thất bại",
+      });
 
-    res
-      .status(200)
-      .json({ success: true, message: "Khôi phục tour thành công" });
+    return res.status(200).json({
+      success: true,
+      message: "Khôi phục tour thành công",
+    });
   } catch (error) {
-    next(error);
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
   }
 };
 
 // [GET] /tour/:id
-const tourDetail = async (req, res, next) => {
+const tourDetail = async (req, res) => {
   try {
     const tour = await Tour.findById(req.params.id).lean();
 
     if (!tour) {
-      return res.status(404).render("error", {
-        message: "Tour không tồn tại",
-        bodyClass: "bg-gray-50",
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy tour",
       });
     }
 
@@ -260,18 +300,18 @@ const tourDetail = async (req, res, next) => {
         .filter((p) => p.trim());
     }
 
-    // Normalize departureDates - handle both old format (array of dates) and new format (array of {date, price})
+    // Chuyển định dạng departureDates nếu cần
     if (tour.departureDates && Array.isArray(tour.departureDates)) {
       tour.departureDates = tour.departureDates
         .map((item) => {
           if (typeof item === "string" || item instanceof Date) {
-            // Old format: just date
+            // Format cũ: chỉ là date string
             return {
               date: new Date(item),
               price: tour.price || 0,
             };
           } else if (typeof item === "object" && item.date) {
-            // New format: {date, price}
+            // Format mới: object có date và price
             return {
               date: new Date(item.date),
               price: item.price || tour.price || 0,
@@ -282,19 +322,22 @@ const tourDetail = async (req, res, next) => {
         .filter((d) => d !== null);
     }
 
-    // Get other tours
+    // Lấy thêm 3 tour khác để gợi ý
     const otherTours = await Tour.find({ _id: { $ne: tour._id } })
       .limit(3)
       .lean();
 
-    res.render("tour-detail", {
+    return res.render("tour-detail", {
       tour,
       otherTours,
-      // layout: false,
       bodyClass: "bg-gray-50",
     });
   } catch (error) {
-    next(error);
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
   }
 };
 

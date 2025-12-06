@@ -1,23 +1,31 @@
 // Global variables
-let currentImageIndex = 0;
-let guestCount = 2;
-let isWishlisted = false;
-let currentMonthDisplay = null; // Track current month in calendar display
-let departureDates = []; // Will be populated from template
+let currentImageIndex = 0; // Index ảnh hiện tại trong lightbox
+let guestCount = 1; // Số lượng khách (mặc định 1)
+let isWishlisted = false; // Trạng thái yêu thích của tour
+let currentMonthDisplay = null; // Tháng đang hiển thị trên lịch
+let departureDates = []; // Danh sách ngày khởi hành từ server
 
-// Initialize departure dates from tour data (populated by template)
+// ============================================
+// KHỞI TẠO NGÀY KHỞI HÀNH
+// ============================================
+/**
+ * Khởi tạo danh sách ngày khởi hành từ data attribute
+ * - Đọc dữ liệu từ #calendar-grid data-departures
+ * - Parse JSON và chuẩn hóa format
+ * - Render month picker và calendar
+ */
 function initializeDepartureDates() {
   const calendarGrid = document.getElementById("calendar-grid");
   if (!calendarGrid) {
-    console.warn("calendar-grid not found");
+    console.warn("Không tìm thấy calendar-grid");
     return;
   }
 
   let departureDatesData = calendarGrid.dataset.departures;
 
-  // Try to parse data attribute
+  // Kiểm tra data attribute có tồn tại không
   if (!departureDatesData) {
-    console.warn("No departure dates data attribute found");
+    console.warn("Không tìm thấy dữ liệu ngày khởi hành");
     return;
   }
 
@@ -25,23 +33,23 @@ function initializeDepartureDates() {
     let parsed = JSON.parse(departureDatesData);
 
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      console.warn("Departure dates is not a valid array");
+      console.warn("Dữ liệu ngày khởi hành không hợp lệ");
       return;
     }
 
-    // Normalize data - handle both cases:
-    // 1. Array of date strings: ["2025-12-07", "2025-12-10"]
-    // 2. Array of objects: [{date: "2025-12-07", price: 5390000}]
+    // Chuẩn hóa dữ liệu - xử lý 2 trường hợp:
+    // 1. Mảng string: ["2025-12-07", "2025-12-10"]
+    // 2. Mảng object: [{date: "2025-12-07", price: 5390000}]
     departureDates = parsed
       .map((item, idx) => {
         if (typeof item === "string") {
-          // Case 1: date string only
+          // Trường hợp 1: chỉ có ngày
           return {
             date: item,
-            price: 0, // Will show 0K
+            price: 0, // Hiển thị 0K
           };
         } else if (typeof item === "object" && item.date) {
-          // Case 2: object with date and price
+          // Trường hợp 2: có cả ngày và giá
           return {
             date: item.date,
             price: item.price || 0,
@@ -52,18 +60,18 @@ function initializeDepartureDates() {
       .filter((d) => d !== null);
 
     if (departureDates.length === 0) {
-      console.warn("No valid departure dates after normalization");
+      console.warn("Không có ngày khởi hành hợp lệ sau khi chuẩn hóa");
       return;
     }
 
-    // Get unique months
+    // Lấy danh sách các tháng duy nhất từ ngày khởi hành
     const uniqueMonths = [];
     const seenMonths = new Set();
 
     departureDates.forEach((dept) => {
       const date = new Date(dept.date);
       if (isNaN(date.getTime())) {
-        console.warn("Invalid date:", dept.date);
+        console.warn("Ngày không hợp lệ:", dept.date);
         return;
       }
 
@@ -82,23 +90,31 @@ function initializeDepartureDates() {
     });
 
     if (uniqueMonths.length === 0) {
-      console.warn("No valid months found");
+      console.warn("Không tìm thấy tháng hợp lệ");
       return;
     }
 
-    // Render month picker
+    // Render danh sách tháng
     renderMonthPicker(uniqueMonths);
 
-    // Set first month as default
+    // Đặt tháng đầu tiên làm mặc định
     currentMonthDisplay = {
       month: uniqueMonths[0].date.getMonth(),
       year: uniqueMonths[0].date.getFullYear(),
     };
     renderCalendar();
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi khởi tạo ngày khởi hành:", error);
   }
-} // Render month picker buttons
+}
+
+// ============================================
+// RENDER MONTH PICKER
+// ============================================
+/**
+ * Render danh sách các nút chọn tháng
+ * @param {Array} months - Mảng các tháng duy nhất [{monthKey, date, label}]
+ */
 function renderMonthPicker(months) {
   const monthList = document.getElementById("month-list");
   if (!monthList) return;
@@ -120,7 +136,15 @@ function renderMonthPicker(months) {
   });
 }
 
-// Render calendar for current month
+// ============================================
+// RENDER CALENDAR
+// ============================================
+/**
+ * Render lịch cho tháng hiện tại
+ * - Tạo lưới lịch với các ngày trong tháng
+ * - Highlight các ngày có tour khởi hành
+ * - Hiển thị giá trên từng ngày
+ */
 function renderCalendar() {
   if (!currentMonthDisplay) return;
 
@@ -131,9 +155,9 @@ function renderCalendar() {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
-  const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+  const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Thứ 2 = 0
 
-  // Update month title
+  // Cập nhật tiêu đề tháng
   const monthTitle = document.getElementById("current-month");
   const monthNames = [
     "Tháng 1",
@@ -151,21 +175,21 @@ function renderCalendar() {
   ];
   monthTitle.textContent = `${monthNames[month]}/${year}`;
 
-  // Add empty cells for days before month starts
+  // Thêm ô trống cho các ngày trước khi tháng bắt đầu
   for (let i = 0; i < startingDayOfWeek; i++) {
     const emptyCell = document.createElement("div");
     emptyCell.className = "text-center py-3 text-gray-400";
     calendarGrid.appendChild(emptyCell);
   }
 
-  // Add day cells
+  // Thêm các ô ngày trong tháng
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
       day
     ).padStart(2, "0")}`;
 
-    // Find departure for this day
-    // Handle different date formats: ISO string or plain date string
+    // Tìm ngày khởi hành cho ngày này
+    // Xử lý nhiều format ngày: ISO string hoặc plain date string
     const departure = departureDates.find((d) => {
       const dDate = new Date(d.date);
       const dDateStr = `${dDate.getUTCFullYear()}-${String(
@@ -177,6 +201,7 @@ function renderCalendar() {
     const dayCell = document.createElement("div");
 
     if (departure) {
+      // Ngày có tour khởi hành
       dayCell.className =
         "bg-blue-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-blue-600 transition duration-200";
       const priceDisplay =
@@ -189,6 +214,7 @@ function renderCalendar() {
       `;
       dayCell.onclick = () => selectDepartureDate(departure);
     } else {
+      // Ngày không có tour
       dayCell.className = "text-center py-3 text-gray-400";
       dayCell.textContent = day;
     }
@@ -197,13 +223,26 @@ function renderCalendar() {
   }
 }
 
-// Format price to K
+// ============================================
+// FORMAT PRICE
+// ============================================
+/**
+ * Format giá tiền thành dạng "K" (ngàn)
+ * @param {Number} price - Giá tiền
+ * @returns {String} - Giá đã format (vd: "5.390k")
+ */
 function formatPrice(price) {
   if (!price) return "0";
   return (Math.floor(price / 1000) + "k").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-// Select departure month
+// ============================================
+// SELECT MONTH
+// ============================================
+/**
+ * Chọn tháng để hiển thị trên lịch
+ * @param {String} monthYear - Tháng/năm dạng "12/2025"
+ */
 function selectMonth(monthYear) {
   const [month, year] = monthYear.split("/");
   currentMonthDisplay = {
@@ -211,7 +250,7 @@ function selectMonth(monthYear) {
     year: parseInt(year),
   };
 
-  // Update active button
+  // Cập nhật nút active
   document.querySelectorAll(".month-picker-btn").forEach((btn) => {
     btn.classList.remove("border-blue-500", "bg-blue-50");
     btn.classList.add("border-gray-300");
@@ -224,7 +263,12 @@ function selectMonth(monthYear) {
   renderCalendar();
 }
 
-// Navigate months
+// ============================================
+// ĐIỀU HƯỚNG THÁNG
+// ============================================
+/**
+ * Chuyển sang tháng trước
+ */
 function prevMonth() {
   if (!currentMonthDisplay) return;
   if (currentMonthDisplay.month === 0) {
@@ -234,11 +278,13 @@ function prevMonth() {
     currentMonthDisplay.month--;
   }
 
-  // Update active month button
   updateActiveMonthButton();
   renderCalendar();
 }
 
+/**
+ * Chuyển sang tháng sau
+ */
 function nextMonth() {
   if (!currentMonthDisplay) return;
   if (currentMonthDisplay.month === 11) {
@@ -248,12 +294,13 @@ function nextMonth() {
     currentMonthDisplay.month++;
   }
 
-  // Update active month button
   updateActiveMonthButton();
   renderCalendar();
 }
 
-// Update active month button highlight
+/**
+ * Cập nhật highlight cho nút tháng đang active
+ */
 function updateActiveMonthButton() {
   const month = currentMonthDisplay.month + 1;
   const year = currentMonthDisplay.year;
@@ -269,19 +316,32 @@ function updateActiveMonthButton() {
   });
 }
 
-// Select departure date
+// ============================================
+// SELECT DEPARTURE DATE
+// ============================================
+/**
+ * Chọn ngày khởi hành
+ * @param {Object} departure - Thông tin ngày khởi hành {date, price}
+ */
 function selectDepartureDate(departure) {
-  console.log("Selected departure:", departure);
-  // Store selected date and show in booking form if needed
+  console.log("Đã chọn ngày khởi hành:", departure);
+  // Lưu ngày đã chọn vào localStorage để dùng trong form đặt tour
   localStorage.setItem("selectedDepartureDate", JSON.stringify(departure));
 }
 
-// Initialize page - populate lightbox thumbnails
+// ============================================
+// KHỞI TẠO LIGHTBOX THUMBNAILS
+// ============================================
+/**
+ * Khởi tạo các thumbnail ảnh trong lightbox
+ * - Tạo danh sách ảnh nhỏ dưới lightbox
+ * - Gắn sự kiện click để mở ảnh tương ứng
+ */
 function initializeLightboxThumbnails() {
   const container = document.getElementById("lightbox-thumbnails");
   if (!container || !images || images.length === 0) return;
 
-  container.innerHTML = ""; // Clear placeholder
+  container.innerHTML = ""; // Xóa placeholder
 
   images.forEach((image, idx) => {
     const img = document.createElement("img");
@@ -298,34 +358,41 @@ function initializeLightboxThumbnails() {
   });
 }
 
-// Initialize calendar on page load
-// (handled in DOMContentLoaded event below)
-
-// Keyboard navigation for lightbox
+// ============================================
+// KEYBOARD NAVIGATION (LIGHTBOX)
+// ============================================
+// Điều khiển lightbox bằng phím
 document.addEventListener("keydown", function (event) {
   const lightbox = document.getElementById("lightbox");
   if (lightbox.classList.contains("hidden")) return;
 
   if (event.key === "ArrowRight") {
-    nextImage();
+    nextImage(); // Mũi tên phải
   } else if (event.key === "ArrowLeft") {
-    prevImage();
+    prevImage(); // Mũi tên trái
   } else if (event.key === "Escape") {
-    closeLightbox();
+    closeLightbox(); // ESC đóng lightbox
   }
 });
 
-// Progress bar on scroll
+// ============================================
+// PROGRESS BAR ON SCROLL
+// ============================================
+/**
+ * Cập nhật thanh tiến độ khi scroll trang
+ * - Tính % scroll
+ * - Hiển thị/ẩn mini tour info trong header
+ */
 window.addEventListener("scroll", function () {
   const progressBar = document.getElementById("progress-bar");
-  if (!progressBar) return; // Skip if progress bar doesn't exist
+  if (!progressBar) return;
 
   const scrollTop = window.pageYOffset;
   const docHeight = document.body.offsetHeight - window.innerHeight;
   const scrollPercent = (scrollTop / docHeight) * 100;
   progressBar.style.width = scrollPercent + "%";
 
-  // Show/hide mini tour info in header
+  // Hiển thị/ẩn thông tin tour mini trong header
   const miniInfo = document.getElementById("mini-tour-info");
   if (scrollTop > 300) {
     miniInfo.classList.remove("hidden");
@@ -336,7 +403,13 @@ window.addEventListener("scroll", function () {
   }
 });
 
-// Accordion functionality
+// ============================================
+// ACCORDION FUNCTIONALITY
+// ============================================
+/**
+ * Bật/tắt accordion (mở rộng/thu gọn)
+ * @param {String} id - ID của element accordion
+ */
 function toggleAccordion(id) {
   const element = document.getElementById(id);
   const icon = document.getElementById(id + "-icon");
@@ -350,33 +423,47 @@ function toggleAccordion(id) {
   }
 }
 
-// Guest counter
+// ============================================
+// GUEST COUNTER
+// ============================================
+/**
+ * Thay đổi số lượng khách
+ * @param {Number} change - Số lượng thay đổi (+1 hoặc -1)
+ */
 function changeGuests(change) {
   guestCount = Math.max(1, Math.min(10, guestCount + change));
   document.getElementById("guest-count").textContent = guestCount;
   document.getElementById("modal-guest-count").textContent = guestCount;
 
+  // Cập nhật tổng giá
   const basePrice = 6390000;
   const totalPrice = (basePrice * guestCount).toLocaleString("vi-VN");
   document.getElementById("total-price").textContent = totalPrice + "đ";
   document.getElementById("modal-total-price").textContent = totalPrice + "đ";
 }
 
-// Initialize wishlist - check if tour is already favorited
+// ============================================
+// INITIALIZE WISHLIST
+// ============================================
+/**
+ * Khởi tạo trạng thái yêu thích
+ * - Kiểm tra tour đã được yêu thích chưa
+ * - Cập nhật UI (icon trái tim)
+ */
 async function initializeWishlist() {
   try {
-    // Get tour ID from button
+    // Lấy tour ID từ button
     const btn = document.querySelector('[onclick*="addToWishlist"]');
     if (!btn) return;
 
-    // Extract tour ID from onclick attribute
+    // Extract tour ID từ onclick attribute
     const onclickAttr = btn.getAttribute("onclick");
     const tourIdMatch = onclickAttr.match(/addToWishlist\('([^']+)'\)/);
     if (!tourIdMatch) return;
 
     const tourId = tourIdMatch[1];
 
-    // Check if tour is favorited
+    // Kiểm tra tour đã được yêu thích chưa
     const isFavorited = await favoriteHelper.checkIsFavorited(tourId);
 
     if (isFavorited) {
@@ -385,6 +472,7 @@ async function initializeWishlist() {
       const text = document.getElementById("wishlist-text");
 
       if (icon && text) {
+        // Tô đỏ trái tim
         icon.setAttribute("fill", "currentColor");
         icon.setAttribute("stroke", "currentColor");
         icon.classList.add("text-red-500");
@@ -393,13 +481,19 @@ async function initializeWishlist() {
       }
     }
   } catch (error) {
-    console.error("Initialize wishlist error:", error);
+    console.error("Lỗi khởi tạo wishlist:", error);
   }
 }
 
-// Wishlist functionality
+// ============================================
+// WISHLIST FUNCTIONALITY
+// ============================================
+/**
+ * Thêm/xóa tour khỏi danh sách yêu thích
+ * @param {String} tourId - ID của tour
+ */
 function addToWishlist(tourId) {
-  // Toggle favorite via API
+  // Toggle favorite qua API
   favoriteHelper
     .toggleFavorite(tourId)
     .then((result) => {
@@ -410,7 +504,7 @@ function addToWishlist(tourId) {
         isWishlisted = result.isFavorited;
 
         if (isWishlisted) {
-          // Fill the heart with red color
+          // Tô đỏ trái tim (đã yêu thích)
           icon.setAttribute("fill", "currentColor");
           icon.setAttribute("stroke", "currentColor");
           icon.classList.add("text-red-500");
@@ -418,7 +512,7 @@ function addToWishlist(tourId) {
           text.textContent = "Đã yêu thích";
           showNotification("Đã thêm vào danh sách yêu thích! 💖", "success");
         } else {
-          // Outline heart with gray color
+          // Outline trái tim (chưa yêu thích)
           icon.setAttribute("fill", "none");
           icon.setAttribute("stroke", "currentColor");
           icon.classList.remove("text-red-500");
@@ -431,40 +525,61 @@ function addToWishlist(tourId) {
       }
     })
     .catch((error) => {
-      console.error("Error toggling favorite:", error);
+      console.error("Lỗi toggle favorite:", error);
       showNotification("Có lỗi xảy ra khi cập nhật yêu thích", "error");
     });
 }
 
-// Lightbox functionality
+// ============================================
+// LIGHTBOX FUNCTIONALITY
+// ============================================
+/**
+ * Mở lightbox với ảnh tại index
+ * @param {Number} index - Index của ảnh cần hiển thị
+ */
 function openLightbox(index) {
-  // Ensure index is valid
+  // Đảm bảo index hợp lệ
   if (!images || index < 0 || index >= images.length) return;
 
   currentImageIndex = index;
   const lightbox = document.getElementById("lightbox");
   lightbox.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
+  document.body.style.overflow = "hidden"; // Không cho scroll body
 
-  // Update display
+  // Cập nhật hiển thị
   updateLightboxDisplay();
 }
 
+/**
+ * Đóng lightbox
+ */
 function closeLightbox() {
   document.getElementById("lightbox").classList.add("hidden");
   document.body.style.overflow = "auto";
 }
 
+/**
+ * Chuyển sang ảnh tiếp theo
+ */
 function nextImage() {
   currentImageIndex = (currentImageIndex + 1) % images.length;
   updateLightboxDisplay();
 }
 
+/**
+ * Quay lại ảnh trước đó
+ */
 function prevImage() {
   currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
   updateLightboxDisplay();
 }
 
+/**
+ * Cập nhật hiển thị lightbox
+ * - Đổi ảnh chính
+ * - Cập nhật caption và counter
+ * - Highlight thumbnail đang active
+ */
 function updateLightboxDisplay() {
   if (!images || !images[currentImageIndex]) return;
 
@@ -477,7 +592,7 @@ function updateLightboxDisplay() {
   caption.textContent = images[currentImageIndex].caption;
   counter.textContent = currentImageIndex + 1 + " / " + images.length;
 
-  // Highlight active thumbnail
+  // Highlight thumbnail đang active
   const allThumbs = document.querySelectorAll(".lightbox-thumb");
   allThumbs.forEach((thumb, idx) => {
     if (idx === currentImageIndex) {
@@ -487,7 +602,7 @@ function updateLightboxDisplay() {
     }
   });
 
-  // Scroll thumbnail into view
+  // Scroll thumbnail vào viewport
   if (allThumbs.length > currentImageIndex) {
     allThumbs[currentImageIndex].scrollIntoView({
       behavior: "smooth",
@@ -497,28 +612,48 @@ function updateLightboxDisplay() {
   }
 }
 
-// Modal functionality
+// ============================================
+// MODAL FUNCTIONALITY
+// ============================================
+/**
+ * Mở modal đặt tour
+ */
 function openBookingModal() {
   document.getElementById("booking-modal").classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
 
+/**
+ * Đóng modal đặt tour
+ */
 function closeBookingModal() {
   document.getElementById("booking-modal").classList.add("hidden");
   document.body.style.overflow = "auto";
 }
 
+/**
+ * Mở modal liên hệ
+ */
 function openContactModal() {
   document.getElementById("contact-modal").classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
 
+/**
+ * Đóng modal liên hệ
+ */
 function closeContactModal() {
   document.getElementById("contact-modal").classList.add("hidden");
   document.body.style.overflow = "auto";
 }
 
-// Form submission
+// ============================================
+// FORM SUBMISSION
+// ============================================
+/**
+ * Xử lý submit form đặt tour
+ * @param {Event} event - Event submit
+ */
 function submitBooking(event) {
   event.preventDefault();
 
@@ -542,7 +677,14 @@ function submitBooking(event) {
   }
 }
 
-// Notification system
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+/**
+ * Hiển thị thông báo popup
+ * @param {String} message - Nội dung thông báo
+ * @param {String} type - Loại thông báo (success/error/info)
+ */
 function showNotification(message, type = "info") {
   const notification = document.createElement("div");
   const bgColor =
@@ -556,6 +698,7 @@ function showNotification(message, type = "info") {
   notification.textContent = message;
   document.body.appendChild(notification);
 
+  // Tự động ẩn sau 4 giây
   setTimeout(() => {
     notification.style.opacity = "0";
     notification.style.transform = "translateX(100%)";
@@ -563,7 +706,10 @@ function showNotification(message, type = "info") {
   }, 4000);
 }
 
-// Calendar interaction
+// ============================================
+// CALENDAR INTERACTION
+// ============================================
+// Xử lý click vào ngày trên lịch
 document.querySelectorAll(".calendar-day").forEach((day) => {
   day.addEventListener("click", function () {
     if (
@@ -573,12 +719,12 @@ document.querySelectorAll(".calendar-day").forEach((day) => {
       const price = this.querySelector(".text-xs")?.textContent || "";
       const date = this.querySelector(".font-semibold")?.textContent || "";
 
-      // Remove previous selections
+      // Xóa selection trước đó
       document.querySelectorAll(".calendar-day").forEach((d) => {
         d.classList.remove("ring-4", "ring-yellow-400");
       });
 
-      // Add selection ring
+      // Thêm ring highlight
       this.classList.add("ring-4", "ring-yellow-400");
 
       showNotification(`Đã chọn ngày ${date} - Giá: ${price} 📅`, "success");
@@ -586,7 +732,10 @@ document.querySelectorAll(".calendar-day").forEach((day) => {
   });
 });
 
-// Close modals when clicking outside
+// ============================================
+// CLOSE MODALS ON OUTSIDE CLICK
+// ============================================
+// Đóng modal khi click bên ngoài
 document.addEventListener("click", function (e) {
   const bookingModal = document.getElementById("booking-modal");
   const contactModal = document.getElementById("contact-modal");
@@ -597,17 +746,26 @@ document.addEventListener("click", function (e) {
   if (e.target === lightbox) closeLightbox();
 });
 
-// Initialize page
+// ============================================
+// INITIALIZE PAGE
+// ============================================
+/**
+ * Khởi tạo trang khi DOM đã load
+ * - Khởi tạo lịch và ngày khởi hành
+ * - Khởi tạo lightbox thumbnails
+ * - Kiểm tra trạng thái yêu thích
+ * - Hiển thị thông báo chào mừng
+ */
 document.addEventListener("DOMContentLoaded", function () {
   initializeDepartureDates();
   initializeLightboxThumbnails();
-  initializeWishlist(); // Check if tour is already favorited
+  initializeWishlist(); // Kiểm tra tour đã được yêu thích chưa
 
-  // Show welcome message
-  setTimeout(() => {
-    showNotification("Chào mừng bạn đến với VietTravel! 🌏", "info");
-  }, 1000);
+  // Hiển thị thông báo chào mừng
+  // setTimeout(() => {
+  //   showNotification("Chào mừng bạn đến với VietTravel! 🌏", "info");
+  // }, 1000);
 
-  // Initialize guest count display
+  // Khởi tạo hiển thị số lượng khách
   changeGuests(0);
 });

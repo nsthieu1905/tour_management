@@ -1,7 +1,7 @@
 // ===========================
 // CONFIRM THÔNG BÁO
 // ===========================
-export const Modal = {
+const Modal = {
   // Modal xác nhận
   confirm({
     title = "Xác nhận",
@@ -94,7 +94,6 @@ export const Modal = {
       }
     };
 
-    // Click outside để đóng
     modal.onclick = (e) => {
       if (e.target === modal) {
         this.close();
@@ -118,7 +117,6 @@ export const Modal = {
     this._keyHandler = keyHandler;
   },
 
-  // Đóng modal
   close() {
     const modal = document.getElementById("reusable-modal");
     if (modal) modal.remove();
@@ -195,7 +193,6 @@ export const Modal = {
       onClose();
     };
 
-    // Click ra ngoài để đóng
     modal.onclick = (e) => {
       if (e.target === modal) {
         this.close();
@@ -223,7 +220,7 @@ export const Modal = {
 // ===========================
 // TOAST
 // ===========================
-export const Notification = {
+const Notification = {
   show(message, type = "success", duration = 3000) {
     const configs = {
       success: { bg: "bg-green-500", icon: "fa-check-circle" },
@@ -276,3 +273,5 @@ export const Notification = {
     this.show(message, "info", duration);
   },
 };
+
+export { Modal, Notification };

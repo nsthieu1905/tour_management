@@ -17,7 +17,7 @@ const generateRefreshToken = (userId) => {
   });
 };
 
-// [POST] auth/login - Admin login only
+// [POST] auth/login
 const login = async (req, res) => {
   try {
     const { username, password, rememberMe } = req.body;
@@ -32,7 +32,7 @@ const login = async (req, res) => {
       });
     }
 
-    // Tìm user theo email (sử dụng email field cho admin)
+    // Tìm user theo email
     const user = await User.findOne({ email: username });
 
     // So sánh password nếu user tồn tại
@@ -69,7 +69,7 @@ const login = async (req, res) => {
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
-    // Convert AUTH_TOKEN_EXP to milliseconds for maxAge
+    // Tính maxAge từ AUTH_TOKEN_EXP
     const accessExpiresInStr = process.env.AUTH_TOKEN_EXP;
     let accessMaxAgeMs = 60 * 1000;
 
@@ -83,7 +83,7 @@ const login = async (req, res) => {
       accessMaxAgeMs = parseInt(accessExpiresInStr) * 24 * 60 * 60 * 1000;
     }
 
-    // Convert REFRESH_TOKEN_EXP to milliseconds for maxAge
+    // Tính maxAge từ REFRESH_TOKEN_EXP
     const refreshExpiresInStr = process.env.REFRESH_TOKEN_EXP;
     let refreshMaxAgeMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -111,8 +111,8 @@ const login = async (req, res) => {
       sameSite: "strict",
     };
 
-    // Chỉ set maxAge nếu check "remember me" → persistent cookie
-    // Nếu không → session cookie (xóa khi tắt browser)
+    // Chỉ set maxAge nếu check "remember me" -> persistent cookie
+    // Nếu không -> session cookie (xóa khi tắt browser)
     if (rememberMe) {
       accessCookieOptions.maxAge = accessMaxAgeMs;
       refreshCookieOptions.maxAge = refreshMaxAgeMs;
@@ -152,7 +152,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -202,7 +202,7 @@ const clientLogin = async (req, res) => {
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
-    // Convert AUTH_TOKEN_EXP to milliseconds for maxAge
+    // Tính maxAge từ AUTH_TOKEN_EXP
     const accessExpiresInStr = process.env.AUTH_TOKEN_EXP;
     let accessMaxAgeMs = 60 * 1000;
 
@@ -216,7 +216,7 @@ const clientLogin = async (req, res) => {
       accessMaxAgeMs = parseInt(accessExpiresInStr) * 24 * 60 * 60 * 1000;
     }
 
-    // Convert REFRESH_TOKEN_EXP to milliseconds for maxAge
+    // Tính maxAge từ REFRESH_TOKEN_EXP
     const refreshExpiresInStr = process.env.REFRESH_TOKEN_EXP;
     let refreshMaxAgeMs = 7 * 24 * 60 * 60 * 1000;
 
@@ -245,6 +245,7 @@ const clientLogin = async (req, res) => {
     };
 
     // Chỉ set maxAge nếu check "remember me" -> persistent cookie
+    // Nếu không -> session cookie (xóa khi tắt browser)
     if (rememberMe) {
       accessCookieOptions.maxAge = accessMaxAgeMs;
       refreshCookieOptions.maxAge = refreshMaxAgeMs;
@@ -384,7 +385,7 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    console.error("Refresh token error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -427,7 +428,7 @@ const logout = async (req, res) => {
       message: "Đăng xuất thành công",
     });
   } catch (error) {
-    console.error("Logout error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -436,34 +437,33 @@ const logout = async (req, res) => {
 };
 
 // API lấy thông tin user hiện tại
-const getCurrentUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
+// const getCurrentUser = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.userId);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Không tìm thấy thông tin user",
-      });
-    }
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Không tìm thấy thông tin user",
+//       });
+//     }
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        user: user.toJSON(),
-      },
-    });
-  } catch (error) {
-    console.error("Get current user error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Lỗi server, vui lòng thử lại sau",
-    });
-  }
-};
+//     return res.status(200).json({
+//       success: true,
+//       data: {
+//         user: user.toJSON(),
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Get current user error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Lỗi server, vui lòng thử lại sau",
+//     });
+//   }
+// };
 
 // [POST] auth/check-token
-// Check nếu access token hết hạn
 const checkToken = (req, res) => {
   try {
     const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
@@ -481,29 +481,29 @@ const checkToken = (req, res) => {
       jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
       return res.status(200).json({
         success: true,
-        message: "Token still valid",
+        message: "Token còn hạn",
         expired: false,
       });
     } catch (error) {
       if (error.name === "TokenExpiredError") {
         return res.status(200).json({
           success: true,
-          message: "Token expired",
+          message: "Token hết hạn",
           expired: true,
         });
       } else {
         return res.status(401).json({
           success: false,
-          message: "Token invalid",
+          message: "Token không hợp lệ",
           expired: true,
         });
       }
     }
   } catch (error) {
-    console.error("Check token error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
@@ -529,7 +529,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Validate email format
+    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -538,7 +538,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Validate password length
+    // Validate password
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -546,7 +546,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Check password match
+    // Check password
     if (password !== passwordConfirm) {
       return res.status(400).json({
         success: false,
@@ -554,7 +554,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Check if email already exists
+    // Kiểm tra email đã tồn tại
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({
@@ -563,13 +563,13 @@ const register = async (req, res) => {
       });
     }
 
-    // Create new user with role = 'customer' by default
+    // Tạo user mới với role mặc định là 'customer'
     const newUser = new User({
       fullName: fullName.trim(),
       email: email.toLowerCase().trim(),
       phone: phone || null,
       password: password,
-      role: "customer", // Default role for new registrations
+      role: "customer",
       status: "active",
     });
 
@@ -583,7 +583,7 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Register error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -597,7 +597,7 @@ module.exports = {
   register,
   refreshToken,
   logout,
-  getCurrentUser,
+  // getCurrentUser,
   checkToken,
   generateAccessToken,
   generateRefreshToken,

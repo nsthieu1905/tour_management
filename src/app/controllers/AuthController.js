@@ -18,13 +18,6 @@ const login = (req, res) => {
   });
 };
 
-// [GET] /auth/register
-const register = (req, res) => {
-  res.render("auth/register", {
-    bodyClass: "bg-gray-50 transition-all duration-300",
-  });
-};
-
 // [GET] /client/login
 const clientLogin = (req, res) => {
   const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
@@ -52,7 +45,6 @@ const clientRegister = (req, res) => {
 
 module.exports = {
   login,
-  register,
   clientLogin,
   clientRegister,
 };

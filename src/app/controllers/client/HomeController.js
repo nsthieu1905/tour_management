@@ -2,22 +2,30 @@ const { Tour, Favorite } = require("../../models/index");
 
 // [GET] /
 const home = (req, res) => {
-  res.render("home", {
-    bodyClass: "bg-gray-50",
-  });
+  try {
+    return res.render("home", {
+      bodyClass: "bg-gray-50",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
+  }
 };
 
-// [GET] /favorites - View user's favorite tours
+// [GET] /favorites
 const favorites = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Get user's favorites
+    // Lấy danh sách yêu thích của người dùng
     const favorites = await Favorite.find({
       userId: userId,
     }).lean();
 
-    // Manually fetch tour data for each favorite
+    // Lấy thông tin chi tiết của các tour yêu thích của user trùng với userId
     const favoriteTours = [];
     for (const fav of favorites) {
       const tour = await Tour.findById(fav.tourId).lean();
@@ -26,15 +34,16 @@ const favorites = async (req, res) => {
       }
     }
 
-    res.render("favorites", {
+    return res.render("favorites", {
       bodyClass: "bg-gray-50",
       favorites: favoriteTours,
       count: favoriteTours.length,
     });
   } catch (error) {
-    console.error("Favorites view error:", error);
-    res.status(500).render("errors/error", {
-      message: "Lỗi khi tải danh sách yêu thích",
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
     });
   }
 };

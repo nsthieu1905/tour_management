@@ -5,7 +5,14 @@ const getAllCoupons = async (req, res, next) => {
   try {
     const coupons = await Khuyen_mai.find().lean();
 
-    res.status(200).json({
+    if (!coupons || coupons.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy danh sách mã giảm giá",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Lấy danh sách mã giảm giá thành công",
       data: coupons,
@@ -27,7 +34,7 @@ const getCouponById = async (req, res, next) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Lấy chi tiết mã giảm giá thành công",
       data: coupon,
@@ -85,7 +92,7 @@ const addCoupon = async (req, res, next) => {
 
     await newCoupon.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Thêm mã giảm giá thành công",
       data: newCoupon,
@@ -156,7 +163,7 @@ const updateCoupon = async (req, res, next) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Cập nhật mã giảm giá thành công",
       data: coupon,
@@ -178,7 +185,7 @@ const deleteCoupon = async (req, res, next) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Xóa mã giảm giá thành công",
       data: coupon,

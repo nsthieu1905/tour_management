@@ -2,10 +2,6 @@ const express = require("express");
 const router = express.Router();
 const upload = require("../../config/multer");
 const tourApiController = require("../../app/API/ToursApiController");
-const {
-  authenticateFromCookie,
-  authenticate,
-} = require("../../middleware/authMiddleware");
 const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
 
 router.delete("/trash/:id", tourApiController.forceDelete);

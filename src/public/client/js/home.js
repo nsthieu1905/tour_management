@@ -620,13 +620,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialize advanced features
   initAdvancedSearch();
   initDynamicPricing();
-  simulateRealTimeUpdates();
+  // simulateRealTimeUpdates();
   trackPriceChanges();
 
   // Show welcome notification
-  setTimeout(() => {
-    showNotification("Chào mừng đến với TravelSmart! 🎉", "success");
-  }, 1000);
+  // setTimeout(() => {
+  //   showNotification("Chào mừng đến với TravelSmart! 🎉", "success");
+  // }, 1000);
 });
 
 // (function () {

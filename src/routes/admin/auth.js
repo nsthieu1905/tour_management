@@ -12,7 +12,6 @@ router.post("/register", authApiController.register);
 router.post("/check-token", authApiController.checkToken);
 router.post("/refresh", authApiController.refreshToken);
 router.post("/logout", authApiController.logout);
-router.get("/register", authController.register);
 // router.get(
 //   "/current-user",
 //   protectClientRoutes,

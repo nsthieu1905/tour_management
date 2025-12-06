@@ -10,7 +10,7 @@ router.get("/dashboard", siteController.dashboard);
 
 router.get("/qly-tour/trash", siteController.trashTour);
 
-router.get("/qly-tour/:id", siteController.tourDetail);
+// router.get("/qly-tour/:id", siteController.tourDetail);
 
 router.get("/qly-tour", siteController.qlyTour);
 

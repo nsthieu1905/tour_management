@@ -19,7 +19,6 @@ const validatePhoneNumber = (phone) => {
 const validateFullName = (fullName) => {
   if (!fullName || fullName.trim().length === 0) return false;
   if (fullName.trim().length < 3) return false;
-  // Không chứa số hoặc ký tự đặc biệt (cho phép khoảng trắng và dấu gạch ngang)
   return /^[a-zA-ZÀ-ỿ\s\-]+$/.test(fullName);
 };
 

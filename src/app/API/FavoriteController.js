@@ -1,12 +1,12 @@
 const { Favorite, Tour } = require("../models/index");
 
-// [POST] /api/favorites/toggle - Add or remove favorite
+// [POST] /api/favorites/toggle
 const toggleFavorite = async (req, res) => {
   try {
     const { tourId } = req.body;
-    const userId = req.user.userId; // From authenticateFromCookie middleware
+    const userId = req.user.userId; // From protectClientRoutes middleware
 
-    // Check if favorite already exists
+    // kiểm tra tour đã thích hay chưa
     const existingFavorite = await Favorite.findOne({
       userId,
       tourId,
@@ -34,27 +34,28 @@ const toggleFavorite = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Toggle favorite error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi cập nhật danh sách yêu thích",
-      error: error.message,
+      message: "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
 
-// [GET] /api/favorites - Get user's favorite tours
+// [GET] /api/favorites
 const getUserFavorites = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Find all favorites for user
+    // Lấy danh sách yêu thích của user trùng với userId
     const favorites = await Favorite.find({
       userId,
       isFavorited: true,
-    }).populate("tourId");
+    })
+      .populate("tourId")
+      .lean();
 
-    // Extract tour data
+    // Lấy chỉ danh sách tour từ favorites
     const favoriteTours = favorites.map((fav) => fav.tourId).filter(Boolean);
 
     return res.status(200).json({
@@ -65,22 +66,21 @@ const getUserFavorites = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get favorites error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi lấy danh sách yêu thích",
-      error: error.message,
+      message: "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
 
-// [GET] /api/favorites/check/:tourId - Check if tour is favorited
+// [GET] /api/favorites/check/:tourId
 const checkIsFavorited = async (req, res) => {
   try {
     const { tourId } = req.params;
     const userId = req.user.userId;
 
-    const favorite = await Favorite.findOne({
+    const exists = await Favorite.exists({
       userId,
       tourId,
       isFavorited: true,
@@ -88,14 +88,13 @@ const checkIsFavorited = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      isFavorited: !!favorite,
+      isFavorited: !!exists,
     });
   } catch (error) {
-    console.error("Check favorite error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi kiểm tra trạng thái yêu thích",
-      error: error.message,
+      message: "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
