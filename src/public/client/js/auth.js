@@ -5,40 +5,58 @@ import {
 import { Notification } from "../../utils/modal.js";
 
 // ============================================
-// XỬ LÝ LỖI FORM
+// CONSTANTS & CONFIGURATION
 // ============================================
 
-// Hiển thị lỗi cho một trường input
+const FORM_CONFIGS = {
+  login: {
+    fields: ["username", "password"],
+    validator: validateLoginInput,
+    endpoint: "/auth/client-login",
+    successMessage: "Đăng nhập thành công!",
+    redirectUrl: "/",
+    buttonTextId: "loginButtonText",
+    spinnerId: "loginSpinner",
+  },
+  register: {
+    fields: ["fullName", "email", "phone", "password", "passwordConfirm"],
+    validator: validateRegisterInput,
+    endpoint: "/auth/register",
+    successMessage: "Đăng ký thành công!",
+    redirectUrl: "/client/auth/login",
+    buttonTextId: "registerButtonText",
+    spinnerId: "registerSpinner",
+  },
+};
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+// Hiển thị/ẩn lỗi cho một trường input
 function showFieldError(fieldId, errorMessage) {
   const field = document.getElementById(fieldId);
   const errorElement = document.getElementById(`${fieldId}Error`);
   const errorMsgElement = document.getElementById(`${fieldId}ErrorMsg`);
 
+  if (!field || !errorElement) return;
+
   if (errorMessage) {
     field.classList.add("border-red-500", "bg-red-50");
-    if (errorMsgElement) {
-      errorMsgElement.textContent = errorMessage;
-    } else {
-      errorElement.textContent = errorMessage;
-    }
+    const targetElement = errorMsgElement || errorElement;
+    targetElement.textContent = errorMessage;
     errorElement.classList.remove("hidden");
   } else {
     field.classList.remove("border-red-500", "bg-red-50");
-    if (errorMsgElement) {
-      errorMsgElement.textContent = "";
-    } else {
-      errorElement.textContent = "";
-    }
+    const targetElement = errorMsgElement || errorElement;
+    targetElement.textContent = "";
     errorElement.classList.add("hidden");
   }
 }
 
-// Xóa tất cả lỗi
-function clearAllErrors() {
-  const fieldIds = ["username", "password"];
-  fieldIds.forEach((fieldId) => {
-    showFieldError(fieldId, null);
-  });
+// Xóa tất cả lỗi của form
+function clearAllErrors(fieldIds) {
+  fieldIds.forEach((fieldId) => showFieldError(fieldId, null));
   clearFormError();
 }
 
@@ -46,6 +64,8 @@ function clearAllErrors() {
 function showFormError(message) {
   const formError = document.getElementById("formError");
   const formErrorMsg = document.getElementById("formErrorMsg");
+
+  if (!formError || !formErrorMsg) return;
 
   if (message) {
     formErrorMsg.textContent = message;
@@ -60,259 +80,190 @@ function clearFormError() {
   showFormError(null);
 }
 
+// Quản lý trạng thái loading
+function toggleLoadingState(config, isLoading) {
+  const buttonText = document.getElementById(config.buttonTextId);
+  const spinner = document.getElementById(config.spinnerId);
+  const button = document.querySelector(`button[type='submit']`);
+
+  if (!buttonText || !spinner) return;
+
+  if (isLoading) {
+    buttonText.classList.add("hidden");
+    spinner.classList.remove("hidden");
+    if (button) button.disabled = true;
+  } else {
+    buttonText.classList.remove("hidden");
+    spinner.classList.add("hidden");
+    if (button) button.disabled = false;
+  }
+}
+
+// Lấy giá trị từ các trường input
+function getFormValues(fieldIds) {
+  const values = {};
+  fieldIds.forEach((fieldId) => {
+    const element = document.getElementById(fieldId);
+    if (element) {
+      values[fieldId] =
+        fieldId === "password" || fieldId === "passwordConfirm"
+          ? element.value
+          : element.value.trim();
+    }
+  });
+  return values;
+}
+
 // ============================================
-// KIỂM TRA DỮ LIỆU NHẬP VÀO
+// VALIDATION
 // ============================================
 
-// Kiểm tra toàn bộ form
-function validateForm(fields = ["username", "password"]) {
-  const username = document.getElementById("username")?.value.trim() || "";
-  const password = document.getElementById("password")?.value.trim() || "";
-
-  const result = validateLoginInput(username, password);
+// Kiểm tra form
+function validateFormWithConfig(config) {
+  const values = getFormValues(config.fields);
+  const result = config.validator(...Object.values(values));
 
   if (!result.isValid) {
-    if (result.errors.username) {
-      showFieldError("username", result.errors.username);
-    }
-    if (result.errors.password) {
-      showFieldError("password", result.errors.password);
-    }
+    Object.keys(result.errors).forEach((fieldId) => {
+      showFieldError(fieldId, result.errors[fieldId]);
+    });
   } else {
-    showFieldError("username", null);
-    showFieldError("password", null);
+    config.fields.forEach((fieldId) => showFieldError(fieldId, null));
   }
 
   return result;
 }
 
-// Kiểm tra dữ liệu thời gian thực (khi người dùng nhập)
-function setupRealtimeValidation() {
-  const usernameField = document.getElementById("username");
-  const passwordField = document.getElementById("password");
+//  Setup validation cho từng trường input
+function setupFieldValidation(fieldId, validator, validateArgs) {
+  const field = document.getElementById(fieldId);
+  if (!field) return;
 
-  if (usernameField) {
-    usernameField.addEventListener("blur", function () {
-      const result = validateLoginInput(this.value.trim(), "");
-      showFieldError("username", result.errors.username || null);
-    });
-
-    usernameField.addEventListener("input", function () {
-      if (this.value.trim()) {
-        const result = validateLoginInput(this.value.trim(), "");
-        if (!result.errors.username) {
-          showFieldError("username", null);
-        }
-      }
-    });
-  }
-
-  if (passwordField) {
-    passwordField.addEventListener("blur", function () {
-      const result = validateLoginInput("", this.value);
-      showFieldError("password", result.errors.password || null);
-    });
-
-    passwordField.addEventListener("input", function () {
-      if (this.value) {
-        const result = validateLoginInput("", this.value);
-        if (!result.errors.password) {
-          showFieldError("password", null);
-        }
-      }
-    });
-  }
-}
-
-// ============================================
-// CHỨC NĂNG ĐĂNG NHẬP
-// ============================================
-
-// Chuyển đổi hiển thị/ẩn mật khẩu
-
-// Hiển thị trạng thái đang tải (loading)
-function showLoadingState() {
-  document.getElementById("loginButtonText").classList.add("hidden");
-  document.getElementById("loginSpinner").classList.remove("hidden");
-}
-
-// Ẩn trạng thái đang tải
-function hideLoadingState() {
-  document.getElementById("loginButtonText").classList.remove("hidden");
-  document.getElementById("loginSpinner").classList.add("hidden");
-}
-
-// ============================================
-// XỬ LÝ FORM ĐĂNG NHẬP
-// ============================================
-
-// Bắt sự kiện submit form
-document.addEventListener("DOMContentLoaded", function () {
-  const loginForm = document.getElementById("loginForm");
-
-  // Thiết lập kiểm tra dữ liệu thời gian thực
-  setupRealtimeValidation();
-
-  if (loginForm) {
-    loginForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      // Xóa tất cả lỗi trước đó
-      clearAllErrors();
-
-      // Kiểm tra dữ liệu form
-      const validationResult = validateForm();
-
-      if (!validationResult.isValid) {
-        return;
-      }
-
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const rememberMe = document.getElementById("rememberMe").checked;
-
-      showLoadingState();
-
-      try {
-        const response = await fetch("/auth/client-login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: username,
-            password: password,
-            rememberMe: rememberMe,
-          }),
-          credentials: "include",
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          hideLoadingState();
-
-          // Hiển thị lỗi chung dưới form
-          if (data.message) {
-            showFormError(data.message);
-          }
-
-          return;
-        }
-
-        // Đăng nhập thành công
-        hideLoadingState();
-        Notification.success("Đăng nhập thành công!");
-
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 1500);
-      } catch (error) {
-        hideLoadingState();
-      }
-    });
-  }
-});
-
-// ============================================
-// XỬ LÝ FORM ĐĂNG KÝ
-// ============================================
-
-// Hiển thị lỗi cho trường đăng ký
-function showRegisterFieldError(fieldId, errorMessage) {
-  // Map field names to actual element IDs in HTML
-  const fieldMap = {
-    password: "password",
-    passwordConfirm: "passwordConfirm",
-  };
-
-  const actualFieldId = fieldMap[fieldId] || fieldId;
-  const field = document.getElementById(actualFieldId);
-  const errorElement = document.getElementById(`${actualFieldId}Error`);
-
-  if (errorMessage) {
-    field.classList.add("border-red-500", "bg-red-50");
-    errorElement.textContent = errorMessage;
-    errorElement.classList.remove("hidden");
-  } else {
-    field.classList.remove("border-red-500", "bg-red-50");
-    errorElement.textContent = "";
-    errorElement.classList.add("hidden");
-  }
-}
-
-// Xóa tất cả lỗi đăng ký
-function clearAllRegisterErrors() {
-  const fieldIds = [
-    "fullName",
-    "email",
-    "phone",
-    "password",
-    "passwordConfirm",
-  ];
-  fieldIds.forEach((fieldId) => {
-    const field = document.getElementById(fieldId);
+  // Xóa lỗi ngay khi người dùng bắt đầu nhập
+  field.addEventListener("input", function () {
     const errorElement = document.getElementById(`${fieldId}Error`);
-    if (field && errorElement) {
-      field.classList.remove("border-red-500", "bg-red-50");
-      errorElement.textContent = "";
-      errorElement.classList.add("hidden");
+    if (errorElement && !errorElement.classList.contains("hidden")) {
+      showFieldError(fieldId, null);
+    }
+  });
+
+  field.addEventListener("blur", function () {
+    const value =
+      fieldId === "password" || fieldId === "passwordConfirm"
+        ? this.value
+        : this.value.trim();
+
+    if (value) {
+      const args = validateArgs(this.value);
+      const result = validator(...args);
+      showFieldError(fieldId, result.errors[fieldId] || null);
     }
   });
 }
 
-// Hiển thị trạng thái loading đăng ký
-function showRegisterLoadingState() {
-  const registerBtn = document.querySelector(
-    "#registerForm button[type='submit']"
-  );
-  const buttonText = document.getElementById("registerButtonText");
-  const spinner = document.getElementById("registerSpinner");
+// ============================================
+// SHOW/HIDE PASSWORD
+// ============================================
 
-  registerBtn.disabled = true;
-  buttonText.classList.add("hidden");
-  spinner.classList.remove("hidden");
-}
+function togglePassword() {
+  const passwordInput = document.getElementById("password");
+  const toggleIcon = document.getElementById("passwordToggle");
 
-// Ẩn trạng thái loading đăng ký
-function hideRegisterLoadingState() {
-  const registerBtn = document.querySelector(
-    "#registerForm button[type='submit']"
-  );
-  const buttonText = document.getElementById("registerButtonText");
-  const spinner = document.getElementById("registerSpinner");
+  if (!passwordInput || !toggleIcon) return;
 
-  registerBtn.disabled = false;
-  buttonText.classList.remove("hidden");
-  spinner.classList.add("hidden");
-}
-
-// Kiểm tra form đăng ký
-function validateRegisterForm() {
-  const fullName = document.getElementById("fullName").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const password = document.getElementById("password").value;
-  const passwordConfirm = document.getElementById("passwordConfirm").value;
-
-  const result = validateRegisterInput(
-    fullName,
-    email,
-    phone,
-    password,
-    passwordConfirm
-  );
-
-  if (!result.isValid) {
-    // Hiển thị lỗi cho từng field
-    Object.keys(result.errors).forEach((fieldId) => {
-      showRegisterFieldError(fieldId, result.errors[fieldId]);
-    });
-    return false;
+  if (passwordInput.type === "password") {
+    passwordInput.type = "text";
+    toggleIcon.classList.remove("fa-eye");
+    toggleIcon.classList.add("fa-eye-slash");
+  } else {
+    passwordInput.type = "password";
+    toggleIcon.classList.remove("fa-eye-slash");
+    toggleIcon.classList.add("fa-eye");
   }
+}
 
-  // Kiểm tra đồng ý điều khoản
-  const agreeTerms = document.getElementById("agreeTerms").checked;
+// ============================================
+// LOGIN HANDLER
+// ============================================
+
+function setupLoginValidation() {
+  setupFieldValidation("username", validateLoginInput, (value) => [
+    value.trim(),
+    "",
+  ]);
+  setupFieldValidation("password", validateLoginInput, (value) => ["", value]);
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const config = FORM_CONFIGS.login;
+
+  clearAllErrors(config.fields);
+
+  const validationResult = validateFormWithConfig(config);
+  if (!validationResult.isValid) return;
+
+  const values = getFormValues(config.fields);
+  const rememberMe = document.getElementById("rememberMe")?.checked || false;
+
+  toggleLoadingState(config, true);
+
+  try {
+    const response = await fetch(config.endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...values, rememberMe }),
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      toggleLoadingState(config, false);
+      if (data.message) showFormError(data.message);
+      return;
+    }
+
+    toggleLoadingState(config, false);
+    Notification.success(config.successMessage);
+
+    setTimeout(() => {
+      window.location.href = config.redirectUrl;
+    }, 1000);
+  } catch (error) {
+    toggleLoadingState(config, false);
+    console.error("Login error:", error);
+  }
+}
+
+// ============================================
+// REGISTER HANDLER
+// ============================================
+
+function setupRegisterValidation() {
+  const fields = ["fullName", "email", "phone", "password", "passwordConfirm"];
+
+  fields.forEach((fieldId) => {
+    setupFieldValidation(fieldId, validateRegisterInput, (value) => {
+      // Tạo object với tất cả giá trị hiện tại
+      const values = getFormValues(FORM_CONFIGS.register.fields);
+      // Cập nhật giá trị của field đang validate
+      values[fieldId] =
+        fieldId === "password" || fieldId === "passwordConfirm"
+          ? value
+          : value.trim();
+
+      return Object.values(values);
+    });
+  });
+}
+
+function validateRegisterForm(config) {
+  const result = validateFormWithConfig(config);
+
+  if (!result.isValid) return false;
+
+  const agreeTerms = document.getElementById("agreeTerms")?.checked;
   if (!agreeTerms) {
     Notification.error("Bạn phải đồng ý với Điều khoản sử dụng");
     return false;
@@ -321,81 +272,210 @@ function validateRegisterForm() {
   return true;
 }
 
-// Bắt sự kiện submit form đăng ký
+async function handleRegisterSubmit(e) {
+  e.preventDefault();
+  const config = FORM_CONFIGS.register;
+
+  clearAllErrors(config.fields);
+
+  if (!validateRegisterForm(config)) return;
+
+  const values = getFormValues(config.fields);
+
+  toggleLoadingState(config, true);
+
+  try {
+    const response = await fetch(config.endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(values),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      toggleLoadingState(config, false);
+
+      if (data.errors) {
+        Object.keys(data.errors).forEach((field) => {
+          showFieldError(field, data.errors[field]);
+        });
+      }
+
+      if (data.message) {
+        Notification.error(data.message);
+      }
+
+      return;
+    }
+
+    toggleLoadingState(config, false);
+    Notification.success(config.successMessage);
+
+    document.getElementById("registerForm")?.classList.add("hidden");
+    document.getElementById("registerSuccess")?.classList.remove("hidden");
+
+    setTimeout(() => {
+      window.location.href = config.redirectUrl;
+    }, 1000);
+  } catch (error) {
+    toggleLoadingState(config, false);
+    Notification.error("Lỗi kết nối, vui lòng thử lại");
+    console.error("Register error:", error);
+  }
+}
+
+// ============================================
+// LOGOUT HANDLER
+// ============================================
+
+async function handleClientLogout() {
+  try {
+    const response = await fetch("/auth/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      window.location.href = "/";
+    } else {
+      const data = await response.json();
+      Notification.error(data.message || "Đăng xuất thất bại");
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    Notification.error("Lỗi kết nối, vui lòng thử lại");
+  }
+}
+
+// ============================================
+// KIỂM TRA VÀ LẤY THÔNG TIN NGƯỜI DÙNG
+// ============================================
+
+// Kiểm tra người dùng đã đăng nhập hay chưa
+async function isLoggedIn() {
+  try {
+    const response = await fetch("/auth/check-token", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    const data = await response.json();
+    return data.success && !data.expired;
+  } catch (error) {
+    console.error("Check login error:", error);
+    return false;
+  }
+}
+
+// Lấy thông tin người dùng hiện tại
+async function getCurrentUser() {
+  try {
+    const response = await fetch("/api/users/current-user", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.data.user;
+    }
+    return null;
+  } catch (error) {
+    console.error("Get current user error:", error);
+    return null;
+  }
+}
+
+// Load user
+async function loadUserInfo() {
+  try {
+    const loggedIn = await isLoggedIn();
+    const user = await getCurrentUser();
+
+    const loginBtn = document.getElementById("loginBtn");
+    const userSection = document.getElementById("userSection");
+
+    if (loggedIn && user) {
+      // Hiển thị thông tin người dùng, ẩn nút đăng nhập
+      loginBtn?.classList.add("hidden");
+      userSection?.classList.remove("hidden");
+
+      // Lấy thông tin người dùng và hiển thị
+      const userFullName = document.getElementById("userFullName");
+      const userFullNameDropdown = document.getElementById(
+        "userFullNameDropdown"
+      );
+      const userEmailDropdown = document.getElementById("userEmailDropdown");
+
+      if (userFullName) userFullName.textContent = user.fullName;
+      if (userFullNameDropdown)
+        userFullNameDropdown.textContent = user.fullName;
+      if (userEmailDropdown) userEmailDropdown.textContent = user.email;
+    } else {
+      // Hiển thị nút đăng nhập, ẩn thông tin người dùng
+      loginBtn?.classList.remove("hidden");
+      userSection?.classList.add("hidden");
+    }
+  } catch (error) {
+    console.error("Load user info error:", error);
+  }
+}
+
+// Dropdown menu
+function toggleUserMenuClient() {
+  const menu = document.getElementById("userMenuClient");
+  if (!menu) return;
+
+  menu.classList.toggle("hidden");
+
+  if (!menu.classList.contains("hidden")) {
+    setTimeout(() => {
+      document.addEventListener("click", function closeMenu(e) {
+        const btn = document.getElementById("userMenuBtn");
+        if (!btn?.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.add("hidden");
+          document.removeEventListener("click", closeMenu);
+        }
+      });
+    }, 0);
+  }
+}
+
+// ============================================
+// ADD EVENT LISTENERS
+// ============================================
+
 document.addEventListener("DOMContentLoaded", function () {
+  const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
+  const logoutBtn = document.getElementById("btn-logout");
+  const userMenuBtn = document.getElementById("userMenuBtn");
+  const showPasswordBtn = document.getElementById("showPasswordBtn");
+
+  if (loginForm) {
+    setupLoginValidation();
+    loginForm.addEventListener("submit", handleLoginSubmit);
+  }
 
   if (registerForm) {
-    registerForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      // Xóa tất cả lỗi trước đó
-      clearAllRegisterErrors();
-
-      // Kiểm tra dữ liệu form
-      if (!validateRegisterForm()) {
-        return;
-      }
-
-      const fullName = document.getElementById("fullName").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const password = document.getElementById("password").value;
-      const passwordConfirm = document.getElementById("passwordConfirm").value;
-
-      showRegisterLoadingState();
-
-      try {
-        const response = await fetch("/auth/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            fullName,
-            email,
-            phone,
-            password,
-            passwordConfirm,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          hideRegisterLoadingState();
-
-          // Hiển thị lỗi từ server
-          if (data.errors) {
-            Object.keys(data.errors).forEach((field) => {
-              showRegisterFieldError(field, data.errors[field]);
-            });
-          }
-
-          if (data.message) {
-            Notification.error(data.message);
-          }
-
-          return;
-        }
-
-        // Đăng ký thành công
-        hideRegisterLoadingState();
-        Notification.success("Đăng ký thành công!");
-
-        // Hiển thị thông báo thành công
-        document.getElementById("registerForm").classList.add("hidden");
-        document.getElementById("registerSuccess").classList.remove("hidden");
-
-        setTimeout(() => {
-          window.location.href = "/client/auth/login";
-        }, 1000);
-      } catch (error) {
-        hideRegisterLoadingState();
-        Notification.error("Lỗi kết nối, vui lòng thử lại");
-        console.error("Register error:", error);
-      }
-    });
+    setupRegisterValidation();
+    registerForm.addEventListener("submit", handleRegisterSubmit);
   }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", handleClientLogout);
+  }
+
+  if (userMenuBtn) {
+    userMenuBtn.addEventListener("click", toggleUserMenuClient);
+  }
+
+  if (showPasswordBtn) {
+    showPasswordBtn.addEventListener("click", togglePassword);
+  }
+
+  loadUserInfo();
 });

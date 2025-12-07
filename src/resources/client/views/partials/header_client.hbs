@@ -81,7 +81,6 @@
               <button
                 id="userMenuBtn"
                 class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 text-white flex items-center justify-center font-bold text-sm hover:shadow-lg transition-shadow"
-                onclick="toggleUserMenuClient()"
               >
                 <i class="fas fa-user"></i>
               </button>
@@ -120,7 +119,7 @@
                   <span>Danh sách yêu thích</span>
                 </a>
                 <button
-                  onclick="handleClientLogout()"
+                  id="btn-logout"
                   class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
                 >
                   <i class="fas fa-sign-out-alt"></i>
@@ -135,63 +134,4 @@
   </div>
 </header>
 
-<script type="module" src="/utils/auth-helper-client.js"></script>
-
-<script>
-  /**
-   * Load user info on page load
-   */
-  async function loadUserInfo() {
-    try {
-      const isLoggedIn = await clientAuthHelper.isLoggedIn();
-      const user = await clientAuthHelper.getCurrentUser();
-
-      if (isLoggedIn && user) {
-        // Show user section, hide login button
-        document.getElementById("loginBtn").classList.add("hidden");
-        document.getElementById("userSection").classList.remove("hidden");
-
-        // Fill user info
-        const firstName = user.fullName.split(" ")[0];
-        document.getElementById("userFullName").textContent = user.fullName;
-        document.getElementById("userFullNameDropdown").textContent =
-          user.fullName;
-        document.getElementById("userEmailDropdown").textContent = user.email;
-      } else {
-        // Show login button, hide user section
-        document.getElementById("loginBtn").classList.remove("hidden");
-        document.getElementById("userSection").classList.add("hidden");
-      }
-    } catch (error) {
-      console.error("Load user info error:", error);
-    }
-  }
-
-  /**
-   * Toggle user dropdown menu
-   */
-  function toggleUserMenuClient() {
-    const menu = document.getElementById("userMenuClient");
-    menu.classList.toggle("hidden");
-
-    // Close menu when clicking outside
-    document.addEventListener("click", function closeMenu(e) {
-      const btn = document.getElementById("userMenuBtn");
-      const menu = document.getElementById("userMenuClient");
-      if (!btn.contains(e.target) && !menu.contains(e.target)) {
-        menu.classList.add("hidden");
-        document.removeEventListener("click", closeMenu);
-      }
-    });
-  }
-
-  /**
-   * Handle logout
-   */
-  async function handleClientLogout() {
-    await clientAuthHelper.logout();
-  }
-
-  // Load user info when page loads
-  document.addEventListener("DOMContentLoaded", loadUserInfo);
-</script>
+<script type="module" src="/client/js/auth.js"></script>

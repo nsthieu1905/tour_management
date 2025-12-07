@@ -66,7 +66,7 @@
         <i class="fas fa-lock absolute left-4 top-11 text-gray-400"></i>
         <button
           type="button"
-          onclick="togglePassword()"
+          id="showPasswordBtn"
           class="absolute right-4 top-11 text-gray-400 hover:text-gray-600"
         >
           <i class="fas fa-eye" id="passwordToggle"></i>
@@ -130,21 +130,4 @@
   </div>
 </div>
 
-<script type="module" src="/utils/auth.js"></script>
-
-<script>
-  function togglePassword() {
-    const passwordInput = document.getElementById("password");
-    const toggleIcon = document.getElementById("passwordToggle");
-
-    if (passwordInput.type === "password") {
-      passwordInput.type = "text";
-      toggleIcon.classList.remove("fa-eye");
-      toggleIcon.classList.add("fa-eye-slash");
-    } else {
-      passwordInput.type = "password";
-      toggleIcon.classList.remove("fa-eye-slash");
-      toggleIcon.classList.add("fa-eye");
-    }
-  }
-</script>
+<script type="module" src="/admin/js/auth.js"></script>

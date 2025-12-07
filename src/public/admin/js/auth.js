@@ -2,40 +2,47 @@ import { validateLoginInput } from "../../utils/validators.js";
 import { Notification } from "../../utils/modal.js";
 
 // ============================================
-// XỬ LÝ LỖI FORM
+// CONSTANTS & CONFIGURATION
 // ============================================
 
-// Hiển thị lỗi cho một trường input
+const ADMIN_CONFIG = {
+  fields: ["username", "password"],
+  validator: validateLoginInput,
+  endpoint: "/auth/login",
+  successMessage: "Đăng nhập thành công!",
+  redirectUrl: "/admin/dashboard",
+  buttonTextId: "loginButtonText",
+  spinnerId: "loginSpinner",
+};
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+// Hiển thị/ẩn lỗi cho một trường input
 function showFieldError(fieldId, errorMessage) {
   const field = document.getElementById(fieldId);
   const errorElement = document.getElementById(`${fieldId}Error`);
   const errorMsgElement = document.getElementById(`${fieldId}ErrorMsg`);
 
+  if (!field || !errorElement) return;
+
   if (errorMessage) {
     field.classList.add("border-red-500", "bg-red-50");
-    if (errorMsgElement) {
-      errorMsgElement.textContent = errorMessage;
-    } else {
-      errorElement.textContent = errorMessage;
-    }
+    const targetElement = errorMsgElement || errorElement;
+    targetElement.textContent = errorMessage;
     errorElement.classList.remove("hidden");
   } else {
     field.classList.remove("border-red-500", "bg-red-50");
-    if (errorMsgElement) {
-      errorMsgElement.textContent = "";
-    } else {
-      errorElement.textContent = "";
-    }
+    const targetElement = errorMsgElement || errorElement;
+    targetElement.textContent = "";
     errorElement.classList.add("hidden");
   }
 }
 
-// Xóa tất cả lỗi
-function clearAllErrors() {
-  const fieldIds = ["username", "password"];
-  fieldIds.forEach((fieldId) => {
-    showFieldError(fieldId, null);
-  });
+// Xóa tất cả lỗi của form
+function clearAllErrors(fieldIds) {
+  fieldIds.forEach((fieldId) => showFieldError(fieldId, null));
   clearFormError();
 }
 
@@ -43,6 +50,8 @@ function clearAllErrors() {
 function showFormError(message) {
   const formError = document.getElementById("formError");
   const formErrorMsg = document.getElementById("formErrorMsg");
+
+  if (!formError || !formErrorMsg) return;
 
   if (message) {
     formErrorMsg.textContent = message;
@@ -57,78 +66,106 @@ function clearFormError() {
   showFormError(null);
 }
 
+// Quản lý trạng thái loading
+function toggleLoadingState(config, isLoading) {
+  const buttonText = document.getElementById(config.buttonTextId);
+  const spinner = document.getElementById(config.spinnerId);
+  const button = document.querySelector(`button[type='submit']`);
+
+  if (!buttonText || !spinner) return;
+
+  if (isLoading) {
+    buttonText.classList.add("hidden");
+    spinner.classList.remove("hidden");
+    if (button) button.disabled = true;
+  } else {
+    buttonText.classList.remove("hidden");
+    spinner.classList.add("hidden");
+    if (button) button.disabled = false;
+  }
+}
+
+// Lấy giá trị từ các trường input
+function getFormValues(fieldIds) {
+  const values = {};
+  fieldIds.forEach((fieldId) => {
+    const element = document.getElementById(fieldId);
+    if (element) {
+      values[fieldId] =
+        fieldId === "password" ? element.value : element.value.trim();
+    }
+  });
+  return values;
+}
+
 // ============================================
-// KIỂM TRA DỮ LIỆU NHẬP VÀO
+// VALIDATION
 // ============================================
 
-// Kiểm tra toàn bộ form
-function validateForm(fields = ["username", "password"]) {
-  const username = document.getElementById("username")?.value.trim() || "";
-  const password = document.getElementById("password")?.value.trim() || "";
-
-  const result = validateLoginInput(username, password);
+// Kiểm tra form
+function validateForm(config) {
+  const values = getFormValues(config.fields);
+  const result = config.validator(...Object.values(values));
 
   if (!result.isValid) {
-    if (result.errors.username) {
-      showFieldError("username", result.errors.username);
-    }
-    if (result.errors.password) {
-      showFieldError("password", result.errors.password);
-    }
+    Object.keys(result.errors).forEach((fieldId) => {
+      showFieldError(fieldId, result.errors[fieldId]);
+    });
   } else {
-    showFieldError("username", null);
-    showFieldError("password", null);
+    config.fields.forEach((fieldId) => showFieldError(fieldId, null));
   }
 
   return result;
 }
 
-// Kiểm tra dữ liệu thời gian thực (khi người dùng nhập)
-function setupRealtimeValidation() {
-  const usernameField = document.getElementById("username");
-  const passwordField = document.getElementById("password");
+// Setup validation cho từng trường input
+function setupFieldValidation(fieldId, validator, validateArgs) {
+  const field = document.getElementById(fieldId);
+  if (!field) return;
 
-  if (usernameField) {
-    usernameField.addEventListener("blur", function () {
-      const result = validateLoginInput(this.value.trim(), "");
-      showFieldError("username", result.errors.username || null);
-    });
+  // Xóa lỗi ngay khi người dùng bắt đầu nhập
+  field.addEventListener("input", function () {
+    const errorElement = document.getElementById(`${fieldId}Error`);
+    if (errorElement && !errorElement.classList.contains("hidden")) {
+      showFieldError(fieldId, null);
+    }
+  });
 
-    usernameField.addEventListener("input", function () {
-      if (this.value.trim()) {
-        const result = validateLoginInput(this.value.trim(), "");
-        if (!result.errors.username) {
-          showFieldError("username", null);
-        }
+  field.addEventListener("blur", function () {
+    const args = validateArgs(this.value);
+    const result = validator(...args);
+    showFieldError(fieldId, result.errors[fieldId] || null);
+  });
+
+  field.addEventListener("input", function () {
+    if (this.value || this.value.trim()) {
+      const args = validateArgs(this.value);
+      const result = validator(...args);
+      if (!result.errors[fieldId]) {
+        showFieldError(fieldId, null);
       }
-    });
-  }
+    }
+  });
+}
 
-  if (passwordField) {
-    passwordField.addEventListener("blur", function () {
-      const result = validateLoginInput("", this.value);
-      showFieldError("password", result.errors.password || null);
-    });
-
-    passwordField.addEventListener("input", function () {
-      if (this.value) {
-        const result = validateLoginInput("", this.value);
-        if (!result.errors.password) {
-          showFieldField("password", null);
-        }
-      }
-    });
-  }
+// Thiết lập validation cho form login
+function setupLoginValidation() {
+  setupFieldValidation("username", validateLoginInput, (value) => [
+    value.trim(),
+    "",
+  ]);
+  setupFieldValidation("password", validateLoginInput, (value) => ["", value]);
 }
 
 // ============================================
-// CHỨC NĂNG ĐĂNG NHẬP
+// SHOW/HIDE PASSWORD
 // ============================================
 
-// Chuyển đổi hiển thị/ẩn mật khẩu
 function togglePassword() {
   const passwordInput = document.getElementById("password");
   const toggleIcon = document.getElementById("passwordToggle");
+
+  if (!passwordInput || !toggleIcon) return;
 
   if (passwordInput.type === "password") {
     passwordInput.type = "text";
@@ -141,147 +178,196 @@ function togglePassword() {
   }
 }
 
-// Hiển thị trạng thái đang tải (loading)
-function showLoadingState() {
-  document.getElementById("loginButtonText").classList.add("hidden");
-  document.getElementById("loginSpinner").classList.remove("hidden");
-}
-
-// Ẩn trạng thái đang tải
-function hideLoadingState() {
-  document.getElementById("loginButtonText").classList.remove("hidden");
-  document.getElementById("loginSpinner").classList.add("hidden");
-}
-
-// Hiển thị thông báo (toast notification)
-// function showNotification(message, type = "info") {
-//   const notification = document.createElement("div");
-//   notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
-
-//   const bgColor =
-//     type === "success"
-//       ? "bg-green-500"
-//       : type === "error"
-//       ? "bg-red-500"
-//       : "bg-blue-500";
-//   notification.classList.add(bgColor, "text-white");
-
-//   notification.innerHTML = `
-//         <div class="flex items-center space-x-3">
-//             <i class="fas fa-${
-//               type === "success"
-//                 ? "check-circle"
-//                 : type === "error"
-//                 ? "exclamation-circle"
-//                 : "info-circle"
-//             }"></i>
-//             <span>${message}</span>
-//             <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
-//                 <i class="fas fa-times"></i>
-//             </button>
-//         </div>
-//     `;
-
-//   document.body.appendChild(notification);
-
-//   setTimeout(() => {
-//     notification.classList.remove("translate-x-full");
-//   }, 100);
-
-//   setTimeout(() => {
-//     notification.classList.add("translate-x-full");
-//     setTimeout(() => notification.remove(), 300);
-//   }, 5000);
-// }
-
 // ============================================
-// CHUYỂN TRANG
+// LOGIN HANDLER
 // ============================================
 
-// Hiển thị trang đăng ký
-function showRegisterPage() {
-  document.getElementById("loginPage").classList.add("hidden");
-  if (document.getElementById("registerPage")) {
-    document.getElementById("registerPage").classList.remove("hidden");
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const config = ADMIN_CONFIG;
+
+  clearAllErrors(config.fields);
+
+  const validationResult = validateForm(config);
+  if (!validationResult.isValid) return;
+
+  const values = getFormValues(config.fields);
+  const rememberMe = document.getElementById("rememberMe")?.checked || false;
+
+  toggleLoadingState(config, true);
+
+  try {
+    const response = await fetch(config.endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...values, rememberMe }),
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      toggleLoadingState(config, false);
+      if (data.message) showFormError(data.message);
+      return;
+    }
+
+    toggleLoadingState(config, false);
+    Notification.success(config.successMessage);
+
+    setTimeout(() => {
+      window.location.href = config.redirectUrl;
+    }, 1000);
+  } catch (error) {
+    toggleLoadingState(config, false);
+    console.error("Login error:", error);
   }
 }
 
-// Hiển thị trang đăng nhập
-function showLoginPage() {
-  if (document.getElementById("registerPage")) {
-    document.getElementById("registerPage").classList.add("hidden");
+// ============================================
+// LOGOUT HANDLER
+// ============================================
+
+async function handleAdminLogout() {
+  try {
+    const response = await fetch("/auth/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      window.location.href = "/admin/auth/login";
+    } else {
+      const data = await response.json();
+      Notification.error(data.message || "Đăng xuất thất bại");
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    Notification.error("Lỗi kết nối, vui lòng thử lại");
   }
-  document.getElementById("loginPage").classList.remove("hidden");
 }
 
 // ============================================
-// XỬ LÝ FORM ĐĂNG NHẬP
+// KIỂM TRA VÀ LẤY THÔNG TIN NGƯỜI DÙNG
 // ============================================
 
-// Bắt sự kiện submit form
+// Kiểm tra người dùng đã đăng nhập hay chưa
+async function isLoggedIn() {
+  try {
+    const response = await fetch("/auth/check-token", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    const data = await response.json();
+    return data.success && !data.expired;
+  } catch (error) {
+    console.error("Check login error:", error);
+    return false;
+  }
+}
+
+// Lấy thông tin người dùng hiện tại
+async function getCurrentUser() {
+  try {
+    const response = await fetch("/api/users/current-user", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.data.user;
+    }
+    return null;
+  } catch (error) {
+    console.error("Get current user error:", error);
+    return null;
+  }
+}
+
+// Load user
+async function loadUserInfo() {
+  try {
+    const loggedIn = await isLoggedIn();
+    const user = await getCurrentUser();
+
+    const loginBtn = document.getElementById("loginBtn");
+    const userSection = document.getElementById("userSection");
+
+    if (loggedIn && user) {
+      // Hiển thị thông tin người dùng, ẩn nút đăng nhập
+      loginBtn?.classList.add("hidden");
+      userSection?.classList.remove("hidden");
+
+      // Lấy thông tin người dùng và hiển thị
+      const userFullName = document.getElementById("userFullName");
+      const userFullNameDropdown = document.getElementById(
+        "userFullNameDropdown"
+      );
+      const userEmailDropdown = document.getElementById("userEmailDropdown");
+
+      if (userFullName) userFullName.textContent = user.fullName;
+      if (userFullNameDropdown)
+        userFullNameDropdown.textContent = user.fullName;
+      if (userEmailDropdown) userEmailDropdown.textContent = user.email;
+    } else {
+      // Hiển thị nút đăng nhập, ẩn thông tin người dùng
+      loginBtn?.classList.remove("hidden");
+      userSection?.classList.add("hidden");
+    }
+  } catch (error) {
+    console.error("Load user info error:", error);
+  }
+}
+
+// Dropdown menu
+function toggleUserMenu() {
+  const menu = document.getElementById("userMenu");
+  if (!menu) return;
+
+  menu.classList.toggle("hidden");
+
+  if (!menu.classList.contains("hidden")) {
+    setTimeout(() => {
+      document.addEventListener("click", function closeMenu(e) {
+        const btn = document.getElementById("userMenuBtn");
+        if (!btn?.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.add("hidden");
+          document.removeEventListener("click", closeMenu);
+        }
+      });
+    }, 0);
+  }
+}
+
+// ============================================
+// ADD EVENT LISTENERS
+// ============================================
+
 document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.getElementById("loginForm");
-
-  // Thiết lập kiểm tra dữ liệu thời gian thực
-  setupRealtimeValidation();
+  const logoutBtn = document.getElementById("btn-logout");
+  const userMenuBtn = document.getElementById("userMenuBtn");
+  const showPasswordBtn = document.getElementById("showPasswordBtn");
 
   if (loginForm) {
-    loginForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      // Xóa tất cả lỗi trước đó
-      clearAllErrors();
-
-      // Kiểm tra dữ liệu form
-      const validationResult = validateForm();
-
-      if (!validationResult.isValid) {
-        return;
-      }
-
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const rememberMe = document.getElementById("rememberMe").checked;
-
-      showLoadingState();
-
-      try {
-        const response = await fetch("/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: username,
-            password: password,
-            rememberMe: rememberMe,
-          }),
-          credentials: "include",
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          hideLoadingState();
-
-          // Hiển thị lỗi chung dưới form
-          if (data.message) {
-            showFormError(data.message);
-          }
-
-          return;
-        }
-
-        // Đăng nhập thành công
-        hideLoadingState();
-        Notification.success("Đăng nhập thành công!");
-
-        setTimeout(() => {
-          window.location.href = "/admin/dashboard";
-        }, 1500);
-      } catch (error) {
-        hideLoadingState();
-      }
-    });
+    setupLoginValidation();
+    loginForm.addEventListener("submit", handleLoginSubmit);
   }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", handleAdminLogout);
+  }
+
+  if (userMenuBtn) {
+    userMenuBtn.addEventListener("click", toggleUserMenu);
+  }
+
+  if (showPasswordBtn) {
+    showPasswordBtn.addEventListener("click", togglePassword);
+  }
+
+  loadUserInfo();
 });
