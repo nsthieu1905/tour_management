@@ -5,6 +5,11 @@ const mongooseDelete = require("mongoose-delete");
 
 const tourSchema = new Schema(
   {
+    tourCode: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     name: {
       type: String,
       required: true,
@@ -44,6 +49,10 @@ const tourSchema = new Schema(
       enum: ["Tiết kiệm", "Tiêu chuẩn", "Giá tốt", "Cao cấp"],
     },
     discountPrice: Number,
+    promotionPrice: {
+      type: Number,
+      description: "Giá sau khi áp dụng promotion theo thời gian (nếu có)",
+    },
     images: {
       type: [String],
       required: true,

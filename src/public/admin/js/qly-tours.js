@@ -16,9 +16,9 @@ import {
   apiPatch,
 } from "../../utils/api.js";
 
-//========================
+//================================
 // QUẢN LÝ TOUR - qly-tours.js
-//========================
+//================================
 
 // Chờ DOM load xong
 document.addEventListener("DOMContentLoaded", function () {
@@ -677,38 +677,6 @@ async function createTour() {
         console.log(err);
       }
     }
-
-    // Xử lý itinerary từ form
-    // const itineraryInputs = document.querySelectorAll(
-    //   'input[name^="itinerary["], textarea[name^="itinerary["]'
-    // );
-    // if (itineraryInputs.length > 0) {
-    //   // Xóa itinerary cũ từ formData
-    //   formData.delete("itinerary");
-
-    //   // Tạo mảng itinerary từ form inputs
-    //   const itinerary = {};
-    //   itineraryInputs.forEach((input) => {
-    //     const match = input.name.match(/itinerary\[(\d+)\]\[(\w+)\]/);
-    //     if (match) {
-    //       const dayIndex = match[1];
-    //       const fieldName = match[2];
-
-    //       if (!itinerary[dayIndex]) {
-    //         itinerary[dayIndex] = {
-    //           day: parseInt(dayIndex) + 1,
-    //           destinations: "",
-    //           description: "",
-    //         };
-    //       }
-    //       itinerary[dayIndex][fieldName] = input.value;
-    //     }
-    //   });
-
-    //   // Thêm itinerary vào formData dưới dạng JSON string
-    //   const itineraryArray = Object.values(itinerary);
-    //   formData.append("itinerary", JSON.stringify(itineraryArray));
-    // }
 
     // Thêm ảnh từ imagesArray vào FormData
     if (imagesArray.length > 0) {

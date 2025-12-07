@@ -1,10 +1,17 @@
 const { Tour, Favorite } = require("../../models/index");
 
 // [GET] /
-const home = (req, res) => {
+const home = async (req, res) => {
   try {
+    const tours = await Tour.find({}).lean();
+    if (!tours || tours.length === 0)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tour" });
+
     return res.render("home", {
       bodyClass: "bg-gray-50",
+      tours: tours,
     });
   } catch (error) {
     console.error(error);

@@ -140,6 +140,7 @@ const create = async (req, res) => {
     }
 
     const tourData = {
+      tourCode: req.body.tourCode,
       name: req.body.name,
       description: req.body.description,
       destination: req.body.destination,

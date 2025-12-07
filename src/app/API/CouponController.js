@@ -195,10 +195,116 @@ const deleteCoupon = async (req, res, next) => {
   }
 };
 
+// [POST] /api/coupons/validate-and-apply
+const validateAndApplyCoupon = async (req, res, next) => {
+  try {
+    const { couponCode, tourId, originalPrice, departureDate } = req.body;
+
+    // Kiểm tra input
+    if (!couponCode || !tourId || !originalPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu thông tin cần thiết",
+      });
+    }
+
+    // Tìm coupon
+    const coupon = await Khuyen_mai.findOne({
+      code: couponCode.toUpperCase(),
+    }).lean();
+
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Mã giảm giá không hợp lệ",
+      });
+    }
+
+    // Kiểm tra trạng thái coupon
+    const now = new Date();
+    if (coupon.status !== "active") {
+      return res.status(400).json({
+        success: false,
+        message: "Mã giảm giá không hoạt động",
+      });
+    }
+
+    // Kiểm tra thời gian hợp lệ
+    if (now < new Date(coupon.startDate) || now > new Date(coupon.endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: "Mã giảm giá đã hết hạn hoặc chưa bắt đầu",
+      });
+    }
+
+    // Kiểm tra giá mua tối thiểu
+    if (originalPrice < coupon.minPurchase) {
+      return res.status(400).json({
+        success: false,
+        message: `Giá tối thiểu để áp dụng mã này là ${coupon.minPurchase.toLocaleString(
+          "vi-VN"
+        )}đ`,
+      });
+    }
+
+    // Kiểm tra coupon áp dụng cho tour này (nếu có giới hạn)
+    if (
+      coupon.applicableTours &&
+      coupon.applicableTours.length > 0 &&
+      !coupon.applicableTours.includes(tourId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Mã giảm giá không áp dụng cho tour này",
+      });
+    }
+
+    // Kiểm tra số lần sử dụng
+    if (coupon.usageLimit > 0 && coupon.usageCount >= coupon.usageLimit) {
+      return res.status(400).json({
+        success: false,
+        message: "Mã giảm giá đã hết số lần sử dụng",
+      });
+    }
+
+    // Tính toán giảm giá
+    let discountAmount = 0;
+    if (coupon.type === "percentage") {
+      discountAmount = originalPrice * (coupon.value / 100);
+      // Kiểm tra giới hạn giảm tối đa
+      if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
+        discountAmount = coupon.maxDiscount;
+      }
+    } else if (coupon.type === "fixed_amount") {
+      discountAmount = coupon.value;
+    }
+
+    const finalPrice = Math.max(0, originalPrice - discountAmount);
+
+    return res.status(200).json({
+      success: true,
+      message: "Áp dụng mã giảm giá thành công",
+      data: {
+        couponCode: coupon.code,
+        couponName: coupon.name,
+        type: coupon.type,
+        value: coupon.value,
+        discountAmount: Math.round(discountAmount),
+        originalPrice,
+        finalPrice: Math.round(finalPrice),
+        savings: Math.round(discountAmount),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllCoupons,
   getCouponById,
   addCoupon,
   updateCoupon,
   deleteCoupon,
+  validateAndApplyCoupon,
 };
