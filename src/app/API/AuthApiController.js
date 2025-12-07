@@ -163,10 +163,10 @@ const login = async (req, res) => {
 // [POST] auth/client-login
 const clientLogin = async (req, res) => {
   try {
-    const { email, password, rememberMe } = req.body;
+    const { username, password, rememberMe } = req.body;
 
     // Validate input format
-    const validation = validateLoginInput(email, password);
+    const validation = validateLoginInput(username, password);
     if (!validation.isValid) {
       return res.status(400).json({
         success: false,
@@ -175,13 +175,13 @@ const clientLogin = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: username });
 
     // So sánh password nếu user tồn tại
     const isPasswordValid = user ? await user.comparePassword(password) : false;
 
     const credentialsValidation = validateCredentials(
-      email,
+      username,
       password,
       user,
       isPasswordValid
@@ -436,33 +436,6 @@ const logout = async (req, res) => {
   }
 };
 
-// API lấy thông tin user hiện tại
-// const getCurrentUser = async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user.userId);
-
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Không tìm thấy thông tin user",
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       data: {
-//         user: user.toJSON(),
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Get current user error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Lỗi server, vui lòng thử lại sau",
-//     });
-//   }
-// };
-
 // [POST] auth/check-token
 const checkToken = (req, res) => {
   try {
@@ -514,43 +487,42 @@ const register = async (req, res) => {
     const { fullName, email, phone, password, passwordConfirm } = req.body;
 
     // Validate required fields
-    if (!fullName || !email || !password || !passwordConfirm) {
+    const errors = {};
+
+    if (!fullName || fullName.trim().length === 0) {
+      errors.fullName = "Vui số nhập tên người dùng";
+    }
+
+    if (!email) {
+      errors.email = "Vui lòng nhập email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Email không hợp lệ (vd: user@example.com)";
+    }
+
+    if (!phone) {
+      errors.phone = "Vui lòng nhập số điện thoại";
+    } else if (!/^(?:\+84|0|84)[1-9]\d{8}$/.test(phone.replace(/\s/g, ""))) {
+      errors.phone = "Số điện thoại không hợp lệ";
+    }
+
+    if (!password) {
+      errors.password = "Vui lòng nhập mật khẩu";
+    } else if (password.length < 6) {
+      errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
+    }
+
+    if (!passwordConfirm) {
+      errors.passwordConfirm = "Vui lòng xác nhận mật khẩu";
+    } else if (password !== passwordConfirm) {
+      errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
+    }
+
+    // Nếu có lỗi validation, trả về ngay
+    if (Object.keys(errors).length > 0) {
       return res.status(400).json({
         success: false,
         message: "Vui lòng điền đầy đủ thông tin",
-        errors: {
-          fullName: !fullName ? "Họ và tên là bắt buộc" : null,
-          email: !email ? "Email là bắt buộc" : null,
-          password: !password ? "Mật khẩu là bắt buộc" : null,
-          passwordConfirm: !passwordConfirm
-            ? "Xác nhận mật khẩu là bắt buộc"
-            : null,
-        },
-      });
-    }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: "Email không hợp lệ",
-      });
-    }
-
-    // Validate password
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "Mật khẩu phải có ít nhất 6 ký tự",
-      });
-    }
-
-    // Check password
-    if (password !== passwordConfirm) {
-      return res.status(400).json({
-        success: false,
-        message: "Mật khẩu xác nhận không khớp",
+        errors: errors,
       });
     }
 
@@ -560,6 +532,9 @@ const register = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Email đã được đăng ký",
+        errors: {
+          email: "Email đã được đăng ký",
+        },
       });
     }
 
@@ -577,9 +552,14 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Đăng ký thành công",
+      message: "Đăng ký thành công!",
       data: {
-        user: newUser.toJSON(),
+        user: {
+          id: newUser._id,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          role: newUser.role,
+        },
       },
     });
   } catch (error) {

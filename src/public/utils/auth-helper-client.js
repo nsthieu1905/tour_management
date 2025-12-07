@@ -1,82 +1,88 @@
 const clientAuthHelper = {
-  login: async function (email, password, rememberMe = false) {
-    try {
-      const response = await fetch("/auth/client-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          email,
-          password,
-          rememberMe,
-        }),
-      });
+  // login: async function (username, password, rememberMe = false) {
+  //   try {
+  //     const response = await fetch("/auth/client-login", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       credentials: "include",
+  //       body: JSON.stringify({
+  //         username,
+  //         password,
+  //         rememberMe,
+  //       }),
+  //     });
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      // Login success - redirect to home
-      if (response.ok && data.success) {
-        window.location.href = "/";
-        return { success: true, data };
-      } else {
-        return {
-          success: false,
-          message: data.message || "Đăng nhập thất bại",
-          errors: data.errors || {},
-        };
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      return {
-        success: false,
-        message: "Lỗi kết nối, vui lòng thử lại",
-      };
-    }
-  },
+  //     // Login success - redirect to home
+  //     if (response.ok && data.success) {
+  //       window.location.href = "/";
+  //       return { success: true, data };
+  //     } else {
+  //       return {
+  //         success: false,
+  //         message: data.message || "Đăng nhập thất bại",
+  //         errors: data.errors || {},
+  //       };
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     return {
+  //       success: false,
+  //       message: "Lỗi kết nối, vui lòng thử lại",
+  //     };
+  //   }
+  // },
 
-  register: async function (fullName, email, phone, password, passwordConfirm) {
-    try {
-      const response = await fetch("/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          fullName,
-          email,
-          phone,
-          password,
-          passwordConfirm,
-        }),
-      });
+  // register: async function (
+  //   fullName,
+  //   username,
+  //   phone,
+  //   password,
+  //   passwordConfirm
+  // ) {
+  //   try {
+  //     const response = await fetch("/auth/register", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       credentials: "include",
+  //       body: JSON.stringify({
+  //         fullName,
+  //         username,
+  //         phone,
+  //         password,
+  //         passwordConfirm,
+  //       }),
+  //     });
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      // Registration success - auto login and redirect
-      if (response.ok && data.success) {
-        return {
-          success: true,
-          message: data.message,
-          data,
-        };
-      } else {
-        return {
-          success: false,
-          message: data.message || "Đăng ký thất bại",
-          errors: data.errors || {},
-        };
-      }
-    } catch (error) {
-      console.error("Register error:", error);
-      return {
-        success: false,
-        message: "Lỗi kết nối, vui lòng thử lại",
-      };
-    }
-  },
+  //     // Registration success - auto login and redirect
+  //     if (response.ok && data.success) {
+  //       return {
+  //         success: true,
+  //         message: data.message,
+  //         data,
+  //       };
+  //     } else {
+  //       return {
+  //         success: false,
+  //         message: data.message || "Đăng ký thất bại",
+  //         errors: data.errors || {},
+  //       };
+  //     }
+  //   } catch (error) {
+  //     console.error("Register error:", error);
+  //     return {
+  //       success: false,
+  //       message: "Lỗi kết nối, vui lòng thử lại",
+  //     };
+  //   }
+  // },
 
   logout: async function () {
     try {

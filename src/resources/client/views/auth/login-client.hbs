@@ -4,7 +4,7 @@
 >
   <div class="absolute inset-0 bg-black opacity-20"></div>
 
-  <!-- Animated Background Elements -->
+  {{!-- Animated Background Elements --}}
   <div class="absolute inset-0 overflow-hidden">
     <div
       class="absolute -top-40 -right-32 w-80 h-80 bg-white opacity-10 rounded-full animate-pulse"
@@ -22,7 +22,6 @@
   <div
     class="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300"
   >
-    <!-- Logo and Title -->
     <div class="text-center mb-8">
       <div
         class="gradient-bg p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center"
@@ -30,32 +29,30 @@
         <i class="fas fa-map-marked-alt text-white text-2xl"></i>
       </div>
       <h1 class="text-3xl font-bold text-gray-900 mb-2">TravelSmart</h1>
+      <p class="text-gray-600">Đăng nhập vào hệ thống quản trị</p>
     </div>
 
-    <!-- Login Form -->
     <form id="loginForm" class="space-y-6" novalidate>
-      <!-- Email Field -->
       <div class="relative">
         <label class="block text-sm font-medium text-gray-700 mb-2">
           <i class="fas fa-envelope mr-2"></i>Email
         </label>
         <input
-          type="email"
-          id="email"
+          type="text"
+          id="username"
           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 pl-12"
-          placeholder="Nhập email"
+          placeholder="Nhập Email"
         />
         <i class="fas fa-envelope absolute left-4 top-11 text-gray-400"></i>
         <span
-          id="emailError"
+          id="usernameError"
           class="text-red-500 text-sm mt-1.5 block font-medium hidden"
         >
           <i class="fas fa-exclamation-circle mr-1"></i
-          ><span id="emailErrorMsg"></span>
+          ><span id="usernameErrorMsg"></span>
         </span>
       </div>
 
-      <!-- Password Field -->
       <div class="relative">
         <label class="block text-sm font-medium text-gray-700 mb-2">
           <i class="fas fa-lock mr-2"></i>Mật khẩu
@@ -83,7 +80,6 @@
         </span>
       </div>
 
-      <!-- Remember Me & Forgot Password -->
       <div class="flex items-center justify-between">
         <label class="flex items-center">
           <input
@@ -100,33 +96,30 @@
         >
       </div>
 
-      <!-- Error Message -->
+      {{!-- General Error Message --}}
       <div
-        id="loginError"
-        class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg hidden"
+        id="formError"
+        class="hidden bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-start"
       >
-        <i class="fas fa-exclamation-triangle mr-2"></i
-        ><span id="errorMessage"></span>
+        <i
+          class="fas fa-exclamation-circle text-red-500 mt-0.5 mr-3 flex-shrink-0"
+        ></i>
+        <span id="formErrorMsg" class="text-sm font-medium"></span>
       </div>
 
-      <!-- Login Button -->
       <button
         type="submit"
-        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 rounded-lg hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center"
+        class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
       >
-        <i class="fas fa-sign-in-alt mr-2"></i>Đăng Nhập
+        <span id="loginButtonText">
+          <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập
+        </span>
+        <span id="loginSpinner" class="hidden">
+          <i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...
+        </span>
       </button>
-
-      <!-- Loading State -->
-      <div id="loadingSpinner" class="hidden flex items-center justify-center">
-        <div
-          class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"
-        ></div>
-        <span class="ml-2 text-gray-600">Đang xử lý...</span>
-      </div>
     </form>
 
-    <!-- Register Link -->
     <div class="mt-6 text-center">
       <p class="text-gray-600">
         Chưa có tài khoản?
@@ -137,87 +130,32 @@
         >
       </p>
     </div>
+
+    <div class="text-center mt-8 text-xs text-gray-500">
+      <p>&copy; 2025 TravelSmart. Bảo mật & Tin cậy.</p>
+      <p class="mt-1">
+        <a href="#" class="hover:text-gray-700">Điều khoản sử dụng</a> •
+        <a href="#" class="hover:text-gray-700">Chính sách bảo mật</a>
+      </p>
+    </div>
   </div>
 </div>
 
-<script src="/utils/auth-helper-client.js"></script>
+<script type="module" src="/client/js/auth.js"></script>
+
 <script>
   function togglePassword() {
     const passwordInput = document.getElementById("password");
-    const passwordToggle = document.getElementById("passwordToggle");
+    const toggleIcon = document.getElementById("passwordToggle");
 
     if (passwordInput.type === "password") {
       passwordInput.type = "text";
-      passwordToggle.classList.remove("fa-eye");
-      passwordToggle.classList.add("fa-eye-slash");
+      toggleIcon.classList.remove("fa-eye");
+      toggleIcon.classList.add("fa-eye-slash");
     } else {
       passwordInput.type = "password";
-      passwordToggle.classList.remove("fa-eye-slash");
-      passwordToggle.classList.add("fa-eye");
+      toggleIcon.classList.remove("fa-eye-slash");
+      toggleIcon.classList.add("fa-eye");
     }
   }
-
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    // Clear previous errors
-    document.getElementById("loginError").classList.add("hidden");
-    document.getElementById("emailError").classList.add("hidden");
-    document.getElementById("passwordError").classList.add("hidden");
-
-    // Get values
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const rememberMe = document.getElementById("rememberMe").checked;
-
-    // Validation
-    let isValid = true;
-    if (!email) {
-      document.getElementById("emailError").classList.remove("hidden");
-      document.getElementById("emailErrorMsg").textContent =
-        "Email không được để trống";
-      isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      document.getElementById("emailError").classList.remove("hidden");
-      document.getElementById("emailErrorMsg").textContent =
-        "Email không hợp lệ";
-      isValid = false;
-    }
-
-    if (!password) {
-      document.getElementById("passwordError").classList.remove("hidden");
-      document.getElementById("passwordErrorMsg").textContent =
-        "Mật khẩu không được để trống";
-      isValid = false;
-    }
-
-    if (!isValid) return;
-
-    // Show loading
-    document.getElementById("loadingSpinner").classList.remove("hidden");
-
-    try {
-      const result = await window.clientAuthHelper.login(
-        email,
-        password,
-        rememberMe
-      );
-
-      if (result.success) {
-        // Redirect to home or dashboard
-        window.location.href = "/";
-      } else {
-        document.getElementById("loginError").classList.remove("hidden");
-        document.getElementById("errorMessage").textContent =
-          result.message || "Đăng nhập thất bại";
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      document.getElementById("loginError").classList.remove("hidden");
-      document.getElementById("errorMessage").textContent =
-        error.message || "Lỗi kết nối";
-    } finally {
-      document.getElementById("loadingSpinner").classList.add("hidden");
-    }
-  });
 </script>

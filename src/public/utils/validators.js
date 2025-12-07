@@ -63,28 +63,40 @@ const validateCredentials = (email, password, user, isPasswordValid) => {
   };
 };
 
-const validateRegisterInput = (fullName, email, password, passwordConfirm) => {
+const validateRegisterInput = (
+  fullName,
+  email,
+  phone,
+  password,
+  passwordConfirm
+) => {
   const errors = {};
 
   if (!fullName || fullName.trim().length === 0) {
-    errors.fullName = "Tên đầy đủ là bắt buộc";
-  } else if (!validateFullName(fullName)) {
-    errors.fullName = "Tên đầy đủ không hợp lệ (không được chứa số)";
+    errors.fullName = "Vui lòng nhập tên nguời dùng";
   }
 
   if (!email) {
-    errors.email = "Email là bắt buộc";
+    errors.email = "Vui lòng nhập email";
   } else if (!validateEmail(email)) {
-    errors.email = "Email không hợp lệ (vd: user@example.com)";
+    errors.email = "Email không hợp lệ";
+  }
+
+  if (!phone) {
+    errors.phone = "Vui lòng nhập số điện thoại";
+  } else if (!validatePhoneNumber(phone)) {
+    errors.phone = "Số điện thoại không hợp lệ";
   }
 
   if (!password) {
-    errors.password = "Mật khẩu là bắt buộc";
+    errors.password = "Vui lòng nhập mật khẩu";
   } else if (!validatePassword(password)) {
     errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
   }
 
-  if (password !== passwordConfirm) {
+  if (!passwordConfirm) {
+    errors.passwordConfirm = "Vui lòng xác nhận mật khẩu";
+  } else if (password !== passwordConfirm) {
     errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
   }
 
@@ -98,7 +110,6 @@ const validateTokenPayload = (token) => {
   if (!token || typeof token !== "string") {
     return false;
   }
-  // JWT format: header.payload.signature
   return token.split(".").length === 3;
 };
 
@@ -111,7 +122,7 @@ const validateUserInput = (userData) => {
   // Validate fullName
   if (userData.fullName) {
     if (!validateFullName(userData.fullName)) {
-      errors.fullName = "Tên đầy đủ không hợp lệ";
+      errors.fullName = "Tên người dùng không hợp lệ";
     }
   }
 
@@ -148,9 +159,9 @@ export {
   validateUsername,
   validatePhoneNumber,
   validateFullName,
-  validateLoginInput,
   validateCredentials,
-  validateRegisterInput,
   validateTokenPayload,
+  validateLoginInput,
+  validateRegisterInput,
   validateUserInput,
 };

@@ -12,12 +12,5 @@ router.post("/register", authApiController.register);
 router.post("/check-token", authApiController.checkToken);
 router.post("/refresh", authApiController.refreshToken);
 router.post("/logout", authApiController.logout);
-// router.get(
-//   "/current-user",
-//   protectClientRoutes,
-//   authApiController.getCurrentUser
-// );
-// router.use(protectAdminRoutes);
-// router.get("/refresh-required", authController.login);
 
 module.exports = router;

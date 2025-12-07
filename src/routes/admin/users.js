@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const usersApiController = require("../../app/API/UsersApiController");
-const protectClientRoutes = require("../../middleware/protectAdminRoutes");
+const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
 router.get(
   "/current-user",
