@@ -268,7 +268,7 @@ const restore = async (req, res) => {
 // [GET] /tour/:id
 const tourDetail = async (req, res) => {
   try {
-    const tour = await Tour.findById(req.params.id).lean();
+    const tour = await Tour.findOne({ slug: req.params.slug }).lean();
 
     if (!tour) {
       return res.status(404).json({

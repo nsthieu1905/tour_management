@@ -1,6 +1,11 @@
 import { Notification } from "../../utils/modal.js";
 import { apiPost } from "../../utils/api.js";
 import { formatPrice } from "../../utils/helpers.js";
+import {
+  validateEmail,
+  validatePhoneNumber,
+  validateFullName,
+} from "../../utils/validators.js";
 
 // State management
 let bookingState = {
@@ -73,6 +78,30 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function setupEventListeners() {
+  // Customer name validation
+  customerNameInput.addEventListener("blur", () => {
+    validateCustomerName();
+  });
+  customerNameInput.addEventListener("input", () => {
+    clearFieldError("customer-name");
+  });
+
+  // Customer email validation
+  customerEmailInput.addEventListener("blur", () => {
+    validateCustomerEmail();
+  });
+  customerEmailInput.addEventListener("input", () => {
+    clearFieldError("customer-email");
+  });
+
+  // Customer phone validation
+  customerPhoneInput.addEventListener("blur", () => {
+    validateCustomerPhone();
+  });
+  customerPhoneInput.addEventListener("input", () => {
+    clearFieldError("customer-phone");
+  });
+
   // Guest count controls
   decreaseGuestBtn.addEventListener("click", () => {
     const current = parseInt(guestCountInput.value);
@@ -115,8 +144,14 @@ function setupEventListeners() {
     });
   });
 
-  // Departure date
-  departureDateSelect.addEventListener("change", onDepartureDateChange);
+  // Departure date validation
+  departureDateSelect.addEventListener("blur", () => {
+    validateDepartureDate();
+  });
+  departureDateSelect.addEventListener("change", () => {
+    clearFieldError("departure-date");
+    onDepartureDateChange();
+  });
 }
 
 function onGuestCountChange() {
@@ -343,29 +378,114 @@ function goToStep(step) {
   }
 }
 
-function validateStep1() {
+function validateCustomerName() {
   const name = customerNameInput.value.trim();
-  const email = customerEmailInput.value.trim();
-  const phone = customerPhoneInput.value.trim();
 
   if (!name) {
-    Notification.error("Vui lòng nhập tên!");
-    return false;
-  }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    Notification.error("Vui lòng nhập email hợp lệ!");
-    return false;
-  }
-  if (!phone || !/^\d{9,11}$/.test(phone)) {
-    Notification.error("Vui lòng nhập số điện thoại hợp lệ!");
-    return false;
-  }
-  if (!departureDateSelect.value) {
-    Notification.error("Vui lòng chọn ngày khởi hành!");
+    showFieldError("customer-name", "Vui lòng nhập tên");
     return false;
   }
 
+  if (!validateFullName(name)) {
+    showFieldError("customer-name", "Tên phải từ 3 ký tự trở lên");
+    return false;
+  }
+
+  clearFieldError("customer-name");
   return true;
+}
+
+function validateCustomerEmail() {
+  const email = customerEmailInput.value.trim();
+
+  if (!email) {
+    showFieldError("customer-email", "Vui lòng nhập email");
+    return false;
+  }
+
+  if (!validateEmail(email)) {
+    showFieldError("customer-email", "Email không hợp lệ");
+    return false;
+  }
+
+  clearFieldError("customer-email");
+  return true;
+}
+
+function validateCustomerPhone() {
+  const phone = customerPhoneInput.value.trim();
+
+  if (!phone) {
+    showFieldError("customer-phone", "Vui lòng nhập số điện thoại");
+    return false;
+  }
+
+  if (!validatePhoneNumber(phone)) {
+    showFieldError(
+      "customer-phone",
+      "Số điện thoại không hợp lệ (VN: 09xx xxx xxxx)"
+    );
+    return false;
+  }
+
+  clearFieldError("customer-phone");
+  return true;
+}
+
+function validateDepartureDate() {
+  if (!departureDateSelect.value) {
+    showFieldError("departure-date", "Vui lòng chọn ngày khởi hành");
+    return false;
+  }
+
+  clearFieldError("departure-date");
+  return true;
+}
+
+function getOrCreateErrorDiv(fieldId) {
+  const input = document.getElementById(fieldId);
+  const parent = input.parentElement;
+  let errorDiv = parent.querySelector(".field-error");
+
+  if (!errorDiv) {
+    errorDiv = document.createElement("div");
+    errorDiv.className = "field-error text-red-600 text-sm mt-1";
+    parent.appendChild(errorDiv);
+  }
+
+  return errorDiv;
+}
+
+function showFieldError(fieldId, message) {
+  const errorDiv = getOrCreateErrorDiv(fieldId);
+  const input = document.getElementById(fieldId);
+  errorDiv.textContent = message;
+  errorDiv.classList.remove("hidden");
+  input.classList.add("border-red-500");
+  input.classList.remove("border-gray-300");
+}
+
+function clearFieldError(fieldId) {
+  const input = document.getElementById(fieldId);
+  const parent = input.parentElement;
+  const errorDiv = parent.querySelector(".field-error");
+
+  if (errorDiv) {
+    errorDiv.textContent = "";
+    errorDiv.classList.add("hidden");
+  }
+
+  input.classList.remove("border-red-500");
+  input.classList.add("border-gray-300");
+}
+
+function validateStep1() {
+  const nameValid = validateCustomerName();
+  const emailValid = validateCustomerEmail();
+  const phoneValid = validateCustomerPhone();
+  const dateValid = validateDepartureDate();
+
+  return nameValid && emailValid && phoneValid && dateValid;
 }
 
 function goToStep1() {

@@ -54,7 +54,7 @@
 
           <button
             class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
-            onclick="window.location.href='/tours/{{_id}}'"
+            onclick="window.location.href='/tours/{{slug}}'"
           >
             Xem chi tiết
           </button>
@@ -94,23 +94,10 @@
    * Remove tour from favorites and reload page
    */
   async function handleRemoveFavorite(tourId) {
-    console.log("Removing favorite for tour:", tourId);
-    if (confirm("Bạn chắc chắn muốn bỏ thích tour này?")) {
-      try {
-        const result = await favoriteHelper.toggleFavorite(tourId);
-        console.log("Toggle favorite result:", result);
-        if (result.success) {
-          // Show success message
-          alert("Đã bỏ thích tour. Tải lại trang...");
-          // Reload page to update list
-          window.location.reload();
-        } else {
-          alert("Lỗi: " + result.message);
-        }
-      } catch (error) {
-        console.error("Error removing favorite:", error);
-        alert("Có lỗi xảy ra khi bỏ thích tour");
-      }
+    const result = await favoriteHelper.toggleFavorite(tourId);
+    if (result.success) {
+      // Reload page to reflect changes
+      window.location.reload();
     }
   }
 </script>

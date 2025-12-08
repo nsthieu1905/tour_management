@@ -243,18 +243,29 @@ const Notification = {
     const notification = document.createElement("div");
     notification.className = `px-6 py-4 rounded-lg shadow-lg animate-slide-in ${config.bg} text-white w-max max-w-sm`;
     notification.innerHTML = `
-      <div class="flex items-center">
-        <i class="fas ${config.icon} mr-3"></i>
-        <span>${message}</span>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fas ${config.icon} mr-3"></i>
+          <span>${message}</span>
+        </div>
+        <button class="ml-4 hover:opacity-75 focus:outline-none transition-opacity" onclick="this.parentElement.parentElement.remove()">
+          <i class="fas fa-times text-lg"></i>
+        </button>
       </div>
     `;
 
     container.appendChild(notification);
 
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       notification.style.animation = "slide-out 0.3s ease-out forwards";
       setTimeout(() => notification.remove(), 300);
     }, duration);
+
+    notification.querySelector("button").addEventListener("click", () => {
+      clearTimeout(timeoutId);
+      notification.style.animation = "slide-out 0.3s ease-out forwards";
+      setTimeout(() => notification.remove(), 300);
+    });
   },
 
   success(message, duration) {

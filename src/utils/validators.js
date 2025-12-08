@@ -1,53 +1,27 @@
-/**
- * Input validators cho authentication
- */
-
-/**
- * Validate email format
- */
 const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-/**
- * Validate password strength
- * Yêu cầu: tối thiểu 6 ký tự
- */
 const validatePassword = (password) => {
   return password && password.length >= 6;
 };
 
-/**
- * Validate username
- * Yêu cầu: tối thiểu 3 ký tự
- */
 const validateUsername = (username) => {
   return username && username.trim().length >= 3;
 };
 
-/**
- * Validate phone number (Việt Nam)
- * Hỗ trợ: +84..., 0..., hoặc 84...
- */
 const validatePhoneNumber = (phone) => {
   const phoneRegex = /^(?:\+84|0|84)[1-9]\d{8}$/;
   return phoneRegex.test(phone.replace(/\s/g, ""));
 };
 
-/**
- * Validate full name
- */
 const validateFullName = (fullName) => {
   if (!fullName || fullName.trim().length === 0) return false;
   if (fullName.trim().length < 3) return false;
-  // Không chứa số hoặc ký tự đặc biệt (cho phép khoảng trắng và dấu gạch ngang)
   return /^[a-zA-ZÀ-ỿ\s\-]+$/.test(fullName);
 };
 
-/**
- * Validate login input
- */
 const validateLoginInput = (email, password) => {
   const errors = {};
 
@@ -74,7 +48,6 @@ const validateLoginInput = (email, password) => {
  * Trả về lỗi chung để không tiết lộ thông tin (bảo mật)
  */
 const validateCredentials = (email, password, user, isPasswordValid) => {
-  // Kiểm tra các điều kiện nhưng không tiết lộ chi tiết
   const isValid = user && isPasswordValid && user.status === "active";
 
   if (!isValid) {
@@ -90,31 +63,40 @@ const validateCredentials = (email, password, user, isPasswordValid) => {
   };
 };
 
-/**
- * Validate register input
- */
-const validateRegisterInput = (fullName, email, password, passwordConfirm) => {
+const validateRegisterInput = (
+  fullName,
+  email,
+  phone,
+  password,
+  passwordConfirm
+) => {
   const errors = {};
 
   if (!fullName || fullName.trim().length === 0) {
-    errors.fullName = "Tên đầy đủ là bắt buộc";
-  } else if (!validateFullName(fullName)) {
-    errors.fullName = "Tên đầy đủ không hợp lệ (không được chứa số)";
+    errors.fullName = "Vui lòng nhập tên nguời dùng";
   }
 
   if (!email) {
-    errors.email = "Email là bắt buộc";
+    errors.email = "Vui lòng nhập email";
   } else if (!validateEmail(email)) {
-    errors.email = "Email không hợp lệ (vd: user@example.com)";
+    errors.email = "Email không hợp lệ";
+  }
+
+  if (!phone) {
+    errors.phone = "Vui lòng nhập số điện thoại";
+  } else if (!validatePhoneNumber(phone)) {
+    errors.phone = "Số điện thoại không hợp lệ";
   }
 
   if (!password) {
-    errors.password = "Mật khẩu là bắt buộc";
+    errors.password = "Vui lòng nhập mật khẩu";
   } else if (!validatePassword(password)) {
     errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
   }
 
-  if (password !== passwordConfirm) {
+  if (!passwordConfirm) {
+    errors.passwordConfirm = "Vui lòng xác nhận mật khẩu";
+  } else if (password !== passwordConfirm) {
     errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
   }
 
@@ -124,14 +106,10 @@ const validateRegisterInput = (fullName, email, password, passwordConfirm) => {
   };
 };
 
-/**
- * Validate token payload
- */
 const validateTokenPayload = (token) => {
   if (!token || typeof token !== "string") {
     return false;
   }
-  // JWT format: header.payload.signature
   return token.split(".").length === 3;
 };
 
@@ -144,7 +122,7 @@ const validateUserInput = (userData) => {
   // Validate fullName
   if (userData.fullName) {
     if (!validateFullName(userData.fullName)) {
-      errors.fullName = "Tên đầy đủ không hợp lệ";
+      errors.fullName = "Tên người dùng không hợp lệ";
     }
   }
 
@@ -175,15 +153,15 @@ const validateUserInput = (userData) => {
   };
 };
 
-module.exports = {
+export {
   validateEmail,
   validatePassword,
   validateUsername,
   validatePhoneNumber,
   validateFullName,
-  validateLoginInput,
   validateCredentials,
-  validateRegisterInput,
   validateTokenPayload,
+  validateLoginInput,
+  validateRegisterInput,
   validateUserInput,
 };

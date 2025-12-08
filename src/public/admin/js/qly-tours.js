@@ -522,7 +522,7 @@ async function getTours() {
               </button>
               <button
                 class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                onclick="window.open('/tours/${tour._id}', '_blank')"
+                onclick="window.open('/tours/${tour.slug}', '_blank')"
               >
                 <i class="fas fa-eye mr-1"></i>Xem chi tiết
               </button>
