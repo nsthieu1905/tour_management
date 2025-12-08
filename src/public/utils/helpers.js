@@ -49,20 +49,22 @@ const formatPrice = (price) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
+function formatPriceK(price) {
+  if (!price) return "0";
+  return (Math.floor(price / 1000) + "k").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 const formatDate = (date) => {
   if (!date) return "";
 
-  // Handle array of dates or array of {date, price} objects
   let value = Array.isArray(date) ? date[0] : date;
 
-  // If it's an object with a date property, extract the date
   if (typeof value === "object" && value !== null && value.date) {
     value = value.date;
   }
 
   const d = new Date(value);
 
-  // Check if date is valid
   if (isNaN(d.getTime())) {
     return "";
   }
@@ -81,5 +83,6 @@ export {
   badgeClass,
   badgeIcon,
   formatPrice,
+  formatPriceK,
   formatDate,
 };

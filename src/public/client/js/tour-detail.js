@@ -1,11 +1,12 @@
+import { Notification } from "../../utils/modal.js";
+import { formatPriceK } from "../../utils/helpers.js";
+
 // Global variables
 let currentImageIndex = 0; // Index ảnh hiện tại trong lightbox
 let guestCount = 1; // Số lượng khách (mặc định 1)
 let isWishlisted = false; // Trạng thái yêu thích của tour
 let currentMonthDisplay = null; // Tháng đang hiển thị tron lịch
 let departureDates = []; // Danh sách ngày khởi hành từ server
-let selectedDeparture = null; // Ngày khởi hành được chọn {date, price}
-let appliedCoupon = null; // Coupon được áp dụng {couponCode, discountAmount, finalPrice}
 
 // ============================================
 // KHỞI TẠO NGÀY KHỞI HÀNH
@@ -208,13 +209,12 @@ function renderCalendar() {
         "bg-blue-500 text-white rounded-lg py-3 text-center cursor-pointer hover:bg-blue-600 transition duration-200";
       const priceDisplay =
         departure.price > 0
-          ? `<div class="text-xs">${formatPrice(departure.price)}</div>`
+          ? `<div class="text-xs">${formatPriceK(departure.price)}</div>`
           : "";
       dayCell.innerHTML = `
         <div class="font-semibold">${day}</div>
         ${priceDisplay}
       `;
-      dayCell.onclick = () => selectDepartureDate(departure);
     } else {
       // Ngày không có tour
       dayCell.className = "text-center py-3 text-gray-400";
@@ -223,19 +223,6 @@ function renderCalendar() {
 
     calendarGrid.appendChild(dayCell);
   }
-}
-
-// ============================================
-// FORMAT PRICE
-// ============================================
-/**
- * Format giá tiền thành dạng "K" (ngàn)
- * @param {Number} price - Giá tiền
- * @returns {String} - Giá đã format (vd: "5.390k")
- */
-function formatPrice(price) {
-  if (!price) return "0";
-  return (Math.floor(price / 1000) + "k").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 // ============================================
@@ -314,70 +301,6 @@ function updateActiveMonthButton() {
     if (btn.dataset.month === monthKey) {
       btn.classList.add("border-blue-500", "bg-blue-50");
       btn.classList.remove("border-gray-300");
-    }
-  });
-}
-
-// ============================================
-// SELECT DEPARTURE DATE
-// ============================================
-/**
- * Chọn ngày khởi hành
- * @param {Object} departure - Thông tin ngày khởi hành {date, price}
- */
-function selectDepartureDate(departure) {
-  console.log("Đã chọn ngày khởi hành:", departure);
-  // Lưu ngày đã chọn vào global variable và localStorage
-  selectedDeparture = departure;
-  localStorage.setItem("selectedDepartureDate", JSON.stringify(departure));
-
-  // Cập nhật lại tổng giá với giá của ngày được chọn
-  changeGuests(0);
-}
-
-// ============================================
-// KHỞI TẠO DROPDOWN NGÀY KHỞI HÀNH
-// ============================================
-/**
- * Khởi tạo dropdown "Ngày khởi hành" trong modal đặt tour
- * - Populate dropdown từ departureDates
- * - Format: "DD/MM/YYYY - GIÁ VND"
- * - Lưu giá vào data attribute của option
- */
-function initializeDepartureDateDropdown() {
-  const dropdown = document.getElementById("departure-date");
-  if (!dropdown || departureDates.length === 0) return;
-
-  departureDates.forEach((dept) => {
-    const date = new Date(dept.date);
-    if (isNaN(date.getTime())) return;
-
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    const dateStr = `${day}/${month}/${year}`;
-    const priceDisplay =
-      dept.price > 0 ? ` - ${dept.price.toLocaleString("vi-VN")}đ` : "";
-
-    const option = document.createElement("option");
-    option.value = dept.date;
-    option.textContent = `${dateStr}${priceDisplay}`;
-    option.setAttribute("data-price", dept.price);
-    dropdown.appendChild(option);
-  });
-
-  // Xử lý sự kiện thay đổi dropdown
-  dropdown.addEventListener("change", function () {
-    if (this.value) {
-      const selectedOption = this.options[this.selectedIndex];
-      const price = parseInt(selectedOption.getAttribute("data-price"), 10);
-      const date = this.value;
-
-      // Cập nhật selectedDeparture
-      selectedDeparture = { date, price };
-
-      // Cập nhật tổng giá
-      changeGuests(0);
     }
   });
 }
@@ -488,18 +411,11 @@ function changeGuests(change) {
   document.getElementById("guest-count").textContent = guestCount;
   document.getElementById("modal-guest-count").textContent = guestCount;
 
-  // Lấy giá: ưu tiên giá ngày khởi hành được chọn, nếu không thì lấy giá mặc định của tour
+  // Lấy giá gốc từ #original-price element
+  const priceElement = document.getElementById("original-price");
   let basePrice = 0;
-
-  if (selectedDeparture && selectedDeparture.price > 0) {
-    // Sử dụng giá của ngày khởi hành được chọn
-    basePrice = selectedDeparture.price;
-  } else {
-    // Fallback: lấy giá gốc từ #original-price element
-    const priceElement = document.getElementById("original-price");
-    if (priceElement) {
-      basePrice = parseInt(priceElement.textContent.replace(/\D/g, ""), 10);
-    }
+  if (priceElement) {
+    basePrice = parseInt(priceElement.textContent.replace(/\D/g, ""), 10);
   }
 
   if (isNaN(basePrice) || basePrice === 0) {
@@ -507,16 +423,8 @@ function changeGuests(change) {
     return;
   }
 
-  // Tính tổng giá trước coupon
-  const totalBeforeCoupon = basePrice * guestCount;
-
-  // Tính giá cuối cùng sau coupon
-  let finalPrice = totalBeforeCoupon;
-  if (appliedCoupon) {
-    // Coupon đã lưu giá discount cho 1 khách, nhân với số khách
-    finalPrice = totalBeforeCoupon - appliedCoupon.discountAmount * guestCount;
-    finalPrice = Math.max(0, finalPrice);
-  }
+  // Tính và cập nhật giá
+  const finalPrice = basePrice * guestCount;
 
   // Cập nhật hiển thị
   document.getElementById("modal-guest-count").textContent = guestCount;
@@ -529,19 +437,6 @@ function changeGuests(change) {
 
   const modalTotalPriceEl = document.getElementById("modal-total-price");
   if (modalTotalPriceEl) modalTotalPriceEl.textContent = priceDisplay;
-
-  // Hiển thị/ẩn discount info
-  if (appliedCoupon) {
-    document.getElementById("original-total").classList.remove("hidden");
-    document.getElementById("discount-info").classList.remove("hidden");
-    document.getElementById("original-total-price").textContent =
-      totalBeforeCoupon.toLocaleString("vi-VN") + "đ";
-    document.getElementById("discount-amount").textContent =
-      (appliedCoupon.discountAmount * guestCount).toLocaleString("vi-VN") + "đ";
-  } else {
-    document.getElementById("original-total").classList.add("hidden");
-    document.getElementById("discount-info").classList.add("hidden");
-  }
 }
 
 // ============================================
@@ -588,146 +483,6 @@ async function initializeWishlist() {
 }
 
 // ============================================
-// APPLY COUPON CODE
-// ============================================
-/**
- * Áp dụng mã coupon
- */
-async function applyCouponCode() {
-  const couponInput = document.getElementById("coupon-code");
-  const couponCode = couponInput.value.trim().toUpperCase();
-  const messageEl = document.getElementById("coupon-message");
-
-  if (!couponCode) {
-    messageEl.classList.remove("hidden", "text-green-600");
-    messageEl.classList.add("text-red-600");
-    messageEl.textContent = "Vui lòng nhập mã giảm giá";
-    return;
-  }
-
-  // Lấy tour ID
-  const tourIdBtn = document.querySelector('[onclick*="addToWishlist"]');
-  if (!tourIdBtn) {
-    messageEl.classList.remove("hidden", "text-green-600");
-    messageEl.classList.add("text-red-600");
-    messageEl.textContent = "Không tìm thấy thông tin tour";
-    return;
-  }
-
-  const onclickAttr = tourIdBtn.getAttribute("onclick");
-  const tourIdMatch = onclickAttr.match(/addToWishlist\('([^']+)'\)/);
-  if (!tourIdMatch) {
-    messageEl.classList.remove("hidden", "text-green-600");
-    messageEl.classList.add("text-red-600");
-    messageEl.textContent = "Không tìm thấy thông tin tour";
-    return;
-  }
-
-  const tourId = tourIdMatch[1];
-
-  // Lấy giá gốc (không coupon)
-  let basePrice = 0;
-  if (selectedDeparture && selectedDeparture.price > 0) {
-    basePrice = selectedDeparture.price;
-  } else {
-    const priceElement = document.getElementById("original-price");
-    if (priceElement) {
-      basePrice = parseInt(priceElement.textContent.replace(/\D/g, ""), 10);
-    }
-  }
-
-  if (basePrice === 0) {
-    messageEl.classList.remove("hidden", "text-green-600");
-    messageEl.classList.add("text-red-600");
-    messageEl.textContent = "Vui lòng chọn ngày khởi hành trước";
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/coupons/applyCoupon", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        couponCode: couponCode,
-        tourId: tourId,
-        originalPrice: basePrice,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      // Lưu coupon thành công
-      appliedCoupon = {
-        couponCode: result.data.couponCode,
-        couponName: result.data.couponName,
-        discountAmount: Math.floor(result.data.discountAmount / guestCount), // Lưu discount per guest
-        savings: result.data.savings,
-      };
-
-      messageEl.classList.remove("hidden", "text-red-600");
-      messageEl.classList.add("text-green-600");
-      messageEl.textContent = `✓ Áp dụng mã ${
-        result.data.couponCode
-      } thành công! Tiết kiệm ${result.data.savings.toLocaleString("vi-VN")}đ`;
-
-      // Cập nhật hiển thị giá
-      changeGuests(0);
-
-      // Disable nút áp dụng
-      document.getElementById("apply-coupon-btn").disabled = true;
-      document.getElementById("apply-coupon-btn").classList.add("opacity-50");
-    } else {
-      messageEl.classList.remove("hidden", "text-green-600");
-      messageEl.classList.add("text-red-600");
-      messageEl.textContent = result.message || "Không thể áp dụng mã này";
-    }
-  } catch (error) {
-    console.error("Lỗi apply coupon:", error);
-    messageEl.classList.remove("hidden", "text-green-600");
-    messageEl.classList.add("text-red-600");
-    messageEl.textContent = "Có lỗi xảy ra. Vui lòng thử lại";
-  }
-}
-
-// ============================================
-// RESET BOOKING FORM
-// ============================================
-/**
- * Reset form đặt tour khi đóng modal
- */
-function resetBookingForm() {
-  // Reset input fields
-  document.getElementById("customer-name").value = "";
-  document.getElementById("customer-phone").value = "";
-  document.getElementById("customer-email").value = "";
-  document.getElementById("departure-date").value = "";
-  document.getElementById("coupon-code").value = "";
-
-  // Reset coupon
-  appliedCoupon = null;
-  const messageEl = document.getElementById("coupon-message");
-  if (messageEl) {
-    messageEl.classList.add("hidden");
-    messageEl.textContent = "";
-  }
-
-  // Enable nút áp dụng coupon
-  const applyBtn = document.getElementById("apply-coupon-btn");
-  if (applyBtn) {
-    applyBtn.disabled = false;
-    applyBtn.classList.remove("opacity-50");
-  }
-
-  // Reset guest count
-  guestCount = 1;
-  changeGuests(0);
-
-  // Reset departure date
-  selectedDeparture = null;
-}
 
 // ============================================
 // WISHLIST FUNCTIONALITY
@@ -754,7 +509,7 @@ function addToWishlist(tourId) {
           icon.classList.add("text-red-500");
           icon.classList.remove("text-gray-600");
           text.textContent = "Đã yêu thích";
-          showNotification("Đã thêm vào danh sách yêu thích! 💖", "success");
+          Notification.success("Đã thêm vào danh sách yêu thích");
         } else {
           // Outline trái tim (chưa yêu thích)
           icon.setAttribute("fill", "none");
@@ -762,15 +517,15 @@ function addToWishlist(tourId) {
           icon.classList.remove("text-red-500");
           icon.classList.add("text-gray-600");
           text.textContent = "Yêu thích";
-          showNotification("Đã xóa khỏi danh sách yêu thích", "info");
+          Notification.success("Đã xóa khỏi danh sách yêu thích");
         }
       } else {
-        showNotification("Lỗi: " + result.message, "error");
+        Notification.error("Có lỗi xảy ra, vui lòng thử lại");
       }
     })
     .catch((error) => {
       console.error("Lỗi toggle favorite:", error);
-      showNotification("Có lỗi xảy ra khi cập nhật yêu thích", "error");
+      Notification.error("Có lỗi xảy ra, vui lòng thử lại");
     });
 }
 
@@ -860,23 +615,6 @@ function updateLightboxDisplay() {
 // MODAL FUNCTIONALITY
 // ============================================
 /**
- * Mở modal đặt tour
- */
-function openBookingModal() {
-  document.getElementById("booking-modal").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-}
-
-/**
- * Đóng modal đặt tour
- */
-function closeBookingModal() {
-  document.getElementById("booking-modal").classList.add("hidden");
-  document.body.style.overflow = "auto";
-  resetBookingForm(); // Reset form khi đóng modal
-}
-
-/**
  * Mở modal liên hệ
  */
 function openContactModal() {
@@ -893,36 +631,6 @@ function closeContactModal() {
 }
 
 // ============================================
-// FORM SUBMISSION
-// ============================================
-/**
- * Xử lý submit form đặt tour
- * @param {Event} event - Event submit
- */
-function submitBooking(event) {
-  event.preventDefault();
-
-  const name = document.getElementById("customer-name").value;
-  const phone = document.getElementById("customer-phone").value;
-  const email = document.getElementById("customer-email").value;
-  const date = document.getElementById("departure-date").value;
-
-  if (name && phone && email && date) {
-    showNotification(
-      `Cảm ơn ${name}! Chúng tôi sẽ liên hệ với bạn trong 24h để xác nhận đặt tour. 🎉`,
-      "success"
-    );
-    closeBookingModal();
-
-    // Reset form
-    document.getElementById("customer-name").value = "";
-    document.getElementById("customer-phone").value = "";
-    document.getElementById("customer-email").value = "";
-    document.getElementById("departure-date").value = "";
-  }
-}
-
-// ============================================
 // NOTIFICATION SYSTEM
 // ============================================
 /**
@@ -930,26 +638,6 @@ function submitBooking(event) {
  * @param {String} message - Nội dung thông báo
  * @param {String} type - Loại thông báo (success/error/info)
  */
-function showNotification(message, type = "info") {
-  const notification = document.createElement("div");
-  const bgColor =
-    type === "success"
-      ? "bg-green-500"
-      : type === "error"
-      ? "bg-red-500"
-      : "bg-blue-500";
-
-  notification.className = `fixed top-20 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in max-w-sm`;
-  notification.textContent = message;
-  document.body.appendChild(notification);
-
-  // Tự động ẩn sau 4 giây
-  setTimeout(() => {
-    notification.style.opacity = "0";
-    notification.style.transform = "translateX(100%)";
-    setTimeout(() => notification.remove(), 300);
-  }, 4000);
-}
 
 // ============================================
 // CALENDAR INTERACTION
@@ -972,7 +660,7 @@ document.querySelectorAll(".calendar-day").forEach((day) => {
       // Thêm ring highlight
       this.classList.add("ring-4", "ring-yellow-400");
 
-      showNotification(`Đã chọn ngày ${date} - Giá: ${price} 📅`, "success");
+      Notification(`Đã chọn ngày ${date} - Giá: ${price} 📅`, "success");
     }
   });
 });
@@ -983,12 +671,7 @@ document.querySelectorAll(".calendar-day").forEach((day) => {
 // Đóng modal khi ấn esc
 document.addEventListener("keydown", function (e) {
   if (e.key === "Escape") {
-    const bookingModal = document.getElementById("booking-modal");
     const contactModal = document.getElementById("contact-modal");
-
-    if (!bookingModal.classList.contains("hidden")) {
-      closeBookingModal();
-    }
 
     if (!contactModal.classList.contains("hidden")) {
       closeContactModal();
@@ -1009,28 +692,21 @@ document.addEventListener("keydown", function (e) {
 document.addEventListener("DOMContentLoaded", function () {
   initializeDepartureDates();
   initializeLightboxThumbnails();
-  initializeDepartureDateDropdown(); // Populate dropdown ngày khởi hành
   initializeWishlist(); // Kiểm tra tour đã được yêu thích chưa
 
   // Khởi tạo hiển thị số lượng khách
   changeGuests(0);
 
-  // Khởi tạo event listener cho coupon input
-  const couponInput = document.getElementById("coupon-code");
-  if (couponInput) {
-    couponInput.addEventListener("input", function () {
-      // Enable nút áp dụng khi user thay đổi mã
-      const applyBtn = document.getElementById("apply-coupon-btn");
-      if (applyBtn) {
-        applyBtn.disabled = false;
-        applyBtn.classList.remove("opacity-50");
-      }
-      // Xóa thông báo cũ
-      const messageEl = document.getElementById("coupon-message");
-      if (messageEl) {
-        messageEl.classList.add("hidden");
-        messageEl.textContent = "";
-      }
-    });
-  }
+  // Expose functions to window object for onclick handlers
+  window.changeGuests = changeGuests;
+  window.addToWishlist = addToWishlist;
+  window.openContactModal = openContactModal;
+  window.closeContactModal = closeContactModal;
+  window.openLightbox = openLightbox;
+  window.closeLightbox = closeLightbox;
+  window.nextImage = nextImage;
+  window.prevImage = prevImage;
+  window.prevMonth = prevMonth;
+  window.nextMonth = nextMonth;
+  window.toggleAccordion = toggleAccordion;
 });

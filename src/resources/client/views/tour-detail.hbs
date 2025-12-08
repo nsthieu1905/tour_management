@@ -635,10 +635,6 @@
           >
             {{formatPrice tour.price}} VND
           </div>
-          <div class="text-sm text-gray-500 line-through">7.200.000đ</div>
-          <div class="text-xs text-green-600 font-semibold">
-            Tiết kiệm 810.000đ
-          </div>
         </div>
 
         <div class="mb-4 p-3 bg-gray-50 rounded-xl">
@@ -692,12 +688,12 @@
           </div>
         </div>
 
-        <button
-          onclick="openBookingModal()"
+        <a
+          href="/booking/{{tour._id}}"
           class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition duration-200 mb-4 shadow-lg flex items-center justify-center gap-2"
         >
-          Đặt ngay
-        </button>
+          <i class="fas fa-check-circle"></i> Đặt ngay
+        </a>
 
         <div class="space-y-3 text-sm mb-4">
           <div class="flex justify-between">
@@ -712,7 +708,9 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">Còn lại:</span>
-            <span class="font-semibold text-red-500">8 chỗ</span>
+            <span class="font-semibold text-red-500"
+              >{{subtract tour.capacity.max tour.capacity.current}} chỗ</span
+            >
           </div>
         </div>
 
@@ -1201,5 +1199,5 @@
   ];
 </script>
 
+<script type="module" src="/client/js/tour-detail.js"></script>
 <script src="/utils/favorite-helper.js"></script>
-<script src="/client/js/tour-detail.js"></script>
