@@ -132,10 +132,10 @@ const settings = (req, res) => {
     });
   }
 };
-// [GET] /admin/ma-giam-gia
+// [GET] /admin/qly-coupon
 const maGiamGia = (req, res) => {
   try {
-    return res.render("components/ma-giam-gia", {
+    return res.render("components/qly-coupon", {
       bodyClass: "bg-gray-50 transition-all duration-300",
     });
   } catch (error) {

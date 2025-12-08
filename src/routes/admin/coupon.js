@@ -3,12 +3,14 @@ const router = express.Router();
 const couponController = require("../../app/API/CouponController");
 const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
 
+router.post("/applyCoupon", couponController.applyCoupon);
+
 router.use(protectAdminRoutes);
 
-router.get("/", couponController.getAllCoupons);
-router.get("/:id", couponController.getCouponById);
-router.post("/add", couponController.addCoupon);
-router.patch("/:id", couponController.updateCoupon);
-router.delete("/:id", couponController.deleteCoupon);
+router.get("/", couponController.findAll);
+router.get("/:id", couponController.findOne);
+router.post("/add", couponController.create);
+router.patch("/:id", couponController.update);
+router.delete("/:id", couponController.deleteOne);
 
 module.exports = router;

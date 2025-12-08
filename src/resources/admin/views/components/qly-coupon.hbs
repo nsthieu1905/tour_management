@@ -1,0 +1,36 @@
+<div class="ml-64 min-h-screen bg-gray-50 p-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Quản lý Mã giảm giá</h1>
+          <p class="text-gray-500 mt-1">
+            Quản lý tất cả mã khuyến mãi và mã giảm giá
+          </p>
+        </div>
+        <button
+          onclick="showAddCouponModal()"
+          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center"
+        >
+          <i class="fas fa-plus mr-2"></i>Thêm mã mới
+        </button>
+      </div>
+    </div>
+
+    <!-- List Container -->
+    <div class="bg-white rounded-xl shadow-sm">
+      <div id="coupons-list" class="divide-y">
+        <!-- Coupon items will be rendered here -->
+      </div>
+      <div id="empty-coupons-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+
+{{> add-edit-coupon}}
+
+<script type="module" src="/admin/js/utils.js"></script>
+<script type="module" src="/admin/js/qly-coupon.js"></script>

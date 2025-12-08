@@ -6,7 +6,7 @@ const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
 const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
 router.get("/admin", authController.login);
-router.post("/login", authApiController.login);
+router.post("/login", authApiController.adminLogin);
 router.post("/client-login", authApiController.clientLogin);
 router.post("/register", authApiController.register);
 router.post("/check-token", authApiController.checkToken);

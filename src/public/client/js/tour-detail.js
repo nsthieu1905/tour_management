@@ -520,8 +520,15 @@ function changeGuests(change) {
 
   // Cập nhật hiển thị
   document.getElementById("modal-guest-count").textContent = guestCount;
-  document.getElementById("modal-total-price").textContent =
-    finalPrice.toLocaleString("vi-VN") + "đ";
+  document.getElementById("guest-count").textContent = guestCount;
+
+  // Update cả 2 chỗ hiển thị tổng giá (detail + modal)
+  const priceDisplay = finalPrice.toLocaleString("vi-VN") + "đ";
+  const totalPriceEl = document.getElementById("total-price");
+  if (totalPriceEl) totalPriceEl.textContent = priceDisplay;
+
+  const modalTotalPriceEl = document.getElementById("modal-total-price");
+  if (modalTotalPriceEl) modalTotalPriceEl.textContent = priceDisplay;
 
   // Hiển thị/ẩn discount info
   if (appliedCoupon) {
@@ -637,7 +644,7 @@ async function applyCouponCode() {
   }
 
   try {
-    const response = await fetch("/api/coupons/validate-and-apply", {
+    const response = await fetch("/api/coupons/applyCoupon", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -683,6 +690,43 @@ async function applyCouponCode() {
     messageEl.classList.add("text-red-600");
     messageEl.textContent = "Có lỗi xảy ra. Vui lòng thử lại";
   }
+}
+
+// ============================================
+// RESET BOOKING FORM
+// ============================================
+/**
+ * Reset form đặt tour khi đóng modal
+ */
+function resetBookingForm() {
+  // Reset input fields
+  document.getElementById("customer-name").value = "";
+  document.getElementById("customer-phone").value = "";
+  document.getElementById("customer-email").value = "";
+  document.getElementById("departure-date").value = "";
+  document.getElementById("coupon-code").value = "";
+
+  // Reset coupon
+  appliedCoupon = null;
+  const messageEl = document.getElementById("coupon-message");
+  if (messageEl) {
+    messageEl.classList.add("hidden");
+    messageEl.textContent = "";
+  }
+
+  // Enable nút áp dụng coupon
+  const applyBtn = document.getElementById("apply-coupon-btn");
+  if (applyBtn) {
+    applyBtn.disabled = false;
+    applyBtn.classList.remove("opacity-50");
+  }
+
+  // Reset guest count
+  guestCount = 1;
+  changeGuests(0);
+
+  // Reset departure date
+  selectedDeparture = null;
 }
 
 // ============================================
@@ -829,6 +873,7 @@ function openBookingModal() {
 function closeBookingModal() {
   document.getElementById("booking-modal").classList.add("hidden");
   document.body.style.overflow = "auto";
+  resetBookingForm(); // Reset form khi đóng modal
 }
 
 /**
@@ -935,15 +980,20 @@ document.querySelectorAll(".calendar-day").forEach((day) => {
 // ============================================
 // CLOSE MODALS ON OUTSIDE CLICK
 // ============================================
-// Đóng modal khi click bên ngoài
-document.addEventListener("click", function (e) {
-  const bookingModal = document.getElementById("booking-modal");
-  const contactModal = document.getElementById("contact-modal");
-  const lightbox = document.getElementById("lightbox");
+// Đóng modal khi ấn esc
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    const bookingModal = document.getElementById("booking-modal");
+    const contactModal = document.getElementById("contact-modal");
 
-  if (e.target === bookingModal) closeBookingModal();
-  if (e.target === contactModal) closeContactModal();
-  if (e.target === lightbox) closeLightbox();
+    if (!bookingModal.classList.contains("hidden")) {
+      closeBookingModal();
+    }
+
+    if (!contactModal.classList.contains("hidden")) {
+      closeContactModal();
+    }
+  }
 });
 
 // ============================================
@@ -964,4 +1014,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Khởi tạo hiển thị số lượng khách
   changeGuests(0);
+
+  // Khởi tạo event listener cho coupon input
+  const couponInput = document.getElementById("coupon-code");
+  if (couponInput) {
+    couponInput.addEventListener("input", function () {
+      // Enable nút áp dụng khi user thay đổi mã
+      const applyBtn = document.getElementById("apply-coupon-btn");
+      if (applyBtn) {
+        applyBtn.disabled = false;
+        applyBtn.classList.remove("opacity-50");
+      }
+      // Xóa thông báo cũ
+      const messageEl = document.getElementById("coupon-message");
+      if (messageEl) {
+        messageEl.classList.add("hidden");
+        messageEl.textContent = "";
+      }
+    });
+  }
 });

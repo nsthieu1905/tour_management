@@ -6,15 +6,10 @@ const fs = require("fs-extra");
 const findAll = async (req, res) => {
   try {
     const tours = await Tour.find({}).lean();
-    if (!tours || tours.length === 0)
-      return res
-        .status(404)
-        .json({ success: false, message: "Không tìm thấy tour" });
-
     return res.status(200).json({
       success: true,
       total: tours.length,
-      message: "Lấy tours thành công",
+      message: tours.length === 0 ? "Chưa có tour nào" : "Lấy tours thành công",
       data: tours,
     });
   } catch (error) {
@@ -209,7 +204,7 @@ const softDelete = async (req, res) => {
 };
 
 // [DELETE] /api/tours/trash/:id
-const forceDelete = async (req, res) => {
+const deleteOne = async (req, res) => {
   try {
     const tour = await Tour.findOneWithDeleted({ _id: req.params.id }).lean();
 
@@ -248,7 +243,7 @@ const forceDelete = async (req, res) => {
 };
 
 // [PATCH] /api/tours/trash/restore/:id
-const restore = async (req, rest) => {
+const restore = async (req, res) => {
   try {
     const result = await Tour.restore({ _id: req.params.id });
     if (!result)
@@ -365,7 +360,7 @@ module.exports = {
   findOne,
   create,
   softDelete,
-  forceDelete,
-  tourDetail,
+  deleteOne,
   restore,
+  tourDetail,
 };

@@ -18,7 +18,7 @@ const generateRefreshToken = (userId) => {
 };
 
 // [POST] auth/login
-const login = async (req, res) => {
+const adminLogin = async (req, res) => {
   try {
     const { username, password, rememberMe } = req.body;
 
@@ -572,12 +572,11 @@ const register = async (req, res) => {
 };
 
 module.exports = {
-  login,
+  adminLogin,
   clientLogin,
   register,
   refreshToken,
   logout,
-  // getCurrentUser,
   checkToken,
   generateAccessToken,
   generateRefreshToken,

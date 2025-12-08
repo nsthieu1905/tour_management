@@ -1,34 +1,3 @@
-<div class="ml-64 min-h-screen bg-gray-50 p-8">
-  <div class="max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="mb-8">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">Quản lý Mã giảm giá</h1>
-          <p class="text-gray-500 mt-1">
-            Quản lý tất cả mã khuyến mãi và mã giảm giá
-          </p>
-        </div>
-        <button
-          onclick="showAddCouponModal()"
-          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center"
-        >
-          <i class="fas fa-plus mr-2"></i>Thêm mã mới
-        </button>
-      </div>
-    </div>
-
-    <!-- List Container -->
-    <div class="bg-white rounded-xl shadow-sm">
-      <div id="coupons-list" class="divide-y">
-        <!-- Coupon items will be rendered here -->
-      </div>
-      <div id="empty-coupons-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Add/Edit Modal -->
 <div
   id="addCouponModal"
   class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
@@ -37,7 +6,9 @@
     class="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
   >
     <div class="flex justify-between items-center mb-4 p-6 border-b">
-      <h3 class="text-xl font-semibold text-gray-900">Thêm mã giảm giá</h3>
+      <h3 id="modalTitle" class="text-xl font-semibold text-gray-900">
+        Thêm mã giảm giá
+      </h3>
       <button
         onclick="hideAddCouponModal()"
         class="text-gray-400 hover:text-gray-600"
@@ -46,11 +17,12 @@
       </button>
     </div>
 
-    <form id="addCouponForm" class="p-6 space-y-4">
+    <!-- UNIFIED FORM -->
+    <form id="couponForm" class="p-6 space-y-4">
       <!-- Mã code -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Mã code *</label
+          >Mã code <span class="text-red-500">*</span></label
         >
         <input
           type="text"
@@ -64,7 +36,7 @@
       <!-- Tên mã -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Tên mã *</label
+          >Tên mã <span class="text-red-500">*</span></label
         >
         <input
           type="text"
@@ -91,7 +63,7 @@
       <!-- Loại giảm -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Loại giảm giá *</label
+          >Loại giảm giá <span class="text-red-500">*</span></label
         >
         <select
           name="type"
@@ -110,7 +82,9 @@
       <!-- Giá trị giảm -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">
-          <span id="valueLabel">Giá trị</span> *
+          <span id="valueLabel"
+            >Giá trị <span class="text-red-500">*</span></span
+          >
         </label>
         <input
           type="number"
@@ -126,7 +100,7 @@
       <!-- Đơn hàng tối thiểu -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Đơn hàng tối thiểu (VNĐ)</label
+          >Đơn tối thiểu (VNĐ) <span class="text-red-500">*</span></label
         >
         <input
           type="number"
@@ -141,7 +115,7 @@
       <!-- Giảm tối đa -->
       <div id="maxDiscountField">
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Giảm tối đa (VNĐ)</label
+          >Giảm tối đa (VNĐ) <span class="text-red-500">*</span></label
         >
         <input
           type="number"
@@ -155,7 +129,7 @@
       <!-- Ngày bắt đầu -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Ngày bắt đầu *</label
+          >Ngày bắt đầu <span class="text-red-500">*</span></label
         >
         <input
           type="date"
@@ -168,7 +142,7 @@
       <!-- Ngày kết thúc -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Ngày kết thúc *</label
+          >Ngày kết thúc <span class="text-red-500">*</span></label
         >
         <input
           type="date"
@@ -233,6 +207,7 @@
         </button>
         <button
           type="submit"
+          id="submitBtn"
           class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
           Thêm mã
@@ -241,6 +216,3 @@
     </form>
   </div>
 </div>
-
-<script type="module" src="/admin/js/utils.js"></script>
-<script type="module" src="/admin/js/qly-ma-giam-gia.js"></script>

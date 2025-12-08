@@ -3,14 +3,11 @@ const router = express.Router();
 const siteController = require("../../app/controllers/admin/SiteController");
 const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
 
-// Áp dụng middleware bảo vệ cho tất cả route admin
 router.use(protectAdminRoutes);
 
 router.get("/dashboard", siteController.dashboard);
 
 router.get("/qly-tour/trash", siteController.trashTour);
-
-// router.get("/qly-tour/:id", siteController.tourDetail);
 
 router.get("/qly-tour", siteController.qlyTour);
 

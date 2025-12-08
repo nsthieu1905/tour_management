@@ -82,6 +82,7 @@ const hbs = engine({
   partialsDir: [
     "./src/resources/admin/views/partials",
     "./src/resources/admin/views/CRUD/qly-tours",
+    "./src/resources/admin/views/CRUD/qly-coupons",
     "./src/resources/client/views/partials",
   ],
 });

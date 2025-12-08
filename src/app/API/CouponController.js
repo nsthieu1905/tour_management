@@ -1,7 +1,7 @@
 const { Khuyen_mai } = require("../models/index");
 
 // [GET] /api/coupons
-const getAllCoupons = async (req, res, next) => {
+const findAll = async (req, res, next) => {
   try {
     const coupons = await Khuyen_mai.find().lean();
 
@@ -23,7 +23,7 @@ const getAllCoupons = async (req, res, next) => {
 };
 
 // [GET] /api/coupons/:id
-const getCouponById = async (req, res, next) => {
+const findOne = async (req, res, next) => {
   try {
     const coupon = await Khuyen_mai.findById(req.params.id).lean();
 
@@ -45,7 +45,7 @@ const getCouponById = async (req, res, next) => {
 };
 
 // [POST] /api/coupons/add
-const addCoupon = async (req, res, next) => {
+const create = async (req, res, next) => {
   try {
     const {
       code,
@@ -103,7 +103,7 @@ const addCoupon = async (req, res, next) => {
 };
 
 // [PATCH] /api/coupons/:id
-const updateCoupon = async (req, res, next) => {
+const update = async (req, res, next) => {
   try {
     const {
       code,
@@ -174,7 +174,7 @@ const updateCoupon = async (req, res, next) => {
 };
 
 // [DELETE] /api/coupons/:id
-const deleteCoupon = async (req, res, next) => {
+const deleteOne = async (req, res, next) => {
   try {
     const coupon = await Khuyen_mai.findByIdAndDelete(req.params.id);
 
@@ -195,8 +195,8 @@ const deleteCoupon = async (req, res, next) => {
   }
 };
 
-// [POST] /api/coupons/validate-and-apply
-const validateAndApplyCoupon = async (req, res, next) => {
+// [POST] /api/coupons/applyCoupon
+const applyCoupon = async (req, res, next) => {
   try {
     const { couponCode, tourId, originalPrice, departureDate } = req.body;
 
@@ -301,10 +301,10 @@ const validateAndApplyCoupon = async (req, res, next) => {
 };
 
 module.exports = {
-  getAllCoupons,
-  getCouponById,
-  addCoupon,
-  updateCoupon,
-  deleteCoupon,
-  validateAndApplyCoupon,
+  findAll,
+  findOne,
+  create,
+  update,
+  deleteOne,
+  applyCoupon,
 };
