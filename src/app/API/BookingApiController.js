@@ -431,10 +431,65 @@ const getUserBookings = async (req, res) => {
   }
 };
 
+// [GET] /api/bookings/admin/all - Get all bookings with pagination for admin
+const getAllBookings = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status || ""; // Filter by bookingStatus
+    const paymentStatus = req.query.paymentStatus || ""; // Filter by paymentStatus
+    const search = req.query.search || ""; // Search by bookingCode or customer name
+
+    // Build filter
+    const filter = {};
+    if (status) filter.bookingStatus = status;
+    if (paymentStatus) filter.paymentStatus = paymentStatus;
+
+    if (search) {
+      filter.$or = [
+        { bookingCode: { $regex: search, $options: "i" } },
+        { "contactInfo.name": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Count total
+    const total = await Booking.countDocuments(filter);
+
+    // Get paginated bookings
+    const bookings = await Booking.find(filter)
+      .populate("tourId", "name slug")
+      .populate("userId", "fullName email")
+      .populate("couponId", "code discountPercentage")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Get all bookings error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createMoMoPayment,
   createBankPayment,
   momoCallback,
   getBooking,
   getUserBookings,
+  getAllBookings,
 };

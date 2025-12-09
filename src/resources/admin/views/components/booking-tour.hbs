@@ -110,140 +110,11 @@
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr class="hover:bg-gray-50">
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                >
-                  #TK2024001
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div class="text-sm font-medium text-gray-900">
-                      Nguyễn Văn An
-                    </div>
-                    <div class="text-sm text-gray-500">0901234567</div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Hạ Long - Sapa 4N3Đ
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  15/12/2024
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  4 người
-                </td>
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                >
-                  18.000.000 VNĐ
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    class="status-pending px-2 py-1 text-xs font-medium rounded-full"
-                    >Chờ xác nhận</span
-                  >
-                </td>
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
-                >
-                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
-                  <button class="text-green-600 hover:text-green-900">
-                    Xác nhận
-                  </button>
-                  <button class="text-red-600 hover:text-red-900">Hủy</button>
-                </td>
-              </tr>
-
-              <tr class="hover:bg-gray-50">
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                >
-                  #TK2024002
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div class="text-sm font-medium text-gray-900">
-                      Trần Thị Bình
-                    </div>
-                    <div class="text-sm text-gray-500">0912345678</div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Phú Quốc 3N2Đ
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  20/12/2024
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  2 người
-                </td>
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                >
-                  6.400.000 VNĐ
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    class="status-confirmed px-2 py-1 text-xs font-medium rounded-full"
-                    >Đã xác nhận</span
-                  >
-                </td>
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
-                >
-                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
-                  <button class="text-orange-600 hover:text-orange-900">
-                    Sửa
-                  </button>
-                  <button class="text-red-600 hover:text-red-900">Hủy</button>
-                </td>
-              </tr>
-
-              <tr class="hover:bg-gray-50">
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                >
-                  #TK2024003
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div class="text-sm font-medium text-gray-900">
-                      Lê Minh Cường
-                    </div>
-                    <div class="text-sm text-gray-500">0923456789</div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Đà Nẵng - Hội An 4N3Đ
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  10/12/2024
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  6 người
-                </td>
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                >
-                  22.800.000 VNĐ
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    class="status-completed px-2 py-1 text-xs font-medium rounded-full"
-                    >Hoàn thành</span
-                  >
-                </td>
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
-                >
-                  <button class="text-blue-600 hover:text-blue-900">Xem</button>
-                  <button class="text-purple-600 hover:text-purple-900">
-                    Đánh giá
-                  </button>
-                </td>
-              </tr>
+            <tbody
+              class="bg-white divide-y divide-gray-200"
+              id="bookingsTableBody"
+            >
+              <!-- Bookings will be loaded by JavaScript -->
             </tbody>
           </table>
         </div>
@@ -254,12 +125,14 @@
         >
           <div class="flex-1 flex justify-between sm:hidden">
             <button
-              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              id="prevBtnMobile"
+              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
             >
               Trước
             </button>
             <button
-              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              id="nextBtnMobile"
+              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
             >
               Sau
             </button>
@@ -267,41 +140,39 @@
           <div
             class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
           >
-            <div>
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-2">
+                <label class="text-sm text-gray-700">Hiển thị:</label>
+                <select
+                  id="pageSizeSelect"
+                  class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <span class="text-sm text-gray-700">hàng</span>
+              </div>
               <p class="text-sm text-gray-700">
-                Hiển thị
-                <span class="font-medium">1</span>
-                đến
-                <span class="font-medium">10</span>
-                trong
-                <span class="font-medium">97</span>
-                kết quả
+                |
+                <span class="ml-2">
+                  Hiển thị
+                  <span class="font-medium" id="recordStart">0</span>
+                  đến
+                  <span class="font-medium" id="recordEnd">0</span>
+                  trong
+                  <span class="font-medium" id="recordTotal">0</span>
+                  kết quả
+                </span>
               </p>
             </div>
             <div>
               <nav
                 class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                id="paginationNav"
               >
-                <button
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  1
-                </button>
-                <button
-                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  2
-                </button>
-                <button
-                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  3
-                </button>
-                <button
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  Sau
-                </button>
+                <!-- Pagination buttons will be generated here -->
               </nav>
             </div>
           </div>
@@ -310,4 +181,199 @@
     </div>
   </main>
 </div>
-<script type="module" src="/admin/js/dashboard.js"></script>
+<script src="/admin/js/dashboard.js"></script>
+<script>
+  let currentPage = 1;
+  let totalPages = 1;
+  let pageSize = 10;
+
+  // Format date
+  function formatDate(dateStr) {
+    const options = {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    };
+    return new Date(dateStr).toLocaleDateString("vi-VN", options);
+  }
+
+  // Format price
+  function formatPrice(price) {
+    return new Intl.NumberFormat("vi-VN").format(Math.round(price)) + " VNĐ";
+  }
+
+  // Get status badge
+  function getStatusBadge(status) {
+    const badges = {
+      pre_booking:
+        '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đang hủy</span>',
+      pending:
+        '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">Chờ xác nhận</span>',
+      confirmed:
+        '<span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Đã xác nhận</span>',
+      cancelled:
+        '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đã hủy</span>',
+      completed:
+        '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Hoàn thành</span>',
+    };
+    return badges[status] || status;
+  }
+
+  // Fetch bookings
+  async function fetchBookings(page = 1) {
+    try {
+      const response = await fetch(
+        `/api/admin/bookings/all?page=${page}&limit=${pageSize}`
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        renderBookings(result.data);
+        currentPage = result.pagination.page;
+        totalPages = result.pagination.pages;
+        updatePagination(result.pagination);
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
+  }
+
+  // Render bookings table
+  function renderBookings(bookings) {
+    const tbody = document.getElementById("bookingsTableBody");
+
+    if (bookings.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 text-center text-gray-500">Không có đơn đặt tour nào</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = bookings
+      .map(
+        (booking) => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          ${booking.bookingCode}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div>
+            <div class="text-sm font-medium text-gray-900">
+              ${booking.contactInfo?.name || "N/A"}
+            </div>
+            <div class="text-sm text-gray-500">
+              ${booking.contactInfo?.phone || "N/A"}
+            </div>
+          </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${booking.tourId?.name || "N/A"}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${formatDate(booking.departureDate)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${booking.numberOfPeople} người
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          ${formatPrice(booking.totalAmount)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          ${getStatusBadge(booking.bookingStatus)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+          <button class="text-blue-600 hover:text-blue-900">Xem</button>
+          <button class="text-green-600 hover:text-green-900">Xác nhận</button>
+          <button class="text-red-600 hover:text-red-900">Hủy</button>
+        </td>
+      </tr>
+    `
+      )
+      .join("");
+  }
+
+  // Update pagination
+  function updatePagination(pagination) {
+    const start = (pagination.page - 1) * pagination.limit + 1;
+    const end = Math.min(pagination.page * pagination.limit, pagination.total);
+
+    document.getElementById("recordStart").textContent = start;
+    document.getElementById("recordEnd").textContent = end;
+    document.getElementById("recordTotal").textContent = pagination.total;
+
+    // Update pagination nav
+    const paginationNav = document.getElementById("paginationNav");
+    let html = "";
+
+    // Previous button
+    html += `<button
+      class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === 1 ? "disabled:opacity-50" : ""
+      }"
+      onclick="goToPage(${pagination.page - 1})"
+      ${pagination.page === 1 ? "disabled" : ""}
+    >
+      ←
+    </button>`;
+
+    // Page numbers
+    for (let i = 1; i <= pagination.pages; i++) {
+      if (i === pagination.page) {
+        html += `<button
+          class="relative inline-flex items-center px-4 py-2 border border-blue-300 bg-blue-50 text-sm font-medium text-blue-600"
+        >
+          ${i}
+        </button>`;
+      } else {
+        html += `<button
+          class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+          onclick="goToPage(${i})"
+        >
+          ${i}
+        </button>`;
+      }
+    }
+
+    // Next button
+    html += `<button
+      class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === pagination.pages ? "disabled:opacity-50" : ""
+      }"
+      onclick="goToPage(${pagination.page + 1})"
+      ${pagination.page === pagination.pages ? "disabled" : ""}
+    >
+      →
+    </button>`;
+
+    paginationNav.innerHTML = html;
+
+    // Update mobile buttons
+    document.getElementById("prevBtnMobile").disabled = pagination.page === 1;
+    document.getElementById("nextBtnMobile").disabled =
+      pagination.page === pagination.pages;
+  }
+
+  // Go to page
+  function goToPage(page) {
+    if (page > 0 && page <= totalPages) {
+      fetchBookings(page);
+    }
+  }
+
+  // Handle page size change
+  document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
+    pageSize = parseInt(e.target.value);
+    currentPage = 1; // Reset to first page
+    fetchBookings(1);
+  });
+
+  // Mobile pagination
+  document.getElementById("prevBtnMobile").addEventListener("click", () => {
+    if (currentPage > 1) goToPage(currentPage - 1);
+  });
+
+  document.getElementById("nextBtnMobile").addEventListener("click", () => {
+    if (currentPage < totalPages) goToPage(currentPage + 1);
+  });
+
+  // Initial load
+  fetchBookings(1);
+</script>
