@@ -141,6 +141,59 @@ class MoMoService {
       req.end();
     });
   }
+
+  static verifySignature(callbackData) {
+    try {
+      const {
+        amount,
+        extraData,
+        message,
+        orderId,
+        orderInfo,
+        orderType,
+        partnerCode,
+        payType,
+        requestId,
+        responseTime,
+        resultCode,
+        transId,
+        signature,
+      } = callbackData;
+
+      const receivedSignature = signature;
+
+      // Build raw signature string for verification
+      const rawSignature =
+        `accessKey=${momoConfig.accessKey}` +
+        `&amount=${amount}` +
+        `&extraData=${extraData}` +
+        `&message=${message}` +
+        `&orderId=${orderId}` +
+        `&orderInfo=${orderInfo}` +
+        `&orderType=${orderType}` +
+        `&partnerCode=${partnerCode}` +
+        `&payType=${payType}` +
+        `&requestId=${requestId}` +
+        `&responseTime=${responseTime}` +
+        `&resultCode=${resultCode}` +
+        `&transId=${transId}`;
+
+      // Generate signature
+      const computedSignature = this.generateSignature(
+        rawSignature,
+        momoConfig.secretKey
+      );
+
+      console.log("Raw signature:", rawSignature);
+      console.log("Computed signature:", computedSignature);
+      console.log("Received signature:", receivedSignature);
+
+      return computedSignature === receivedSignature;
+    } catch (error) {
+      console.error("Error verifying signature:", error);
+      return false;
+    }
+  }
 }
 
 module.exports = MoMoService;
