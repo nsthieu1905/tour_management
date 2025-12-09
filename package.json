@@ -43,6 +43,7 @@
     "mongoose-delete": "^1.0.2",
     "mongoose-slug-updater": "^2.4.0",
     "multer": "^2.0.2",
+    "redis": "^5.10.0",
     "tough-cookie": "^6.0.0"
   },
   "devDependencies": {

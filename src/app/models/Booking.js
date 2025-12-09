@@ -30,6 +30,11 @@ const bookingSchema = new mongoose.Schema(
     ],
     numberOfPeople: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
+    couponId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Khuyen_mai",
+      required: false,
+    },
     depositAmount: { type: Number, default: 0 },
     remainingAmount: Number,
     paymentStatus: {

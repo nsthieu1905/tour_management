@@ -265,6 +265,8 @@ function updatePriceSummary() {
   // Update step 2 summary
   document.getElementById("summary-subtotal").textContent =
     formatPrice(subtotal) + "₫";
+  document.getElementById("summary-discount-amount").textContent =
+    formatPrice(bookingState.discountAmount) + "₫";
   document.getElementById("summary-total").textContent =
     formatPrice(total) + "₫";
   document.getElementById("summary-guests").textContent =
@@ -291,6 +293,8 @@ async function applyCoupon() {
 
   try {
     applyCouponBtn.disabled = true;
+
+    // Call applyCoupon API
     const res = await apiPost(
       "/api/coupons/applyCoupon",
       JSON.stringify({
@@ -309,6 +313,7 @@ async function applyCoupon() {
     const result = await res.json();
 
     if (result.success) {
+      // Update booking state with coupon data from API
       bookingState.coupon = {
         code: result.data.couponCode,
         name: result.data.couponName,
@@ -321,12 +326,7 @@ async function applyCoupon() {
       updatePriceSummary();
       discountInfo.classList.remove("hidden");
 
-      // Populate coupon details in step 1
-      const couponCodeDisplay = document.getElementById("coupon-code-display");
-      if (couponCodeDisplay) {
-        couponCodeDisplay.textContent = result.data.couponCode;
-      }
-
+      // Update discount description in step 1
       const discountDescription = document.getElementById(
         "discount-description"
       );
@@ -340,21 +340,16 @@ async function applyCoupon() {
         discountDescription.textContent = description;
       }
 
-      // Show discount info in step 2
-      const summaryDiscount = document.getElementById("summary-discount");
-      if (summaryDiscount) {
-        summaryDiscount.classList.remove("hidden");
-      }
+      // Update coupon code in step 2
       const couponCodeEl = document.getElementById("summary-coupon-code");
       if (couponCodeEl) {
         couponCodeEl.textContent = result.data.couponCode;
       }
-      const summaryDiscountAmountEl = document.querySelector(
-        "#summary-discount-amount"
-      );
-      if (summaryDiscountAmountEl) {
-        summaryDiscountAmountEl.textContent =
-          formatPrice(result.data.discountAmount) + "₫";
+
+      // Show summary-discount div in step 2
+      const summaryDiscount = document.getElementById("summary-discount");
+      if (summaryDiscount) {
+        summaryDiscount.classList.remove("hidden");
       }
 
       showCouponMessage(
@@ -607,6 +602,7 @@ async function confirmPayment() {
         departureDate: bookingState.departureDate,
         paymentMethod: "bank_transfer",
         couponCode: bookingState.coupon?.code || null,
+        subtotal: bookingState.subtotal,
         total: bookingState.total,
         userId: bookingState.userId,
       };
@@ -656,6 +652,7 @@ async function confirmPayment() {
         departureDate: bookingState.departureDate,
         paymentMethod: "cash",
         couponCode: bookingState.coupon?.code || null,
+        subtotal: bookingState.subtotal,
         total: bookingState.total,
         userId: bookingState.userId,
       };
@@ -708,6 +705,7 @@ async function confirmPayment() {
       departureDate: bookingState.departureDate,
       paymentMethod: bookingState.paymentMethod,
       couponCode: bookingState.coupon?.code || null,
+      subtotal: bookingState.subtotal,
       total: bookingState.total,
       userId: bookingState.userId,
     };

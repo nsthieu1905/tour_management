@@ -25,4 +25,29 @@ const bookingSuccess = async (req, res) => {
   }
 };
 
-module.exports = { bookingPage, bookingSuccess };
+// GET /booking-details/:bookingId
+const bookingDetails = async (req, res) => {
+  try {
+    res.render("booking-detail", {
+      bookingId: req.params.bookingId,
+      user: req.user,
+    });
+  } catch (error) {
+    console.error("Booking details page error:", error);
+    res.status(500).send("Lỗi hiển thị trang");
+  }
+};
+
+// GET /my-bookings
+const myBookings = async (req, res) => {
+  try {
+    res.render("my-bookings", {
+      user: req.user,
+    });
+  } catch (error) {
+    console.error("My bookings page error:", error);
+    res.status(500).send("Lỗi hiển thị trang");
+  }
+};
+
+module.exports = { bookingPage, bookingSuccess, bookingDetails, myBookings };

@@ -1,4 +1,4 @@
-const { Booking, Tour, User } = require("../models/index");
+const { Booking, Tour, User, Khuyen_mai } = require("../models/index");
 const MoMoService = require("../services/MoMoService");
 const { PAYMENT_LIMITS } = require("../services/MoMoService");
 
@@ -14,9 +14,10 @@ const createMoMoPayment = async (req, res) => {
       departureDate,
       paymentMethod,
       couponCode,
+      subtotal,
       total,
-      userId,
     } = req.body;
+    const userId = req.user.userId; // From protectClientRoutes middleware
 
     // Validate required fields
     if (
@@ -77,10 +78,22 @@ const createMoMoPayment = async (req, res) => {
       }
     }
 
+    // Handle coupon code - just store couponId, validation already done on client
+    let couponId = null;
+    if (couponCode) {
+      const coupon = await Khuyen_mai.findOne({
+        code: couponCode.toUpperCase(),
+      });
+      if (coupon) {
+        couponId = coupon._id;
+      }
+    }
+
     // Create booking
     const bookingData = {
       bookingCode,
       tourId,
+      userId,
       contactInfo: {
         name: customerName,
         email: customerEmail,
@@ -94,9 +107,9 @@ const createMoMoPayment = async (req, res) => {
       bookingStatus: "pending",
     };
 
-    // Add userId if provided (from current logged-in user)
-    if (userId) {
-      bookingData.userId = userId;
+    // Add coupon info if applied
+    if (couponId) {
+      bookingData.couponId = couponId;
     }
 
     const booking = new Booking(bookingData);
@@ -154,10 +167,11 @@ const createBankPayment = async (req, res) => {
       guestCount,
       departureDate,
       couponCode,
+      subtotal,
       total,
       paymentMethod,
-      userId,
     } = req.body;
+    const userId = req.user.userId; // From protectClientRoutes middleware
 
     // Validate required fields
     if (
@@ -196,6 +210,17 @@ const createBankPayment = async (req, res) => {
       }
     }
 
+    // Handle coupon code - just store couponId, validation already done on client
+    let couponId = null;
+    if (couponCode) {
+      const coupon = await Khuyen_mai.findOne({
+        code: couponCode.toUpperCase(),
+      });
+      if (coupon) {
+        couponId = coupon._id;
+      }
+    }
+
     // Generate unique booking code
     const bookingCode = "BK" + new Date().getTime();
 
@@ -203,6 +228,7 @@ const createBankPayment = async (req, res) => {
     const bookingData = {
       bookingCode,
       tourId,
+      userId,
       contactInfo: {
         name: customerName,
         email: customerEmail,
@@ -216,9 +242,9 @@ const createBankPayment = async (req, res) => {
       bookingStatus: "pending",
     };
 
-    // Add userId if provided (from current logged-in user)
-    if (userId) {
-      bookingData.userId = userId;
+    // Add coupon info if applied
+    if (couponId) {
+      bookingData.couponId = couponId;
     }
 
     const booking = new Booking(bookingData);
@@ -325,9 +351,9 @@ const momoCallback = async (req, res) => {
 // [GET] /api/bookings/:bookingId
 const getBooking = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.bookingId).populate(
-      "tourId"
-    );
+    const booking = await Booking.findById(req.params.bookingId)
+      .populate("tourId")
+      .populate("couponId");
 
     if (!booking) {
       return res.status(404).json({
@@ -336,12 +362,56 @@ const getBooking = async (req, res) => {
       });
     }
 
+    // Calculate discount amount if coupon exists
+    let discountAmount = 0;
+    if (booking.couponId) {
+      const coupon = booking.couponId;
+      const subtotal = booking.tourId.price * booking.numberOfPeople;
+
+      if (coupon.type === "percentage") {
+        discountAmount = Math.floor(subtotal * (coupon.value / 100));
+        if (coupon.maxDiscount) {
+          discountAmount = Math.min(discountAmount, coupon.maxDiscount);
+        }
+      } else if (coupon.type === "fixed_amount") {
+        discountAmount = coupon.value;
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      data: booking,
+      data: {
+        ...booking.toObject(),
+        discountAmount,
+        subtotal: booking.tourId.price * booking.numberOfPeople,
+      },
     });
   } catch (error) {
     console.error("Get booking error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
+// [GET] /api/bookings/user/bookings
+const getUserBookings = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const bookings = await Booking.find({ userId })
+      .populate("tourId", "name slug price")
+      .select("-payments")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+    });
+  } catch (error) {
+    console.error("Get user bookings error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server",
@@ -355,4 +425,5 @@ module.exports = {
   createBankPayment,
   momoCallback,
   getBooking,
+  getUserBookings,
 };

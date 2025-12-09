@@ -98,8 +98,9 @@
         Về trang chủ
       </a>
       <a
-        href="/my-bookings"
-        class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-semibold text-center transition-colors"
+        id="view-details-btn"
+        href="#"
+        class="flex-1 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 font-semibold text-center transition-colors"
       >
         Xem đơn đặt tour
       </a>
@@ -199,6 +200,9 @@
           paymentMethod = result.data.paymentMethod;
           console.log("Got paymentMethod from API:", paymentMethod);
           updateStatusBadge(paymentMethod);
+
+          // Set up view details button
+          setupViewDetailsButton(bookingId);
         } else {
           console.log("Could not fetch booking, using default (momo)");
           updateStatusBadge("momo");
@@ -210,6 +214,19 @@
       });
   } else {
     updateStatusBadge(paymentMethod);
+
+    // Set up view details button
+    if (bookingId) {
+      setupViewDetailsButton(bookingId);
+    }
+  }
+
+  // Function to set up view details button
+  function setupViewDetailsButton(id) {
+    const viewDetailsBtn = document.getElementById("view-details-btn");
+    if (viewDetailsBtn) {
+      viewDetailsBtn.href = `/booking-details/${id}`;
+    }
   }
 
   // Clear sessionStorage

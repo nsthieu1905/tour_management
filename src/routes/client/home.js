@@ -13,5 +13,7 @@ router.use(protectClientRoutes);
 router.get("/tours/:slug", tourApiController.tourDetail);
 router.get("/favorites", homeController.favorites);
 router.get("/booking/:slug", bookingController.bookingPage);
+router.get("/booking-details/:bookingId", bookingController.bookingDetails);
+router.get("/my-bookings", bookingController.myBookings);
 
 module.exports = router;

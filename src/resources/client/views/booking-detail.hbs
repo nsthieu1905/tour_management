@@ -1,0 +1,286 @@
+<div class="min-h-screen pt-24 pb-12 bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="mb-8">
+      <a
+        href="/my-bookings"
+        class="text-blue-600 hover:text-blue-800 flex items-center space-x-2 mb-4"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span>Quay lại</span>
+      </a>
+      <h1 class="text-3xl font-bold text-gray-900">Chi tiết đơn đặt tour</h1>
+    </div>
+
+    <div id="loading" class="flex justify-center items-center py-12">
+      <div class="text-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"
+        ></div>
+        <p class="mt-4 text-gray-600">Đang tải thông tin...</p>
+      </div>
+    </div>
+
+    <div id="content" class="hidden space-y-6">
+      <div
+        id="success-banner"
+        class="hidden bg-green-50 border border-green-200 rounded-lg p-6"
+      >
+        <div class="flex items-center space-x-3">
+          <div class="bg-green-100 rounded-full p-2">
+            <i class="bi bi-check-circle text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-green-900">
+              Đơn đặt tour đã được tạo thành công
+            </h3>
+            <p id="success-message" class="text-sm text-green-700"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-8 space-y-6">
+        <div class="pb-6 border-b">
+          <h2 class="text-2xl font-bold text-gray-900">
+            Thông tin đơn đặt tour
+          </h2>
+          <p id="booking-code" class="text-lg text-gray-600 mt-1">
+            Mã đơn: <span class="font-semibold text-blue-600"></span>
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-600 uppercase tracking-wide"
+            >
+              Thông tin khách hàng
+            </h3>
+            <div class="mt-4 space-y-3">
+              <div>
+                <p class="text-xs text-gray-500">Họ và tên</p>
+                <p id="customer-name" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Email</p>
+                <p id="customer-email" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Điện thoại</p>
+                <p id="customer-phone" class="font-semibold text-gray-900"></p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-600 uppercase tracking-wide"
+            >
+              Thông tin tour
+            </h3>
+            <div class="mt-4 space-y-3">
+              <div>
+                <p class="text-xs text-gray-500">Tên tour</p>
+                <p id="tour-name" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Ngày khởi hành</p>
+                <p id="departure-date" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Số lượng khách</p>
+                <p id="guest-count" class="font-semibold text-gray-900"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t pt-6">
+          <h3
+            class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4"
+          >
+            Hóa đơn thanh toán
+          </h3>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="flex justify-between">
+              <span>Giá tour (1 người):</span
+              ><span id="price-per-person" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between">
+              <span>Số lượng:</span
+              ><span id="quantity" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between pt-3 border-t">
+              <span>Giá cơ bản:</span
+              ><span id="subtotal" class="font-semibold"></span>
+            </div>
+            <div id="coupon-section" class="hidden pt-3 border-t">
+              <div class="flex justify-between">
+                <span>Mã giảm giá:</span
+                ><span
+                  id="coupon-code"
+                  class="font-semibold text-blue-600"
+                ></span>
+              </div>
+              <div class="flex justify-between mt-2">
+                <span>Tiền giảm:</span
+                ><span
+                  id="discount-amount"
+                  class="font-semibold text-green-600"
+                ></span>
+              </div>
+            </div>
+            <div class="flex justify-between pt-3 border-t">
+              <span class="text-lg font-semibold">Tổng cộng:</span
+              ><span
+                id="total-amount"
+                class="text-2xl font-bold text-blue-600"
+              ></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t pt-6">
+          <h3
+            class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4"
+          >
+            Trạng thái thanh toán
+          </h3>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="flex justify-between">
+              <span>Phương thức thanh toán:</span
+              ><span id="payment-method" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between">
+              <span>Trạng thái thanh toán:</span
+              ><span id="payment-status" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between">
+              <span>Trạng thái đơn hàng:</span
+              ><span id="booking-status" class="font-semibold"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <a
+          href="/my-bookings"
+          class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg text-center"
+          >Quay lại danh sách</a
+        >
+        <a
+          href="/"
+          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg text-center"
+          >Tiếp tục tìm tour</a
+        >
+      </div>
+    </div>
+
+    <div
+      id="error-state"
+      class="hidden bg-red-50 border border-red-200 rounded-lg p-8 text-center"
+    >
+      <i class="bi bi-exclamation-circle text-red-600 text-4xl mb-4 block"></i>
+      <h3 class="text-xl font-semibold text-red-900 mb-2">
+        Không tìm thấy đơn đặt tour
+      </h3>
+      <p class="text-red-700 mb-6">
+        Vui lòng kiểm tra lại mã đơn hoặc quay lại danh sách.
+      </p>
+      <a
+        href="/my-bookings"
+        class="inline-block bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg"
+        >Quay lại danh sách</a
+      >
+    </div>
+  </div>
+</div>
+
+<script>
+  const pathParts = window.location.pathname.split("/");
+  const bookingId = pathParts[pathParts.length - 1];
+  if (!bookingId) {
+    showError("Không có mã đơn");
+  } else {
+    loadBookingDetail(bookingId);
+  }
+  async function loadBookingDetail(id) {
+    try {
+      const res = await fetch(`/api/bookings/${id}`);
+      const result = await res.json();
+      if (!result.success) {
+        showError(result.message);
+        return;
+      }
+      displayBookingDetail(result.data);
+    } catch (error) {
+      showError("Có lỗi xảy ra");
+    }
+  }
+  function displayBookingDetail(booking) {
+    const tour = booking.tourId;
+    document.getElementById("booking-code").querySelector("span").textContent =
+      booking.bookingCode;
+    document.getElementById("customer-name").textContent =
+      booking.contactInfo.name;
+    document.getElementById("customer-email").textContent =
+      booking.contactInfo.email;
+    document.getElementById("customer-phone").textContent =
+      booking.contactInfo.phone;
+    document.getElementById("tour-name").textContent = tour.name;
+    document.getElementById("departure-date").textContent = new Date(
+      booking.departureDate
+    ).toLocaleDateString("vi-VN");
+    document.getElementById("guest-count").textContent =
+      booking.numberOfPeople + " người";
+    const pricePerPerson = tour.price;
+    const subtotal = booking.subtotal;
+    const discountAmount = booking.discountAmount || 0;
+    const total = booking.totalAmount;
+    const fmt = (n) =>
+      new Intl.NumberFormat("vi-VN").format(Math.round(n)) + "₫";
+    document.getElementById("price-per-person").textContent =
+      fmt(pricePerPerson);
+    document.getElementById("quantity").textContent = booking.numberOfPeople;
+    document.getElementById("subtotal").textContent = fmt(subtotal);
+    document.getElementById("total-amount").textContent = fmt(total);
+    if (booking.couponId) {
+      document.getElementById("coupon-section").classList.remove("hidden");
+      document.getElementById("coupon-code").textContent =
+        booking.couponId.code;
+      document.getElementById("discount-amount").textContent =
+        fmt(discountAmount);
+    }
+    const paymentLabels = {
+      momo: "Ví MoMo",
+      bank_transfer: "Chuyển khoản",
+      cash: "Thanh toán khi tour",
+      vnpay: "VNPay",
+    };
+    document.getElementById("payment-method").textContent =
+      paymentLabels[booking.paymentMethod] || booking.paymentMethod;
+    const statusBadge =
+      {
+        pending:
+          '<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">Chờ TT</span>',
+        paid: '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">Đã TT</span>',
+      }[booking.paymentStatus] || booking.paymentStatus;
+    document.getElementById("payment-status").innerHTML = statusBadge;
+    const bookingBadge =
+      {
+        pending:
+          '<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">Chờ xác nhận</span>',
+        confirmed:
+          '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">Đã xác nhận</span>',
+      }[booking.bookingStatus] || booking.bookingStatus;
+    document.getElementById("booking-status").innerHTML = bookingBadge;
+    if (booking.paymentStatus === "paid") {
+      document.getElementById("success-banner").classList.remove("hidden");
+    }
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("content").classList.remove("hidden");
+  }
+  function showError(msg) {
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("error-state").classList.remove("hidden");
+  }
+</script>
