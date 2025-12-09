@@ -29,20 +29,17 @@ let bookingState = {
   discountAmount: 0,
   total: 0,
   paymentMethod: "momo",
-  userId: null, // Will be fetched from current-user API
+  userId: null,
 };
 
 // DOM Elements
 const step1Content = document.getElementById("step-1-content");
 const step2Content = document.getElementById("step-2-content");
-const step3Content = document.getElementById("step-3-content");
 
 const step1Circle = document.getElementById("step-1-circle");
 const step2Circle = document.getElementById("step-2-circle");
-const step3Circle = document.getElementById("step-3-circle");
 
 const line1 = document.getElementById("line-1");
-const line2 = document.getElementById("line-2");
 
 // Customer info inputs
 const customerNameInput = document.getElementById("customer-name");
@@ -224,7 +221,6 @@ function onDepartureDateChange() {
     bookingState.departureDate = dateStr;
 
     // Extract price from text like "09/12/2025 - 123.213.213₫/người"
-    // Get the text and extract numbers after " - " and before "₫"
     const text = selected.textContent;
     const priceMatch = text.match(/[\d.]+(?=₫)/);
     const priceText = priceMatch ? priceMatch[0].replace(/\./g, "") : "";
@@ -275,7 +271,6 @@ function updatePriceSummary() {
   if (bookingState.departureDate) {
     const dateText = formatDateToDDMMYYYY(bookingState.departureDate);
     document.getElementById("summary-date").textContent = dateText;
-    document.getElementById("booking-date").textContent = dateText;
   }
 }
 
@@ -294,7 +289,6 @@ async function applyCoupon() {
   try {
     applyCouponBtn.disabled = true;
 
-    // Call applyCoupon API
     const res = await apiPost(
       "/api/coupons/applyCoupon",
       JSON.stringify({
@@ -313,7 +307,6 @@ async function applyCoupon() {
     const result = await res.json();
 
     if (result.success) {
-      // Update booking state with coupon data from API
       bookingState.coupon = {
         code: result.data.couponCode,
         name: result.data.couponName,
@@ -326,7 +319,6 @@ async function applyCoupon() {
       updatePriceSummary();
       discountInfo.classList.remove("hidden");
 
-      // Update discount description in step 1
       const discountDescription = document.getElementById(
         "discount-description"
       );
@@ -340,13 +332,11 @@ async function applyCoupon() {
         discountDescription.textContent = description;
       }
 
-      // Update coupon code in step 2
       const couponCodeEl = document.getElementById("summary-coupon-code");
       if (couponCodeEl) {
         couponCodeEl.textContent = result.data.couponCode;
       }
 
-      // Show summary-discount div in step 2
       const summaryDiscount = document.getElementById("summary-discount");
       if (summaryDiscount) {
         summaryDiscount.classList.remove("hidden");
@@ -380,18 +370,14 @@ function goToStep(step) {
   // Hide all steps
   step1Content.classList.add("hidden");
   step2Content.classList.add("hidden");
-  step3Content.classList.add("hidden");
 
   // Reset circle colors
   step1Circle.className =
     "w-12 h-12 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer hover:bg-gray-400 transition";
   step2Circle.className =
     "w-12 h-12 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer hover:bg-gray-400 transition";
-  step3Circle.className =
-    "w-12 h-12 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer hover:bg-gray-400 transition";
 
   line1.className = "flex-1 h-1 bg-gray-300 mx-2 mb-8";
-  line2.className = "flex-1 h-1 bg-gray-300 mx-2 mb-8";
 
   if (step === 1) {
     step1Content.classList.remove("hidden");
@@ -407,22 +393,6 @@ function goToStep(step) {
     line1.className = "flex-1 h-1 bg-green-500 mx-2 mb-8";
 
     step2Circle.className =
-      "w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer hover:bg-blue-600 transition";
-  } else if (step === 3) {
-    step3Content.classList.remove("hidden");
-
-    // Highlight all steps
-    step1Circle.className =
-      "w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer transition";
-    step1Circle.innerHTML = "<span>✓</span>";
-    line1.className = "flex-1 h-1 bg-green-500 mx-2 mb-8";
-
-    step2Circle.className =
-      "w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer transition";
-    step2Circle.innerHTML = "<span>✓</span>";
-    line2.className = "flex-1 h-1 bg-green-500 mx-2 mb-8";
-
-    step3Circle.className =
       "w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer hover:bg-blue-600 transition";
   }
 }
@@ -553,18 +523,15 @@ function updatePaymentMethodUI() {
   const confirmCheckbox = document.getElementById("bank-transfer-confirm");
 
   if (bookingState.paymentMethod === "bank_transfer") {
-    // Show bank transfer section
     bankSection.classList.remove("hidden");
     updateBankTransferInfo();
   } else {
-    // Hide bank transfer section
     bankSection.classList.add("hidden");
     confirmCheckbox.checked = false;
   }
 }
 
 function updateBankTransferInfo() {
-  // Hiển thị ảnh QR code tĩnh
   const qrImg = document.getElementById("qr-code-img");
   qrImg.src = "/images/QR.jpg";
   qrImg.alt = `QR Code chuyển ${Math.round(bookingState.total)}₫ tới ${
@@ -583,16 +550,14 @@ async function confirmPayment() {
   try {
     console.log("Current payment method:", bookingState.paymentMethod);
 
-    // Handle bank transfer separately
+    // Handle bank transfer
     if (bookingState.paymentMethod === "bank_transfer") {
-      console.log("Handling bank transfer payment");
       const confirmCheckbox = document.getElementById("bank-transfer-confirm");
       if (!confirmCheckbox.checked) {
         Notification.error("Vui lòng xác nhận đã chuyển khoản");
         return;
       }
 
-      // Simulate bank transfer payment
       const bookingData = {
         customerName: customerNameInput.value.trim(),
         customerEmail: customerEmailInput.value.trim(),
@@ -607,7 +572,6 @@ async function confirmPayment() {
         userId: bookingState.userId,
       };
 
-      // Create booking with bank transfer status (pending approval)
       const res = await apiPost(
         "/api/bookings/create-bank-payment",
         JSON.stringify(bookingData)
@@ -622,15 +586,11 @@ async function confirmPayment() {
       const result = await res.json();
 
       if (result.success) {
-        // Store booking info
         sessionStorage.setItem("bookingId", result.data.bookingId);
         sessionStorage.setItem("bookingCode", result.data.bookingCode);
         sessionStorage.setItem("bookingTotal", bookingState.total);
         sessionStorage.setItem("paymentMethod", "bank_transfer");
 
-        console.log("Bank transfer booking created:", result);
-
-        // Redirect to success page
         window.location.href = "/booking-success";
       } else {
         Notification.error(result.message || "Có lỗi xảy ra, vui lòng thử lại");
@@ -640,9 +600,8 @@ async function confirmPayment() {
       return;
     }
 
-    // Handle cash payment (thanh toán khi tour)
+    // Handle cash payment
     if (bookingState.paymentMethod === "cash") {
-      // Create booking directly for cash payment
       const bookingData = {
         customerName: customerNameInput.value.trim(),
         customerEmail: customerEmailInput.value.trim(),
@@ -671,13 +630,11 @@ async function confirmPayment() {
       const result = await res.json();
 
       if (result.success) {
-        // Store booking info
         sessionStorage.setItem("bookingId", result.data.bookingId);
         sessionStorage.setItem("bookingCode", result.data.bookingCode);
         sessionStorage.setItem("bookingTotal", bookingState.total);
         sessionStorage.setItem("paymentMethod", "cash");
 
-        // Redirect to success page
         window.location.href = "/booking-success";
       } else {
         Notification.error(result.message || "Có lỗi xảy ra, vui lòng thử lại");
@@ -691,15 +648,10 @@ async function confirmPayment() {
     confirmPaymentBtn.disabled = true;
     confirmPaymentBtn.textContent = "Đang xử lý...";
 
-    const name = customerNameInput.value.trim();
-    const email = customerEmailInput.value.trim();
-    const phone = customerPhoneInput.value.trim();
-
-    // Booking data from form inputs
     const bookingData = {
-      customerName: name,
-      customerEmail: email,
-      customerPhone: phone,
+      customerName: customerNameInput.value.trim(),
+      customerEmail: customerEmailInput.value.trim(),
+      customerPhone: customerPhoneInput.value.trim(),
       tourId: bookingState.tourId,
       guestCount: bookingState.guestCount,
       departureDate: bookingState.departureDate,
@@ -710,7 +662,6 @@ async function confirmPayment() {
       userId: bookingState.userId,
     };
 
-    // Call API to create MoMo payment request
     const res = await apiPost(
       "/api/bookings/create-momo-payment",
       JSON.stringify(bookingData)
@@ -725,13 +676,11 @@ async function confirmPayment() {
     const result = await res.json();
 
     if (result.success && result.data.payUrl) {
-      // Store booking info before redirect
       sessionStorage.setItem("bookingId", result.data.bookingId);
       sessionStorage.setItem("bookingCode", result.data.bookingCode);
       sessionStorage.setItem("bookingTotal", bookingState.total);
       sessionStorage.setItem("paymentMethod", "momo");
 
-      // Redirect to MoMo payment page
       window.location.href = result.data.payUrl;
     } else {
       Notification.error(result.message || "Có lỗi xảy ra, vui lòng thử lại");

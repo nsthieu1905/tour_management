@@ -17,7 +17,7 @@ const createMoMoPayment = async (req, res) => {
       subtotal,
       total,
     } = req.body;
-    const userId = req.user.userId; // From protectClientRoutes middleware
+    const userId = req.user.userId;
 
     // Validate required fields
     if (
@@ -59,7 +59,7 @@ const createMoMoPayment = async (req, res) => {
         success: false,
         message: `Số tiền thanh toán không được vượt quá ${PAYMENT_LIMITS.MAX_AMOUNT.toLocaleString(
           "vi-VN"
-        )} VND. Vui lòng liên hệ hỗ trợ để thanh toán qua cách khác`,
+        )} VND`,
       });
     }
 
@@ -78,7 +78,7 @@ const createMoMoPayment = async (req, res) => {
       }
     }
 
-    // Handle coupon code - just store couponId, validation already done on client
+    // Handle coupon code
     let couponId = null;
     if (couponCode) {
       const coupon = await Khuyen_mai.findOne({
@@ -89,7 +89,7 @@ const createMoMoPayment = async (req, res) => {
       }
     }
 
-    // Create booking
+    // ✨ Tạo PRE_BOOKING (sẽ tự động expire sau 5 phút)
     const bookingData = {
       bookingCode,
       tourId,
@@ -103,25 +103,28 @@ const createMoMoPayment = async (req, res) => {
       totalAmount: total,
       departureDate: departureDateObj,
       paymentMethod: paymentMethod || "momo",
+      bookingStatus: "pre_booking", // ✨ Set status = pre_booking
       paymentStatus: "pending",
-      bookingStatus: "pending",
+      // expiresAt sẽ được set tự động bởi middleware
     };
 
-    // Add coupon info if applied
     if (couponId) {
       bookingData.couponId = couponId;
     }
 
     const booking = new Booking(bookingData);
-
     await booking.save();
+
+    console.log(
+      `Pre-booking created: ${booking._id}, expires at: ${booking.expiresAt}`
+    );
 
     // Create MoMo payment request
     const paymentData = {
       bookingId: booking._id.toString(),
       tourName: tour.name,
       customerName,
-      amount: Math.round(total), // MoMo yêu cầu số nguyên
+      amount: Math.round(total),
     };
 
     const momoResponse = await MoMoService.createPaymentRequest(paymentData);
@@ -138,7 +141,7 @@ const createMoMoPayment = async (req, res) => {
         },
       });
     } else {
-      // Delete booking nếu tạo payment request thất bại
+      // Delete pre-booking nếu tạo payment request thất bại
       await Booking.findByIdAndDelete(booking._id);
 
       return res.status(400).json({
@@ -288,14 +291,16 @@ const momoCallback = async (req, res) => {
     console.log("MoMo Callback received:", req.body);
 
     if (resultCode === 0) {
-      // Payment successful
-      // Find booking by extraData (bookingId)
+      // ✨ Payment successful - Update pre_booking thành confirmed
       if (extraData) {
         const booking = await Booking.findById(extraData);
 
         if (booking) {
-          booking.paymentStatus = "paid";
+          // ✨ Update status
           booking.bookingStatus = "confirmed";
+          booking.paymentStatus = "paid";
+          booking.expiresAt = undefined; // Xóa expiresAt vì đã confirmed
+
           booking.payments.push({
             amount,
             method: "momo",
@@ -306,7 +311,9 @@ const momoCallback = async (req, res) => {
 
           await booking.save();
 
-          console.log(`Booking ${booking._id} marked as paid`);
+          console.log(`Booking ${booking._id} confirmed and marked as paid`);
+        } else {
+          console.error(`Booking not found: ${extraData}`);
         }
       }
 
@@ -315,11 +322,10 @@ const momoCallback = async (req, res) => {
         message: "Thanh toán thành công",
       });
     } else {
-      // Payment failed
+      // ✨ Payment failed - Giữ nguyên pre_booking, sẽ tự động expire
       if (extraData) {
         const booking = await Booking.findById(extraData);
         if (booking) {
-          booking.paymentStatus = "pending";
           booking.payments.push({
             amount,
             method: "momo",
@@ -329,6 +335,9 @@ const momoCallback = async (req, res) => {
           });
 
           await booking.save();
+          console.log(
+            `Payment failed for booking ${booking._id}, will auto-expire`
+          );
         }
       }
 
