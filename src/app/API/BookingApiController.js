@@ -89,7 +89,7 @@ const createMoMoPayment = async (req, res) => {
       }
     }
 
-    // ✨ Tạo PRE_BOOKING (sẽ tự động expire sau 5 phút)
+    // Create pre-booking (auto expires after 5 minutes)
     const bookingData = {
       bookingCode,
       tourId,
@@ -103,9 +103,8 @@ const createMoMoPayment = async (req, res) => {
       totalAmount: total,
       departureDate: departureDateObj,
       paymentMethod: paymentMethod || "momo",
-      bookingStatus: "pre_booking", // ✨ Set status = pre_booking
+      bookingStatus: "pre_booking",
       paymentStatus: "pending",
-      // expiresAt sẽ được set tự động bởi middleware
     };
 
     if (couponId) {
@@ -115,9 +114,7 @@ const createMoMoPayment = async (req, res) => {
     const booking = new Booking(bookingData);
     await booking.save();
 
-    console.log(
-      `✅ Pre-booking created: ${booking._id}, expires at: ${booking.expiresAt}`
-    ); // Create MoMo payment request
+    // Create MoMo payment request
     const paymentData = {
       bookingId: booking._id.toString(),
       tourName: tour.name,
@@ -139,7 +136,7 @@ const createMoMoPayment = async (req, res) => {
         },
       });
     } else {
-      // Delete pre-booking nếu tạo payment request thất bại
+      // Delete pre-booking if payment request fails
       await Booking.findByIdAndDelete(booking._id);
 
       return res.status(400).json({
@@ -148,11 +145,15 @@ const createMoMoPayment = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Create MoMo payment error:", error);
+    console.error("Create MoMo payment error:", {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?.userId,
+      tourId: req.body?.tourId,
+    });
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
-      error: error.message,
     });
   }
 };
@@ -172,7 +173,7 @@ const createBankPayment = async (req, res) => {
       total,
       paymentMethod,
     } = req.body;
-    const userId = req.user.userId; // From protectClientRoutes middleware
+    const userId = req.user.userId;
 
     // Validate required fields
     if (
@@ -211,7 +212,7 @@ const createBankPayment = async (req, res) => {
       }
     }
 
-    // Handle coupon code - just store couponId, validation already done on client
+    // Handle coupon code
     let couponId = null;
     if (couponCode) {
       const coupon = await Khuyen_mai.findOne({
@@ -243,7 +244,6 @@ const createBankPayment = async (req, res) => {
       bookingStatus: "pending",
     };
 
-    // Add coupon info if applied
     if (couponId) {
       bookingData.couponId = couponId;
     }
@@ -261,11 +261,15 @@ const createBankPayment = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Create bank payment error:", error);
+    console.error("Create bank payment error:", {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?.userId,
+      tourId: req.body?.tourId,
+    });
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
-      error: error.message,
     });
   }
 };
@@ -286,31 +290,14 @@ const momoCallback = async (req, res) => {
       extraData,
     } = req.body;
 
-    console.log("🔔 ==========================================");
-    console.log("🔔 MoMo Callback received!");
-    console.log("🔔 Full body:", JSON.stringify(req.body, null, 2));
-    console.log("🔔 extraData:", extraData);
-    console.log("🔔 resultCode:", resultCode);
-    console.log("🔔 ==========================================");
-
     if (resultCode === 0) {
-      // ✨ Payment successful - Update pre_booking thành confirmed
-      console.log("✅ Result code = 0 (SUCCESS)");
-
+      // Payment successful - Update pre_booking to confirmed
       if (extraData) {
-        console.log(`📂 Fetching booking with ID: ${extraData}`);
         const booking = await Booking.findById(extraData);
 
         if (booking) {
-          console.log(`✅ Found booking: ${booking._id}`);
-          console.log(
-            `   - Before: bookingStatus=${booking.bookingStatus}, paymentStatus=${booking.paymentStatus}`
-          );
-
-          // ✨ Update status (middleware will clear expiresAt)
           booking.bookingStatus = "confirmed";
           booking.paymentStatus = "paid";
-
           booking.payments.push({
             amount,
             method: "momo",
@@ -320,17 +307,9 @@ const momoCallback = async (req, res) => {
           });
 
           await booking.save();
-
-          console.log(`✅ Booking ${booking._id} confirmed and marked as paid`);
-          console.log(
-            `   - After: bookingStatus=${booking.bookingStatus}, paymentStatus=${booking.paymentStatus}`
-          );
-          console.log(`   - expiresAt: ${booking.expiresAt}`);
         } else {
-          console.error(`❌ Booking not found with ID: ${extraData}`);
+          console.error("MoMo callback - Booking not found:", extraData);
         }
-      } else {
-        console.warn("⚠️ extraData is empty!");
       }
 
       return res.status(200).json({
@@ -338,9 +317,7 @@ const momoCallback = async (req, res) => {
         message: "Thanh toán thành công",
       });
     } else {
-      // ✨ Payment failed - Giữ nguyên pre_booking, sẽ tự động expire
-      console.log(`❌ Result code != 0 (FAILED): ${resultCode}`);
-
+      // Payment failed - Keep pre_booking, will auto-expire
       if (extraData) {
         const booking = await Booking.findById(extraData);
         if (booking) {
@@ -353,9 +330,6 @@ const momoCallback = async (req, res) => {
           });
 
           await booking.save();
-          console.log(
-            `⚠️ Payment failed for booking ${booking._id}, will auto-expire`
-          );
         }
       }
 
@@ -366,11 +340,15 @@ const momoCallback = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("MoMo callback error:", error);
+    console.error("MoMo callback error:", {
+      message: error.message,
+      stack: error.stack,
+      requestId: req.body?.requestId,
+      extraData: req.body?.extraData,
+    });
     return res.status(500).json({
       success: false,
       message: "Lỗi xử lý callback",
-      error: error.message,
     });
   }
 };
@@ -414,11 +392,14 @@ const getBooking = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get booking error:", error);
+    console.error("Get booking error:", {
+      message: error.message,
+      stack: error.stack,
+      bookingId: req.params?.bookingId,
+    });
     return res.status(500).json({
       success: false,
       message: "Lỗi server",
-      error: error.message,
     });
   }
 };
@@ -438,11 +419,14 @@ const getUserBookings = async (req, res) => {
       data: bookings,
     });
   } catch (error) {
-    console.error("Get user bookings error:", error);
+    console.error("Get user bookings error:", {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?.userId,
+    });
     return res.status(500).json({
       success: false,
       message: "Lỗi server",
-      error: error.message,
     });
   }
 };

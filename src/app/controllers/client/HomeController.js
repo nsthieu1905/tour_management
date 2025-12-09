@@ -10,7 +10,7 @@ const home = async (req, res) => {
       tours: tours,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Home page error:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi máy chủ, vui lòng thử lại sau.",
@@ -43,7 +43,7 @@ const favorites = async (req, res) => {
       count: favoriteTours.length,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Favorites page error:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi máy chủ, vui lòng thử lại sau.",

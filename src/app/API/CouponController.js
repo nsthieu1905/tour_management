@@ -1,7 +1,7 @@
 const { Khuyen_mai } = require("../models/index");
 
 // [GET] /api/coupons
-const findAll = async (req, res, next) => {
+const findAll = async (req, res) => {
   try {
     const coupons = await Khuyen_mai.find().lean();
 
@@ -18,12 +18,16 @@ const findAll = async (req, res, next) => {
       data: coupons,
     });
   } catch (error) {
-    next(error);
+    console.error("Lỗi lấy danh sách mã giảm giá:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
 // [GET] /api/coupons/:id
-const findOne = async (req, res, next) => {
+const findOne = async (req, res) => {
   try {
     const coupon = await Khuyen_mai.findById(req.params.id).lean();
 
@@ -40,12 +44,16 @@ const findOne = async (req, res, next) => {
       data: coupon,
     });
   } catch (error) {
-    next(error);
+    console.error("Lỗi lấy chi tiết mã giảm giá:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
 // [POST] /api/coupons/add
-const create = async (req, res, next) => {
+const create = async (req, res) => {
   try {
     const {
       code,
@@ -98,12 +106,16 @@ const create = async (req, res, next) => {
       data: newCoupon,
     });
   } catch (error) {
-    next(error);
+    console.error("Lỗi tạo mã giảm giá:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
 // [PATCH] /api/coupons/:id
-const update = async (req, res, next) => {
+const update = async (req, res) => {
   try {
     const {
       code,
@@ -169,12 +181,16 @@ const update = async (req, res, next) => {
       data: coupon,
     });
   } catch (error) {
-    next(error);
+    console.error("Lỗi cập nhật mã giảm giá:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
 // [DELETE] /api/coupons/:id
-const deleteOne = async (req, res, next) => {
+const deleteOne = async (req, res) => {
   try {
     const coupon = await Khuyen_mai.findByIdAndDelete(req.params.id);
 
@@ -191,12 +207,16 @@ const deleteOne = async (req, res, next) => {
       data: coupon,
     });
   } catch (error) {
-    next(error);
+    console.error("Lỗi xóa mã giảm giá:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
 // [POST] /api/coupons/applyCoupon
-const applyCoupon = async (req, res, next) => {
+const applyCoupon = async (req, res) => {
   try {
     const { couponCode, tourId, originalPrice, departureDate } = req.body;
 
@@ -296,7 +316,11 @@ const applyCoupon = async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    console.error("Lỗi áp dụng mã giảm giá:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 

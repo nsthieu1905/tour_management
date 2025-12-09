@@ -34,7 +34,7 @@ const toggleFavorite = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error(error);
+    console.error("Toggle favorite error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -66,7 +66,7 @@ const getUserFavorites = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Get user favorites error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -91,7 +91,7 @@ const checkIsFavorited = async (req, res) => {
       isFavorited: !!exists,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Check is favorited error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",

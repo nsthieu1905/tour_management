@@ -152,7 +152,7 @@ const adminLogin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Admin Api login error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -386,6 +386,7 @@ const refreshToken = async (req, res) => {
     }
 
     console.error(error);
+    console.error("Client refresh token error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -428,7 +429,7 @@ const logout = async (req, res) => {
       message: "Đăng xuất thành công",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Logout error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -473,7 +474,7 @@ const checkToken = (req, res) => {
       }
     }
   } catch (error) {
-    console.error(error);
+    console.error("Check token error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -563,7 +564,7 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Register error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",

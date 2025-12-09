@@ -13,92 +13,63 @@ const bookingPage = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Booking page error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
 // GET /booking-success
 const bookingSuccess = async (req, res) => {
   try {
-    // 🔥 Handle MoMo callback from query params
     const { resultCode, extraData, signature, transId, amount } = req.query;
 
     if (resultCode !== undefined) {
-      console.log("🔔 ========================================");
-      console.log("🔔 MoMo Redirect Callback received!");
-      console.log("🔔 Query params:", req.query);
-      console.log("🔔 ========================================");
-
-      // Verify signature if provided
+      // Verify signature
       if (signature && extraData) {
         const isValidSignature = MoMoService.verifySignature(req.query);
-        console.log(
-          `Signature verification: ${
-            isValidSignature ? "✅ PASSED" : "❌ FAILED"
-          }`
-        );
+
+        if (!isValidSignature) {
+          return res.status(400).json({
+            success: false,
+            message: "Chữ ký không hợp lệ.",
+          });
+        }
       }
 
-      // Process callback
-      if (resultCode === "0") {
+      // Process payment callback
+      if (resultCode === "0" && extraData) {
         // Payment successful
-        console.log("✅ Result code = 0 (SUCCESS)");
+        const booking = await Booking.findById(extraData);
 
-        if (extraData) {
-          console.log(`📂 Fetching booking with ID: ${extraData}`);
-          const booking = await Booking.findById(extraData);
+        if (booking) {
+          booking.bookingStatus = "confirmed";
+          booking.paymentStatus = "paid";
+          booking.payments.push({
+            amount: parseInt(amount) || 0,
+            method: "momo",
+            transactionId: transId,
+            status: "success",
+            paidAt: new Date(),
+          });
 
-          if (booking) {
-            console.log(`✅ Found booking: ${booking._id}`);
-            console.log(
-              `   - Before: bookingStatus=${booking.bookingStatus}, paymentStatus=${booking.paymentStatus}`
-            );
-
-            // Update booking status
-            booking.bookingStatus = "confirmed";
-            booking.paymentStatus = "paid";
-
-            booking.payments.push({
-              amount: parseInt(amount) || 0,
-              method: "momo",
-              transactionId: transId,
-              status: "success",
-              paidAt: new Date(),
-            });
-
-            await booking.save();
-
-            console.log(
-              `✅ Booking ${booking._id} confirmed and marked as paid`
-            );
-            console.log(
-              `   - After: bookingStatus=${booking.bookingStatus}, paymentStatus=${booking.paymentStatus}`
-            );
-          } else {
-            console.error(`❌ Booking not found with ID: ${extraData}`);
-          }
-        } else {
-          console.warn("⚠️ extraData is empty!");
+          await booking.save();
         }
-      } else {
+      } else if (extraData) {
         // Payment failed
-        console.log(`❌ Result code != 0 (FAILED): ${resultCode}`);
+        const booking = await Booking.findById(extraData);
 
-        if (extraData) {
-          const booking = await Booking.findById(extraData);
-          if (booking) {
-            booking.payments.push({
-              amount: parseInt(amount) || 0,
-              method: "momo",
-              transactionId: transId,
-              status: "failed",
-              paidAt: new Date(),
-            });
+        if (booking) {
+          booking.payments.push({
+            amount: parseInt(amount) || 0,
+            method: "momo",
+            transactionId: transId,
+            status: "failed",
+            paidAt: new Date(),
+          });
 
-            await booking.save();
-            console.log(
-              `⚠️ Payment failed for booking ${booking._id}, will auto-expire`
-            );
-          }
+          await booking.save();
         }
       }
     }
@@ -106,7 +77,10 @@ const bookingSuccess = async (req, res) => {
     res.render("booking-success");
   } catch (error) {
     console.error("Booking success page error:", error);
-    res.status(500).send("Lỗi hiển thị trang");
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
@@ -119,7 +93,10 @@ const bookingDetails = async (req, res) => {
     });
   } catch (error) {
     console.error("Booking details page error:", error);
-    res.status(500).send("Lỗi hiển thị trang");
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
@@ -127,12 +104,21 @@ const bookingDetails = async (req, res) => {
 const myBookings = async (req, res) => {
   try {
     res.render("my-bookings", {
+      bodyClass: "bg-gray-50",
       user: req.user,
     });
   } catch (error) {
     console.error("My bookings page error:", error);
-    res.status(500).send("Lỗi hiển thị trang");
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
   }
 };
 
-module.exports = { bookingPage, bookingSuccess, bookingDetails, myBookings };
+module.exports = {
+  bookingPage,
+  bookingSuccess,
+  bookingDetails,
+  myBookings,
+};

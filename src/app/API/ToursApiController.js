@@ -13,7 +13,7 @@ const findAll = async (req, res) => {
       data: tours,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi lấy tours:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -37,7 +37,7 @@ const findTrash = async (req, res) => {
       data: tours,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi lấy tours trong thùng rác:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -172,7 +172,7 @@ const create = async (req, res) => {
       data: tour,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi tạo tour:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -195,7 +195,7 @@ const softDelete = async (req, res) => {
       message: "Xoá tour thành công",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi xoá tour:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -234,7 +234,7 @@ const deleteOne = async (req, res) => {
       message: "Xoá tour và ảnh thành công",
     });
   } catch (error) {
-    console.log(error);
+    console.log("Lỗi xoá vĩnh viễn tour:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -257,7 +257,7 @@ const restore = async (req, res) => {
       message: "Khôi phục tour thành công",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi khôi phục tour:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -329,7 +329,7 @@ const tourDetail = async (req, res) => {
       bodyClass: "bg-gray-50",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Lỗi lấy chi tiết tour:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",

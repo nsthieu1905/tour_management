@@ -46,21 +46,19 @@ const bookingSchema = new mongoose.Schema(
       enum: ["pending", "partial", "paid", "refunded"],
       default: "pending",
     },
-    // ✨ THAY ĐỔI 1: Thêm "pre_booking" vào enum
     bookingStatus: {
       type: String,
       enum: ["pre_booking", "pending", "confirmed", "cancelled", "completed"],
-      default: "pre_booking", // ✨ Mặc định là pre_booking
+      default: "pre_booking",
     },
     paymentMethod: {
       type: String,
       enum: ["vnpay", "momo", "bank_transfer", "cash"],
     },
     departureDate: Date,
-    // ✨ THAY ĐỔI 2: Thêm field expiresAt với TTL index
     expiresAt: {
       type: Date,
-      index: { expires: 0 }, // TTL index - MongoDB tự động xóa khi hết hạn
+      index: { expires: 0 },
     },
     specialRequests: String,
     cancellationReason: String,
@@ -82,12 +80,9 @@ const bookingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✨ THAY ĐỔI 3: Middleware tự động set expiresAt cho pre_booking
 bookingSchema.pre("save", function (next) {
-  // Nếu là booking mới và status = pre_booking
   if (this.isNew && this.bookingStatus === "pre_booking") {
-    // Set expire sau 5 phút
-    this.expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    this.expiresAt = new Date(Date.now() + 3 * 60 * 1000);
   }
 
   // Nếu chuyển sang confirmed, xóa expiresAt
