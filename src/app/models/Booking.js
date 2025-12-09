@@ -49,15 +49,15 @@ const bookingSchema = new mongoose.Schema(
     bookingStatus: {
       type: String,
       enum: [
-        "pending_payment", // Chờ thanh toán
-        "pending_confirmation", // Chờ xác nhận (đã thanh toán)
+        "pre_booking", // Chờ thanh toán
+        "pending", // Chờ xác nhận (đã thanh toán)
         "confirmed", // Đã xác nhận
         "refund_requested", // Yêu cầu hoàn tiền
         "refunded", // Đã hoàn tiền
         "completed", // Hoàn thành
         "cancelled", // Đã hủy
       ],
-      default: "pending_payment",
+      default: "pre_booking",
     },
     paymentMethod: {
       type: String,
@@ -113,15 +113,15 @@ const bookingSchema = new mongoose.Schema(
 );
 
 bookingSchema.pre("save", function (next) {
-  // Set expiresAt cho pending_payment lần đầu (3 phút)
-  if (this.isNew && this.bookingStatus === "pending_payment") {
+  // Set expiresAt cho pre_booking lần đầu (3 phút)
+  if (this.isNew && this.bookingStatus === "pre_booking") {
     this.expiresAt = new Date(Date.now() + 3 * 60 * 1000);
   }
 
-  // Xóa expiresAt khi chuyển sang trạng thái không phải pending_payment
+  // Xóa expiresAt khi chuyển sang trạng thái không phải pre_booking
   if (
     this.isModified("bookingStatus") &&
-    this.bookingStatus !== "pending_payment"
+    this.bookingStatus !== "pre_booking"
   ) {
     this.expiresAt = undefined;
   }

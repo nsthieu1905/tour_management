@@ -229,6 +229,7 @@ const createBankPayment = async (req, res) => {
     const bookingCode = "BK" + new Date().getTime();
 
     // Create booking data
+    // ✅ THAY ĐỔI: Tạo với paid/pending vì chưa có API ngân hàng
     const bookingData = {
       bookingCode,
       tourId,
@@ -242,8 +243,8 @@ const createBankPayment = async (req, res) => {
       totalAmount: total,
       departureDate: departureDateObj,
       paymentMethod: paymentMethod || "bank_transfer",
-      paymentStatus: "pending",
-      bookingStatus: "pending",
+      paymentStatus: "paid", // ✅ Đã thanh toán (giả định khách đã chuyển khoản)
+      bookingStatus: "pending", // ✅ Chờ xác nhận
     };
 
     if (couponId) {
@@ -293,13 +294,14 @@ const momoCallback = async (req, res) => {
     } = req.body;
 
     if (resultCode === 0) {
-      // Payment successful - Update pre_booking to confirmed
+      // Payment successful
+      // ✅ THAY ĐỔI: Chuyển sang paid/pending thay vì paid/confirmed
       if (extraData) {
         const booking = await Booking.findById(extraData);
 
         if (booking) {
-          booking.bookingStatus = "confirmed";
-          booking.paymentStatus = "paid";
+          booking.bookingStatus = "pending"; // ✅ Chờ xác nhận (thay vì confirmed)
+          booking.paymentStatus = "paid"; // ✅ Đã thanh toán
           booking.payments.push({
             amount,
             method: "momo",
@@ -500,23 +502,26 @@ const confirmPayment = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
     }
 
-    // Cập nhật trạng thái
-    booking.bookingStatus = "pending_confirmation";
-    booking.paymentStatus = "paid";
+    // ✅ THAY ĐỔI: Cập nhật sang paid/confirmed luôn (thanh toán + xác nhận luôn)
+    booking.bookingStatus = "confirmed"; // ✅ Đã xác nhận (thay vì pending)
+    booking.paymentStatus = "paid"; // ✅ Đã thanh toán
     booking.payments.push({
       amount: booking.totalAmount,
       method: "cash",
       status: "paid",
       paidAt: new Date(),
     });
+    booking.confirmedBy = adminId; // ✅ Thêm thông tin admin xác nhận
+    booking.confirmedAt = new Date(); // ✅ Thêm thời gian xác nhận
     await booking.save();
 
-    // Gửi email xác nhận thanh toán (MOCK)
+    // Gửi email xác nhận thanh toán + xác nhận đơn (MOCK)
     await EmailService.sendPaymentConfirmationEmail(booking, booking.tourId);
+    await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
 
     return res.status(200).json({
       success: true,
-      message: "Xác nhận thanh toán thành công",
+      message: "Xác nhận thanh toán và đơn đặt tour thành công",
       data: booking,
     });
   } catch (error) {
@@ -542,20 +547,17 @@ const confirmBooking = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
     }
 
-    // Chỉ có thể xác nhận đơn có trạng thái chờ xác nhận hoặc chờ thanh toán
-    if (
-      booking.bookingStatus !== "pending_confirmation" &&
-      booking.bookingStatus !== "pending_payment"
-    ) {
+    // Chỉ có thể xác nhận đơn có trạng thái chờ xác nhận (paid/pending)
+    if (booking.bookingStatus !== "pending") {
       return res.status(400).json({
         success: false,
         message: "Trạng thái đơn không hợp lệ để xác nhận",
       });
     }
 
-    // Cập nhật trạng thái
-    booking.bookingStatus = "confirmed";
-    booking.paymentStatus = "paid";
+    // ✅ Cập nhật trạng thái
+    booking.bookingStatus = "confirmed"; // ✅ Chuyển sang đã xác nhận
+    // paymentStatus giữ nguyên "paid" (đã thanh toán rồi)
     booking.confirmedBy = adminId;
     booking.confirmedAt = new Date();
     await booking.save();
