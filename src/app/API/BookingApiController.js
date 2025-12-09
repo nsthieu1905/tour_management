@@ -1,5 +1,7 @@
 const { Booking, Tour, User, Khuyen_mai } = require("../models/index");
 const MoMoService = require("../services/MoMoService");
+const RefundService = require("../services/RefundService");
+const EmailService = require("../services/EmailService");
 const { PAYMENT_LIMITS } = require("../services/MoMoService");
 
 // [POST] /api/bookings/create-momo-payment
@@ -431,7 +433,7 @@ const getUserBookings = async (req, res) => {
   }
 };
 
-// [GET] /api/bookings/admin/all - Get all bookings with pagination for admin
+// [GET] /api/bookings/admin/all
 const getAllBookings = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -485,6 +487,319 @@ const getAllBookings = async (req, res) => {
   }
 };
 
+// [POST] /api/admin/bookings/confirm-payment - Xác nhận thanh toán tại quầy
+const confirmPayment = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    const adminId = req.user.userId;
+
+    const booking = await Booking.findById(bookingId).populate("tourId");
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    // Cập nhật trạng thái
+    booking.bookingStatus = "pending_confirmation";
+    booking.paymentStatus = "paid";
+    booking.payments.push({
+      amount: booking.totalAmount,
+      method: "cash",
+      status: "paid",
+      paidAt: new Date(),
+    });
+    await booking.save();
+
+    // Gửi email xác nhận thanh toán (MOCK)
+    await EmailService.sendPaymentConfirmationEmail(booking, booking.tourId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Xác nhận thanh toán thành công",
+      data: booking,
+    });
+  } catch (error) {
+    console.error("Confirm payment error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi xác nhận thanh toán",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/admin/bookings/confirm-booking - Xác nhận đơn đặt tour
+const confirmBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    const adminId = req.user.userId;
+
+    const booking = await Booking.findById(bookingId).populate("tourId");
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    // Chỉ có thể xác nhận đơn có trạng thái chờ xác nhận hoặc chờ thanh toán
+    if (
+      booking.bookingStatus !== "pending_confirmation" &&
+      booking.bookingStatus !== "pending_payment"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Trạng thái đơn không hợp lệ để xác nhận",
+      });
+    }
+
+    // Cập nhật trạng thái
+    booking.bookingStatus = "confirmed";
+    booking.paymentStatus = "paid";
+    booking.confirmedBy = adminId;
+    booking.confirmedAt = new Date();
+    await booking.save();
+
+    // Gửi email xác nhận (MOCK)
+    await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Xác nhận đơn đặt tour thành công",
+      data: booking,
+    });
+  } catch (error) {
+    console.error("Confirm booking error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi xác nhận đơn đặt tour",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/admin/bookings/complete - Hoàn thành tour
+const completeBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    const booking = await Booking.findById(bookingId).populate("tourId");
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    // Chỉ có thể hoàn thành đơn có trạng thái đã xác nhận
+    if (booking.bookingStatus !== "confirmed") {
+      return res.status(400).json({
+        success: false,
+        message: "Chỉ có thể hoàn thành các đơn đã xác nhận",
+      });
+    }
+
+    booking.bookingStatus = "completed";
+    await booking.save();
+
+    // Gửi email cảm ơn (MOCK)
+    await EmailService.sendCompletionThankYouEmail(booking, booking.tourId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Hoàn thành tour thành công",
+      data: booking,
+    });
+  } catch (error) {
+    console.error("Complete booking error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi hoàn thành tour",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/admin/bookings/request-refund - Yêu cầu hoàn tiền từ phía khách
+const requestRefund = async (req, res) => {
+  try {
+    const { bookingId, reason } = req.body;
+
+    const booking = await Booking.findById(bookingId).populate("tourId");
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    // Validate yêu cầu
+    const validation = RefundService.validateRefundRequest(booking);
+    if (!validation.valid) {
+      return res
+        .status(400)
+        .json({ success: false, message: validation.error });
+    }
+
+    // Tính % hoàn tiền tự động
+    const refundCalc = RefundService.calculateRefundPercentage(
+      booking.departureDate
+    );
+
+    // Cập nhật trạng thái
+    booking.bookingStatus = "refund_requested";
+    booking.refundInfo = {
+      reason,
+      requestedAt: new Date(),
+      daysUntilDeparture: refundCalc.daysUntilDeparture,
+      refundPercentage: refundCalc.percentage, // Suggestion
+    };
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Yêu cầu hoàn tiền đã được ghi nhận",
+      data: booking,
+      refundSuggestion: refundCalc,
+    });
+  } catch (error) {
+    console.error("Request refund error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi yêu cầu hoàn tiền",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/admin/bookings/approve-refund - Duyệt hoàn tiền
+const approveRefund = async (req, res) => {
+  try {
+    const { bookingId, refundPercentage } = req.body;
+    const adminId = req.user.userId;
+
+    const booking = await Booking.findById(bookingId).populate("tourId");
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    if (booking.bookingStatus !== "refund_requested") {
+      return res.status(400).json({
+        success: false,
+        message: "Đơn này không phải là yêu cầu hoàn tiền",
+      });
+    }
+
+    // Tính toán số tiền hoàn
+    const refundAmount = RefundService.calculateRefundAmount(
+      booking.totalAmount,
+      refundPercentage
+    );
+
+    // Cập nhật thông tin hoàn tiền
+    booking.bookingStatus = "refunded";
+    booking.refundInfo.refundPercentage = refundPercentage;
+    booking.refundInfo.refundAmount = refundAmount;
+    booking.refundInfo.approvedBy = adminId;
+    booking.refundInfo.approvedAt = new Date();
+    booking.paymentStatus = "refunded";
+    await booking.save();
+
+    // Gửi email hoàn tiền được duyệt (MOCK)
+    await EmailService.sendRefundApprovedEmail(booking, refundAmount);
+
+    return res.status(200).json({
+      success: true,
+      message: "Duyệt hoàn tiền thành công",
+      data: booking,
+    });
+  } catch (error) {
+    console.error("Approve refund error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi duyệt hoàn tiền",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/admin/bookings/reject-refund - Từ chối hoàn tiền
+const rejectRefund = async (req, res) => {
+  try {
+    const { bookingId, rejectionReason } = req.body;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    if (booking.bookingStatus !== "refund_requested") {
+      return res.status(400).json({
+        success: false,
+        message: "Đơn này không phải là yêu cầu hoàn tiền",
+      });
+    }
+
+    // Cập nhật thông tin từ chối
+    booking.refundInfo.rejectionReason = rejectionReason;
+    booking.bookingStatus = "confirmed"; // Quay lại trạng thái confirmed
+    await booking.save();
+
+    // Gửi email từ chối hoàn tiền (MOCK)
+    await EmailService.sendRefundRejectedEmail(booking, rejectionReason);
+
+    return res.status(200).json({
+      success: true,
+      message: "Từ chối hoàn tiền thành công",
+      data: booking,
+    });
+  } catch (error) {
+    console.error("Reject refund error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi từ chối hoàn tiền",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/admin/bookings/cancel - Hủy đơn đặt tour
+const cancelBooking = async (req, res) => {
+  try {
+    const { bookingId, reason } = req.body;
+    const adminId = req.user.userId;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    // Cập nhật trạng thái hủy
+    booking.bookingStatus = "cancelled";
+    booking.cancellationReason = reason;
+    booking.cancelledBy = adminId;
+    booking.cancelledAt = new Date();
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Hủy đơn đặt tour thành công",
+      data: booking,
+    });
+  } catch (error) {
+    console.error("Cancel booking error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi hủy đơn đặt tour",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createMoMoPayment,
   createBankPayment,
@@ -492,4 +807,11 @@ module.exports = {
   getBooking,
   getUserBookings,
   getAllBookings,
+  confirmPayment,
+  confirmBooking,
+  completeBooking,
+  requestRefund,
+  approveRefund,
+  rejectRefund,
+  cancelBooking,
 };

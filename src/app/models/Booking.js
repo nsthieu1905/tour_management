@@ -48,8 +48,16 @@ const bookingSchema = new mongoose.Schema(
     },
     bookingStatus: {
       type: String,
-      enum: ["pre_booking", "pending", "confirmed", "cancelled", "completed"],
-      default: "pre_booking",
+      enum: [
+        "pending_payment", // Chờ thanh toán
+        "pending_confirmation", // Chờ xác nhận (đã thanh toán)
+        "confirmed", // Đã xác nhận
+        "refund_requested", // Yêu cầu hoàn tiền
+        "refunded", // Đã hoàn tiền
+        "completed", // Hoàn thành
+        "cancelled", // Đã hủy
+      ],
+      default: "pending_payment",
     },
     paymentMethod: {
       type: String,
@@ -61,6 +69,30 @@ const bookingSchema = new mongoose.Schema(
       index: { expires: 0 },
     },
     specialRequests: String,
+
+    // Hoàn tiền fields
+    refundInfo: {
+      reason: String, // Lý do hủy tour
+      requestedAt: Date, // Ngày yêu cầu hoàn tiền
+      daysUntilDeparture: Number, // Số ngày còn lại đến ngày khởi hành
+      refundPercentage: {
+        // % hoàn tiền (100, 50, 0)
+        type: Number,
+        default: null,
+        min: 0,
+        max: 100,
+      },
+      refundAmount: Number, // Số tiền được hoàn
+      approvedBy: {
+        // Admin xác nhận hoàn tiền
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      approvedAt: Date, // Ngày xác nhận hoàn tiền
+      rejectionReason: String, // Lý do từ chối hoàn tiền
+    },
+
+    // Hủy tour fields
     cancellationReason: String,
     cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     cancelledAt: Date,
@@ -81,12 +113,16 @@ const bookingSchema = new mongoose.Schema(
 );
 
 bookingSchema.pre("save", function (next) {
-  if (this.isNew && this.bookingStatus === "pre_booking") {
+  // Set expiresAt cho pending_payment lần đầu (3 phút)
+  if (this.isNew && this.bookingStatus === "pending_payment") {
     this.expiresAt = new Date(Date.now() + 3 * 60 * 1000);
   }
 
-  // Nếu chuyển sang confirmed, xóa expiresAt
-  if (this.isModified("bookingStatus") && this.bookingStatus === "confirmed") {
+  // Xóa expiresAt khi chuyển sang trạng thái không phải pending_payment
+  if (
+    this.isModified("bookingStatus") &&
+    this.bookingStatus !== "pending_payment"
+  ) {
     this.expiresAt = undefined;
   }
 

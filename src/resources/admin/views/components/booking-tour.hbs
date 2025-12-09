@@ -13,42 +13,122 @@
           <button
             class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
           >
-            <i class="fas fa-download mr-2"></i>Xuất Excel
+            Xuất Excel
           </button>
           <button
             class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
           >
-            <i class="fas fa-file-pdf mr-2"></i>Xuất PDF
+            Xuất PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div
+        class="bg-white rounded-t-xl shadow-sm mb-0 border-b border-gray-200"
+      >
+        <div class="flex flex-wrap">
+          <button
+            id="tab-pending-payment"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="pending_payment"
+          >
+            Chờ thanh toán
+            <span
+              class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
+              >0</span
+            >
+          </button>
+          <button
+            id="tab-pending-confirmation"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="pending_confirmation"
+          >
+            Chờ xác nhận
+            <span
+              class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
+              >0</span
+            >
+          </button>
+          <button
+            id="tab-confirmed"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="confirmed"
+          >
+            Đã xác nhận
+            <span
+              class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
+              >0</span
+            >
+          </button>
+          <button
+            id="tab-refund-requested"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="refund_requested"
+          >
+            Yêu cầu hoàn tiền
+            <span
+              class="ml-2 bg-red-200 text-red-700 px-2 py-1 rounded-full text-xs font-bold"
+              >0</span
+            >
+          </button>
+          <button
+            id="tab-refunded"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="refunded"
+          >
+            Đã hoàn tiền
+            <span
+              class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
+              >0</span
+            >
+          </button>
+          <button
+            id="tab-completed"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="completed"
+          >
+            Hoàn thành
+            <span
+              class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
+              >0</span
+            >
+          </button>
+          <button
+            id="tab-cancelled"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="cancelled"
+          >
+            Đã hủy
+            <span
+              class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
+              >0</span
+            >
           </button>
         </div>
       </div>
 
       <!-- Booking Filters -->
-      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+      <div class="bg-white p-4 rounded-b-xl shadow-sm mb-6">
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <select
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          >
-            <option>Tất cả trạng thái</option>
-            <option>Chờ xác nhận</option>
-            <option>Đã xác nhận</option>
-            <option>Đã hủy</option>
-            <option>Hoàn thành</option>
-          </select>
-
           <input
             type="date"
+            id="filterStartDate"
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="Từ ngày"
           />
           <input
             type="date"
+            id="filterEndDate"
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="Đến ngày"
           />
 
           <select
+            id="filterTour"
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           >
-            <option>Tất cả tour</option>
+            <option value="">Tất cả tour</option>
             <option>Hạ Long - Sapa</option>
             <option>Phú Quốc</option>
             <option>Đà Nẵng - Hội An</option>
@@ -56,6 +136,7 @@
 
           <input
             type="text"
+            id="filterSearch"
             placeholder="Tìm theo mã đơn, tên KH..."
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           />
@@ -186,6 +267,7 @@
   let currentPage = 1;
   let totalPages = 1;
   let pageSize = 10;
+  let currentStatus = "pending_payment"; // Tab hiện tại
 
   // Format date
   function formatDate(dateStr) {
@@ -205,25 +287,29 @@
   // Get status badge
   function getStatusBadge(status) {
     const badges = {
-      pre_booking:
-        '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đang hủy</span>',
-      pending:
-        '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">Chờ xác nhận</span>',
+      pending_payment:
+        '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">Chờ thanh toán</span>',
+      pending_confirmation:
+        '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Chờ xác nhận</span>',
       confirmed:
         '<span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Đã xác nhận</span>',
-      cancelled:
-        '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đã hủy</span>',
+      refund_requested:
+        '<span class="bg-orange-100 text-orange-800 px-2 py-1 text-xs font-medium rounded-full">Yêu cầu hoàn tiền</span>',
+      refunded:
+        '<span class="bg-purple-100 text-purple-800 px-2 py-1 text-xs font-medium rounded-full">Đã hoàn tiền</span>',
       completed:
         '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Hoàn thành</span>',
+      cancelled:
+        '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đã hủy</span>',
     };
     return badges[status] || status;
   }
 
   // Fetch bookings
-  async function fetchBookings(page = 1) {
+  async function fetchBookings(page = 1, status = currentStatus) {
     try {
       const response = await fetch(
-        `/api/admin/bookings/all?page=${page}&limit=${pageSize}`
+        `/api/admin/bookings/all?page=${page}&limit=${pageSize}&status=${status}`
       );
       const result = await response.json();
 
@@ -280,9 +366,7 @@
           ${getStatusBadge(booking.bookingStatus)}
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-          <button class="text-blue-600 hover:text-blue-900">Xem</button>
-          <button class="text-green-600 hover:text-green-900">Xác nhận</button>
-          <button class="text-red-600 hover:text-red-900">Hủy</button>
+          ${renderActions(booking)}
         </td>
       </tr>
     `
@@ -290,7 +374,289 @@
       .join("");
   }
 
+  // Render action buttons dựa trên trạng thái
+  function renderActions(booking) {
+    const id = booking._id;
+    let actions = "";
+
+    switch (booking.bookingStatus) {
+      case "pending_payment":
+        actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmPayment('${id}')">Thanh toán</button>`;
+        actions += `<button class="text-red-600 hover:text-red-900 text-xs" onclick="cancelBooking('${id}')">Hủy</button>`;
+        break;
+
+      case "pending_confirmation":
+        actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmBooking('${id}')">Xác nhận</button>`;
+        actions += `<button class="text-red-600 hover:text-red-900 text-xs" onclick="cancelBooking('${id}')">Hủy</button>`;
+        break;
+
+      case "confirmed":
+        actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="completeBooking('${id}')">Hoàn thành</button>`;
+        break;
+
+      case "refund_requested":
+        actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="approveRefund('${id}')">Duyệt</button>`;
+        actions += `<button class="text-red-600 hover:text-red-900 text-xs" onclick="rejectRefund('${id}')">Từ chối</button>`;
+        break;
+
+      case "completed":
+      case "refunded":
+      case "cancelled":
+        actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="viewBooking('${id}')">Xem</button>`;
+        break;
+
+      default:
+        actions += `<span class="text-gray-600 text-xs">-</span>`;
+    }
+
+    return actions;
+  }
+
+  // Action handlers
+  function confirmPayment(bookingId) {
+    if (confirm("Xác nhận thanh toán tại quầy cho đơn này?")) {
+      fetch(`/api/admin/bookings/confirm-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success) {
+            alert("Xac nhan thanh toan thanh cong!");
+            fetchBookings(currentPage, currentStatus);
+          } else {
+            alert("Loi: " + res.message);
+          }
+        });
+    }
+  }
+
+  function confirmBooking(bookingId) {
+    if (confirm("Xác nhận đơn đặt tour này?")) {
+      fetch(`/api/admin/bookings/confirm-booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success) {
+            alert("Xac nhan don thanh cong! Email da duoc gui.");
+            fetchBookings(currentPage, currentStatus);
+          } else {
+            alert("Loi: " + res.message);
+          }
+        });
+    }
+  }
+
+  function completeBooking(bookingId) {
+    if (confirm("Hoàn thành tour này?")) {
+      fetch(`/api/admin/bookings/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success) {
+            alert("Hoan thanh tour! Email cam on da duoc gui.");
+            fetchBookings(currentPage, currentStatus);
+          } else {
+            alert("Loi: " + res.message);
+          }
+        });
+    }
+  }
+
+  function approveRefund(bookingId) {
+    const refundPercentage = prompt("Nhập % hoàn tiền (0-100):", "50");
+    if (refundPercentage !== null) {
+      fetch(`/api/admin/bookings/approve-refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId,
+          refundPercentage: parseInt(refundPercentage),
+        }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success) {
+            alert("Duyet hoan tien thanh cong! Email da duoc gui.");
+            fetchBookings(currentPage, currentStatus);
+          } else {
+            alert("Loi: " + res.message);
+          }
+        });
+    }
+  }
+
+  function rejectRefund(bookingId) {
+    const reason = prompt("Nhập lý do từ chối:");
+    if (reason !== null) {
+      fetch(`/api/admin/bookings/reject-refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, rejectionReason: reason }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success) {
+            alert("Tu choi hoan tien! Email da duoc gui.");
+            fetchBookings(currentPage, currentStatus);
+          } else {
+            alert("Loi: " + res.message);
+          }
+        });
+    }
+  }
+
+  function cancelBooking(bookingId) {
+    const reason = prompt("Nhập lý do hủy:");
+    if (reason !== null) {
+      fetch(`/api/admin/bookings/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, reason }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success) {
+            alert("Huy don thanh cong!");
+            fetchBookings(currentPage, currentStatus);
+          } else {
+            alert("Loi: " + res.message);
+          }
+        });
+    }
+  }
+
+  function viewBooking(bookingId) {
+    alert("Chi tiết đơn: " + bookingId + " (TODO: Mở modal)");
+  }
+
   // Update pagination
+  function updatePagination(pagination) {
+    const start = (pagination.page - 1) * pagination.limit + 1;
+    const end = Math.min(pagination.page * pagination.limit, pagination.total);
+
+    document.getElementById("recordStart").textContent = start;
+    document.getElementById("recordEnd").textContent = end;
+    document.getElementById("recordTotal").textContent = pagination.total;
+
+    // Update pagination nav
+    const paginationNav = document.getElementById("paginationNav");
+    let html = "";
+
+    // Previous button
+    html += `<button
+      class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === 1 ? "disabled:opacity-50" : ""
+      }"
+      onclick="goToPage(${pagination.page - 1})"
+      ${pagination.page === 1 ? "disabled" : ""}
+    >
+      ←
+    </button>`;
+
+    // Page numbers
+    for (let i = 1; i <= pagination.pages; i++) {
+      if (i === pagination.page) {
+        html += `<button
+          class="relative inline-flex items-center px-4 py-2 border border-blue-300 bg-blue-50 text-sm font-medium text-blue-600"
+        >
+          ${i}
+        </button>`;
+      } else {
+        html += `<button
+          class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+          onclick="goToPage(${i})"
+        >
+          ${i}
+        </button>`;
+      }
+    }
+
+    // Next button
+    html += `<button
+      class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === pagination.pages ? "disabled:opacity-50" : ""
+      }"
+      onclick="goToPage(${pagination.page + 1})"
+      ${pagination.page === pagination.pages ? "disabled" : ""}
+    >
+      →
+    </button>`;
+
+    paginationNav.innerHTML = html;
+
+    // Update mobile buttons
+    document.getElementById("prevBtnMobile").disabled = pagination.page === 1;
+    document.getElementById("nextBtnMobile").disabled =
+      pagination.page === pagination.pages;
+  }
+
+  // Go to page
+  function goToPage(page) {
+    if (page > 0 && page <= totalPages) {
+      fetchBookings(page, currentStatus);
+    }
+  }
+
+  // Switch tab
+  function switchTab(status) {
+    currentStatus = status;
+    currentPage = 1;
+
+    // Update tab styles
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      if (btn.getAttribute("data-status") === status) {
+        btn.classList.add("border-blue-600", "text-blue-600");
+        btn.classList.remove("text-gray-600", "border-transparent");
+      } else {
+        btn.classList.remove("border-blue-600", "text-blue-600");
+        btn.classList.add("text-gray-600", "border-transparent");
+      }
+    });
+
+    fetchBookings(1, status);
+  }
+
+  // Handle page size change
+  document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
+    pageSize = parseInt(e.target.value);
+    currentPage = 1;
+    fetchBookings(1, currentStatus);
+  });
+
+  // Handle tab clicks
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const status = btn.getAttribute("data-status");
+      switchTab(status);
+    });
+  });
+
+  // Mobile pagination
+  document.getElementById("prevBtnMobile").addEventListener("click", () => {
+    if (currentPage > 1) goToPage(currentPage - 1);
+  });
+
+  document.getElementById("nextBtnMobile").addEventListener("click", () => {
+    if (currentPage < totalPages) goToPage(currentPage + 1);
+  });
+
+  // Initial load - set pending_payment as active tab
+  document
+    .querySelector('[data-status="pending_payment"]')
+    .classList.add("border-blue-600", "text-blue-600");
+  document
+    .querySelector('[data-status="pending_payment"]')
+    .classList.remove("text-gray-600", "border-transparent");
+  fetchBookings(1, currentStatus);
+
   function updatePagination(pagination) {
     const start = (pagination.page - 1) * pagination.limit + 1;
     const end = Math.min(pagination.page * pagination.limit, pagination.total);
@@ -361,8 +727,16 @@
   // Handle page size change
   document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
     pageSize = parseInt(e.target.value);
-    currentPage = 1; // Reset to first page
-    fetchBookings(1);
+    currentPage = 1;
+    fetchBookings(1, currentStatus);
+  });
+
+  // Handle tab clicks
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const status = btn.getAttribute("data-status");
+      switchTab(status);
+    });
   });
 
   // Mobile pagination
@@ -374,6 +748,12 @@
     if (currentPage < totalPages) goToPage(currentPage + 1);
   });
 
-  // Initial load
-  fetchBookings(1);
+  // Initial load - set pending_payment as active tab
+  document
+    .querySelector('[data-status="pending_payment"]')
+    .classList.add("border-blue-600", "text-blue-600");
+  document
+    .querySelector('[data-status="pending_payment"]')
+    .classList.remove("text-gray-600", "border-transparent");
+  fetchBookings(1, currentStatus);
 </script>
