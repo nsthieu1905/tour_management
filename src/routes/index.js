@@ -9,6 +9,7 @@ const usersApiRoutes = require("./admin/users");
 const homeRoutes = require("./client/home");
 const clientAuthRoutes = require("./client/auth");
 const favoriteRoutes = require("./client/favorites");
+const bookingRoutes = require("./client/bookings");
 
 function route(app) {
   // Admin
@@ -21,6 +22,7 @@ function route(app) {
   // Client
   app.use("/client/auth", clientAuthRoutes);
   app.use("/api/favorites", favoriteRoutes);
+  app.use("/api/bookings", bookingRoutes);
   app.use("/", homeRoutes);
 }
 

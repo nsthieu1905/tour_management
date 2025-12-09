@@ -15,4 +15,14 @@ const bookingPage = async (req, res, next) => {
   }
 };
 
-module.exports = { bookingPage };
+// GET /booking-success
+const bookingSuccess = async (req, res) => {
+  try {
+    res.render("booking-success");
+  } catch (error) {
+    console.error("Booking success page error:", error);
+    res.status(500).send("Lỗi hiển thị trang");
+  }
+};
+
+module.exports = { bookingPage, bookingSuccess };

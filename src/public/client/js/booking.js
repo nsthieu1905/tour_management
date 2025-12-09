@@ -7,6 +7,17 @@ import {
   validateFullName,
 } from "../../utils/validators.js";
 
+// Helper function to format date to dd/mm/yyyy
+function formatDateToDDMMYYYY(dateStr) {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  if (isNaN(date)) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 // State management
 let bookingState = {
   tourId: null,
@@ -18,6 +29,7 @@ let bookingState = {
   discountAmount: 0,
   total: 0,
   paymentMethod: "momo",
+  userId: null, // Will be fetched from current-user API
 };
 
 // DOM Elements
@@ -64,6 +76,14 @@ const tourId =
 const tourPrice = parseInt(contentDiv?.dataset.tourPrice) || 0;
 const tourCapacity = parseInt(contentDiv?.dataset.tourCapacity) || 1;
 
+// Bank transfer config
+const BANK_CONFIG = {
+  bankName: "Ngân hàng Quân Đội (MB Bank)",
+  accountNumber: "0001242921822",
+  accountName: "NGUYEN SY TRUNG HIEU",
+  bankCode: "MBB",
+};
+
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
   bookingState.tourId = tourId;
@@ -73,9 +93,39 @@ document.addEventListener("DOMContentLoaded", () => {
   // Update unit price display
   unitPriceEl.textContent = formatPrice(tourPrice) + "₫";
 
+  // Fetch current user ID if logged in
+  fetchCurrentUserId();
+
   setupEventListeners();
   updatePriceSummary();
 });
+
+// Fetch current user ID from API
+async function fetchCurrentUserId() {
+  try {
+    console.log("Fetching current user...");
+    const res = await fetch("/api/users/current-user");
+    console.log("Response status:", res.status, res.ok);
+
+    if (res.ok) {
+      const result = await res.json();
+      console.log("Current user result:", result);
+      if (result.success && result.data?._id) {
+        bookingState.userId = result.data._id;
+        console.log("Current user ID set:", bookingState.userId);
+      } else {
+        console.log("No user data in response");
+        bookingState.userId = null;
+      }
+    } else {
+      console.log("Response not ok");
+      bookingState.userId = null;
+    }
+  } catch (error) {
+    console.log("Error fetching user:", error.message);
+    bookingState.userId = null;
+  }
+}
 
 function setupEventListeners() {
   // Customer name validation
@@ -141,6 +191,7 @@ function setupEventListeners() {
   document.querySelectorAll('input[name="payment-method"]').forEach((radio) => {
     radio.addEventListener("change", (e) => {
       bookingState.paymentMethod = e.target.value;
+      updatePaymentMethodUI();
     });
   });
 
@@ -165,7 +216,12 @@ function onDepartureDateChange() {
   const selected =
     departureDateSelect.options[departureDateSelect.selectedIndex];
   if (selected.value) {
-    bookingState.departureDate = selected.value;
+    // Store the ObjectId for API (if needed)
+    bookingState.departureDateId = selected.value;
+
+    // Get actual date from data-date attribute
+    const dateStr = selected.getAttribute("data-date");
+    bookingState.departureDate = dateStr;
 
     // Extract price from text like "09/12/2025 - 123.213.213₫/người"
     // Get the text and extract numbers after " - " and before "₫"
@@ -215,9 +271,7 @@ function updatePriceSummary() {
     bookingState.guestCount + " người";
 
   if (bookingState.departureDate) {
-    const dateText =
-      departureDateSelect.options[departureDateSelect.selectedIndex].dataset
-        .date;
+    const dateText = formatDateToDDMMYYYY(bookingState.departureDate);
     document.getElementById("summary-date").textContent = dateText;
     document.getElementById("booking-date").textContent = dateText;
   }
@@ -499,8 +553,144 @@ function goToStep2() {
   goToStep(2);
 }
 
+function updatePaymentMethodUI() {
+  const bankSection = document.getElementById("bank-transfer-section");
+  const confirmCheckbox = document.getElementById("bank-transfer-confirm");
+
+  if (bookingState.paymentMethod === "bank_transfer") {
+    // Show bank transfer section
+    bankSection.classList.remove("hidden");
+    updateBankTransferInfo();
+  } else {
+    // Hide bank transfer section
+    bankSection.classList.add("hidden");
+    confirmCheckbox.checked = false;
+  }
+}
+
+function updateBankTransferInfo() {
+  // Hiển thị ảnh QR code tĩnh
+  const qrImg = document.getElementById("qr-code-img");
+  qrImg.src = "/images/QR.jpg";
+  qrImg.alt = `QR Code chuyển ${Math.round(bookingState.total)}₫ tới ${
+    BANK_CONFIG.accountNumber
+  }`;
+
+  document.getElementById("bank-name").textContent = BANK_CONFIG.bankName;
+  document.getElementById("account-number").textContent =
+    BANK_CONFIG.accountNumber;
+  document.getElementById("account-name").textContent = BANK_CONFIG.accountName;
+  document.getElementById("transfer-amount").textContent =
+    formatPrice(bookingState.total) + "₫";
+}
+
 async function confirmPayment() {
   try {
+    console.log("Current payment method:", bookingState.paymentMethod);
+
+    // Handle bank transfer separately
+    if (bookingState.paymentMethod === "bank_transfer") {
+      console.log("Handling bank transfer payment");
+      const confirmCheckbox = document.getElementById("bank-transfer-confirm");
+      if (!confirmCheckbox.checked) {
+        Notification.error("Vui lòng xác nhận đã chuyển khoản");
+        return;
+      }
+
+      // Simulate bank transfer payment
+      const bookingData = {
+        customerName: customerNameInput.value.trim(),
+        customerEmail: customerEmailInput.value.trim(),
+        customerPhone: customerPhoneInput.value.trim(),
+        tourId: bookingState.tourId,
+        guestCount: bookingState.guestCount,
+        departureDate: bookingState.departureDate,
+        paymentMethod: "bank_transfer",
+        couponCode: bookingState.coupon?.code || null,
+        total: bookingState.total,
+        userId: bookingState.userId,
+      };
+
+      // Create booking with bank transfer status (pending approval)
+      const res = await apiPost(
+        "/api/bookings/create-bank-payment",
+        JSON.stringify(bookingData)
+      );
+
+      if (!res) {
+        confirmPaymentBtn.disabled = false;
+        confirmPaymentBtn.textContent = "Xác nhận thanh toán";
+        return;
+      }
+
+      const result = await res.json();
+
+      if (result.success) {
+        // Store booking info
+        sessionStorage.setItem("bookingId", result.data.bookingId);
+        sessionStorage.setItem("bookingCode", result.data.bookingCode);
+        sessionStorage.setItem("bookingTotal", bookingState.total);
+        sessionStorage.setItem("paymentMethod", "bank_transfer");
+
+        console.log("Bank transfer booking created:", result);
+
+        // Redirect to success page
+        window.location.href = "/booking-success";
+      } else {
+        Notification.error(result.message || "Có lỗi xảy ra, vui lòng thử lại");
+        confirmPaymentBtn.disabled = false;
+        confirmPaymentBtn.textContent = "Xác nhận thanh toán";
+      }
+      return;
+    }
+
+    // Handle cash payment (thanh toán khi tour)
+    if (bookingState.paymentMethod === "cash") {
+      // Create booking directly for cash payment
+      const bookingData = {
+        customerName: customerNameInput.value.trim(),
+        customerEmail: customerEmailInput.value.trim(),
+        customerPhone: customerPhoneInput.value.trim(),
+        tourId: bookingState.tourId,
+        guestCount: bookingState.guestCount,
+        departureDate: bookingState.departureDate,
+        paymentMethod: "cash",
+        couponCode: bookingState.coupon?.code || null,
+        total: bookingState.total,
+        userId: bookingState.userId,
+      };
+
+      const res = await apiPost(
+        "/api/bookings/create-bank-payment",
+        JSON.stringify(bookingData)
+      );
+
+      if (!res) {
+        confirmPaymentBtn.disabled = false;
+        confirmPaymentBtn.textContent = "Xác nhận thanh toán";
+        return;
+      }
+
+      const result = await res.json();
+
+      if (result.success) {
+        // Store booking info
+        sessionStorage.setItem("bookingId", result.data.bookingId);
+        sessionStorage.setItem("bookingCode", result.data.bookingCode);
+        sessionStorage.setItem("bookingTotal", bookingState.total);
+        sessionStorage.setItem("paymentMethod", "cash");
+
+        // Redirect to success page
+        window.location.href = "/booking-success";
+      } else {
+        Notification.error(result.message || "Có lỗi xảy ra, vui lòng thử lại");
+        confirmPaymentBtn.disabled = false;
+        confirmPaymentBtn.textContent = "Xác nhận thanh toán";
+      }
+      return;
+    }
+
+    // Handle MoMo payment
     confirmPaymentBtn.disabled = true;
     confirmPaymentBtn.textContent = "Đang xử lý...";
 
@@ -519,20 +709,37 @@ async function confirmPayment() {
       paymentMethod: bookingState.paymentMethod,
       couponCode: bookingState.coupon?.code || null,
       total: bookingState.total,
+      userId: bookingState.userId,
     };
 
-    // In real app, call API to create booking
-    // const res = await apiPost("/api/bookings", JSON.stringify(bookingData));
+    // Call API to create MoMo payment request
+    const res = await apiPost(
+      "/api/bookings/create-momo-payment",
+      JSON.stringify(bookingData)
+    );
 
-    // Simulate success
-    setTimeout(() => {
-      document.getElementById("booking-code").textContent = `BK${Date.now()}`;
-      document.getElementById("booking-total").textContent =
-        formatPrice(bookingState.total) + "₫";
-      goToStep(3);
+    if (!res) {
       confirmPaymentBtn.disabled = false;
       confirmPaymentBtn.textContent = "Xác nhận thanh toán";
-    }, 1000);
+      return;
+    }
+
+    const result = await res.json();
+
+    if (result.success && result.data.payUrl) {
+      // Store booking info before redirect
+      sessionStorage.setItem("bookingId", result.data.bookingId);
+      sessionStorage.setItem("bookingCode", result.data.bookingCode);
+      sessionStorage.setItem("bookingTotal", bookingState.total);
+      sessionStorage.setItem("paymentMethod", "momo");
+
+      // Redirect to MoMo payment page
+      window.location.href = result.data.payUrl;
+    } else {
+      Notification.error(result.message || "Có lỗi xảy ra, vui lòng thử lại");
+      confirmPaymentBtn.disabled = false;
+      confirmPaymentBtn.textContent = "Xác nhận thanh toán";
+    }
   } catch (error) {
     console.error("Error:", error);
     Notification.error("Có lỗi xảy ra, vui lòng thử lại");

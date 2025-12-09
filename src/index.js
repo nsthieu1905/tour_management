@@ -16,7 +16,7 @@ app.use(methodOverride("_method"));
 db.connect();
 
 //Http logger
-app.use(morgan("combined"));
+// app.use(morgan("combined"));
 
 //config static files
 app.use(express.static("./src/public"));

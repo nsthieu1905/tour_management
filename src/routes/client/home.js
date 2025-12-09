@@ -8,6 +8,7 @@ const bookingController = require("../../app/controllers/client/BookingControlle
 const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
 router.get("/", homeController.home);
+router.get("/booking-success", bookingController.bookingSuccess);
 router.use(protectClientRoutes);
 router.get("/tours/:slug", tourApiController.tourDetail);
 router.get("/favorites", homeController.favorites);
