@@ -63,7 +63,7 @@ const calculateRefundAmount = (totalAmount, percentage) => {
  */
 const validateRefundRequest = (booking) => {
   // Chỉ các đơn đã xác nhận mới có thể yêu cầu hoàn tiền
-  if (booking.bookingStatus !== "confirmed") {
+  if (booking.paymentStatus !== "paid") {
     return {
       valid: false,
       error: "Chỉ các đơn đã xác nhận mới có thể yêu cầu hoàn tiền",

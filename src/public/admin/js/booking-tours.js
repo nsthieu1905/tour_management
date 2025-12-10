@@ -29,25 +29,86 @@ function formatPrice(price) {
   return new Intl.NumberFormat("vi-VN").format(Math.round(price)) + " VNĐ";
 }
 
-// Get status badge
-function getStatusBadge(status) {
-  const badges = {
-    pre_pending:
-      '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">Chờ thanh toán</span>',
-    pending:
-      '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Chờ xác nhận</span>',
-    confirmed:
-      '<span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Đã xác nhận</span>',
-    refund_requested:
-      '<span class="bg-orange-100 text-orange-800 px-2 py-1 text-xs font-medium rounded-full">Yêu cầu hoàn tiền</span>',
-    refunded:
-      '<span class="bg-purple-100 text-purple-800 px-2 py-1 text-xs font-medium rounded-full">Đã hoàn tiền</span>',
-    completed:
-      '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Hoàn thành</span>',
-    cancelled:
-      '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đã hủy</span>',
+// Get status badge - Kết hợp cả bookingStatus và paymentStatus
+function getStatusBadge(bookingStatus, paymentStatus) {
+  if (bookingStatus === "pending" && paymentStatus === "pending") {
+    // Chờ thanh toán (cash chưa thanh toán)
+    return '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">Chờ thanh toán</span>';
+  } else if (bookingStatus === "pending" && paymentStatus === "paid") {
+    // Chờ xác nhận (đã thanh toán, chờ admin xác nhận)
+    return '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Chờ xác nhận</span>';
+  } else if (bookingStatus === "confirmed") {
+    return '<span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Đã xác nhận</span>';
+  } else if (bookingStatus === "completed") {
+    return '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Hoàn thành</span>';
+  } else if (bookingStatus === "refund_requested") {
+    return '<span class="bg-orange-100 text-orange-800 px-2 py-1 text-xs font-medium rounded-full">Chờ hoàn tiền</span>';
+  } else if (bookingStatus === "refunded") {
+    return '<span class="bg-yellow-600 text-white px-2 py-1 text-xs font-medium rounded-full">Đã hoàn tiền</span>';
+  } else if (bookingStatus === "cancelled") {
+    return '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đã hủy</span>';
+  }
+
+  return `<span class="bg-gray-100 text-gray-800 px-2 py-1 text-xs font-medium rounded-full">${bookingStatus}</span>`;
+}
+
+// Calculate refund amount based on days until departure
+function calculateRefundInfo(departureDate, totalAmount) {
+  if (!departureDate || !totalAmount) {
+    console.error("Invalid input:", { departureDate, totalAmount });
+    return {
+      daysUntilDeparture: 0,
+      cancellationFeePercent: 100,
+      cancellationFee: totalAmount || 0,
+      refundAmount: 0,
+    };
+  }
+
+  const now = new Date();
+  const departure = new Date(departureDate);
+
+  if (isNaN(departure.getTime())) {
+    console.error("Invalid departure date:", departureDate);
+    return {
+      daysUntilDeparture: 0,
+      cancellationFeePercent: 100,
+      cancellationFee: totalAmount,
+      refundAmount: 0,
+    };
+  }
+
+  const daysUntilDeparture = Math.ceil(
+    (departure - now) / (1000 * 60 * 60 * 24)
+  );
+
+  let cancellationFeePercent = 0;
+
+  if (daysUntilDeparture >= 30 && daysUntilDeparture <= 45) {
+    cancellationFeePercent = 10;
+  } else if (daysUntilDeparture >= 20 && daysUntilDeparture < 30) {
+    cancellationFeePercent = 20;
+  } else if (daysUntilDeparture >= 15 && daysUntilDeparture < 20) {
+    cancellationFeePercent = 30;
+  } else if (daysUntilDeparture >= 7 && daysUntilDeparture < 15) {
+    cancellationFeePercent = 40;
+  } else if (daysUntilDeparture >= 3 && daysUntilDeparture < 7) {
+    cancellationFeePercent = 75;
+  } else if (daysUntilDeparture < 3) {
+    cancellationFeePercent = 100;
+  } else if (daysUntilDeparture > 45) {
+    cancellationFeePercent = 0;
+  }
+
+  const total = Number(totalAmount) || 0;
+  const cancellationFee = Math.round((total * cancellationFeePercent) / 100);
+  const refundAmount = total - cancellationFee;
+
+  return {
+    daysUntilDeparture,
+    cancellationFeePercent,
+    cancellationFee,
+    refundAmount,
   };
-  return badges[status] || status;
 }
 
 // Show loading state
@@ -129,10 +190,9 @@ async function fetchAllCounts() {
       "pre_pending",
       "pending",
       "confirmed",
-      "refund_requested",
-      "refunded",
       "completed",
-      "cancelled",
+      "refund_requested",
+      "refunded_cancelled",
     ];
 
     for (const status of statuses) {
@@ -215,7 +275,7 @@ function renderBookings(bookings) {
           ${formatPrice(booking.totalAmount)}
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-          ${getStatusBadge(booking.bookingStatus)}
+          ${getStatusBadge(booking.bookingStatus, booking.paymentStatus)}
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
           ${renderActions(booking)}
@@ -229,36 +289,36 @@ function renderBookings(bookings) {
 // Render action buttons based on status
 function renderActions(booking) {
   const id = booking._id;
+  const bookingStatus = booking.bookingStatus;
+  const paymentStatus = booking.paymentStatus;
   let actions = "";
 
-  switch (booking.bookingStatus) {
-    case "pre_pending":
-      actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmPayment('${id}')">Thanh toán</button>`;
-      actions += `<button class="text-red-600 hover:text-red-900 text-xs ml-2" onclick="cancelBooking('${id}')">Hủy</button>`;
-      break;
-
-    case "pending":
-      actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmBooking('${id}')">Xác nhận</button>`;
-      actions += `<button class="text-red-600 hover:text-red-900 text-xs ml-2" onclick="cancelBooking('${id}')">Hủy</button>`;
-      break;
-
-    case "confirmed":
-      actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="completeBooking('${id}')">Hoàn thành</button>`;
-      break;
-
-    case "refund_requested":
-      actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="approveRefund('${id}')">Duyệt</button>`;
-      actions += `<button class="text-red-600 hover:text-red-900 text-xs ml-2" onclick="rejectRefund('${id}')">Từ chối</button>`;
-      break;
-
-    case "completed":
-    case "refunded":
-    case "cancelled":
-      actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="viewBooking('${id}')">Xem</button>`;
-      break;
-
-    default:
-      actions += `<span class="text-gray-600 text-xs">-</span>`;
+  if (bookingStatus === "pending" && paymentStatus === "pending") {
+    // Tab "Chờ thanh toán" (pending/pending): Thanh toán, Hủy
+    actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmPayment('${id}')">Thanh toán</button>`;
+    actions += `<button class="text-red-600 hover:text-red-900 text-xs ml-2" onclick="cancelBooking('${id}')">Hủy</button>`;
+  } else if (bookingStatus === "pending" && paymentStatus === "paid") {
+    // Tab "Chờ xác nhận" (paid/pending): Xác nhận, Hoàn tiền, Xem
+    actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmBooking('${id}')">Xác nhận</button>`;
+    actions += `<button class="text-orange-600 hover:text-orange-900 text-xs ml-2" onclick="requestRefund('${id}')">Hoàn tiền</button>`;
+    actions += `<button class="text-blue-600 hover:text-blue-900 text-xs ml-2" onclick="viewBooking('${id}')">Xem</button>`;
+  } else if (bookingStatus === "confirmed") {
+    // Tab "Đã xác nhận": Hoàn thành, Hoàn tiền, Xem
+    actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="completeBooking('${id}')">Hoàn thành</button>`;
+    actions += `<button class="text-orange-600 hover:text-orange-900 text-xs ml-2" onclick="requestRefund('${id}')">Hoàn tiền</button>`;
+    actions += `<button class="text-blue-600 hover:text-blue-900 text-xs ml-2" onclick="viewBooking('${id}')">Xem</button>`;
+  } else if (bookingStatus === "completed") {
+    // Tab "Hoàn thành": Xem
+    actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="viewBooking('${id}')">Xem</button>`;
+  } else if (bookingStatus === "refund_requested") {
+    // Tab "Chờ hoàn tiền": Xác nhận hoàn tiền, Xem
+    actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="approveRefund('${id}', ${booking.totalAmount}, '${booking.departureDate}')">Xác nhận hoàn tiền</button>`;
+    actions += `<button class="text-blue-600 hover:text-blue-900 text-xs ml-2" onclick="viewBooking('${id}')">Xem</button>`;
+  } else if (bookingStatus === "refunded" || bookingStatus === "cancelled") {
+    // Tab "Hoàn/Hủy": Xem
+    actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="viewBooking('${id}')">Xem</button>`;
+  } else {
+    actions += `<span class="text-gray-600 text-xs">-</span>`;
   }
 
   return actions;
@@ -448,27 +508,18 @@ function completeBooking(bookingId) {
   }
 }
 
-function approveRefund(bookingId) {
-  const refundPercentage = prompt("Nhập % hoàn tiền (0-100):", "50");
-  if (refundPercentage !== null && refundPercentage !== "") {
-    const percentage = parseInt(refundPercentage);
-    if (isNaN(percentage) || percentage < 0 || percentage > 100) {
-      alert("Vui lòng nhập số hợp lệ từ 0-100");
-      return;
-    }
-
-    fetch(`/api/admin/bookings/approve-refund`, {
+function requestRefund(bookingId) {
+  const reason = prompt("Nhập lý do yêu cầu hoàn tiền:");
+  if (reason !== null && reason.trim() !== "") {
+    fetch(`/api/admin/bookings/request-refund`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        bookingId,
-        refundPercentage: percentage,
-      }),
+      body: JSON.stringify({ bookingId, reason }),
     })
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Duyệt hoàn tiền thành công! Email đã được gửi.");
+          alert("Yêu cầu hoàn tiền đã được ghi nhận!");
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
@@ -481,18 +532,42 @@ function approveRefund(bookingId) {
   }
 }
 
-function rejectRefund(bookingId) {
-  const reason = prompt("Nhập lý do từ chối:");
-  if (reason !== null && reason.trim() !== "") {
-    fetch(`/api/admin/bookings/reject-refund`, {
+function approveRefund(bookingId, totalAmount, departureDate) {
+  // Calculate refund info
+  const refundInfo = calculateRefundInfo(departureDate, totalAmount);
+
+  if (isNaN(refundInfo.refundAmount) || isNaN(refundInfo.cancellationFee)) {
+    alert(
+      "Lỗi: Không thể tính toán số tiền hoàn lại. Vui lòng kiểm tra lại thông tin."
+    );
+    return;
+  }
+
+  const message = `
+Thông tin hoàn tiền:
+- Số ngày còn lại: ${refundInfo.daysUntilDeparture} ngày
+- Phí hủy: ${refundInfo.cancellationFeePercent}% (${formatPrice(
+    refundInfo.cancellationFee
+  )})
+- Số tiền hoàn lại: ${formatPrice(refundInfo.refundAmount)}
+
+Xác nhận hoàn tiền?
+  `.trim();
+
+  if (confirm(message)) {
+    fetch(`/api/admin/bookings/approve-refund`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId, rejectionReason: reason }),
+      body: JSON.stringify({
+        bookingId,
+        refundAmount: Number(refundInfo.refundAmount),
+        cancellationFeePercent: Number(refundInfo.cancellationFeePercent),
+      }),
     })
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Từ chối hoàn tiền! Email đã được gửi.");
+          alert("Xác nhận hoàn tiền thành công!");
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
@@ -530,7 +605,7 @@ function cancelBooking(bookingId) {
 }
 
 function viewBooking(bookingId) {
-  window.location.href = `/api/bookings/${bookingId}`;
+  alert("Chức năng xem chi tiết đang được phát triển...");
 }
 
 // ============================================
@@ -569,22 +644,6 @@ function applyFilters() {
     document.getElementById("filterEndDate")?.value || "";
   currentFilters.tour = document.getElementById("filterTour")?.value || "";
   currentFilters.search = document.getElementById("filterSearch")?.value || "";
-
-  fetchBookings(1, currentStatus);
-}
-
-function resetFilters() {
-  document.getElementById("filterStartDate").value = "";
-  document.getElementById("filterEndDate").value = "";
-  document.getElementById("filterTour").value = "";
-  document.getElementById("filterSearch").value = "";
-
-  currentFilters = {
-    startDate: "",
-    endDate: "",
-    tour: "",
-    search: "",
-  };
 
   fetchBookings(1, currentStatus);
 }

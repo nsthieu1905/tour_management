@@ -229,7 +229,6 @@ const createBankPayment = async (req, res) => {
     const bookingCode = "BK" + new Date().getTime();
 
     // Create booking data
-    // ✅ CASH: pending/pending (chưa thanh toán)
     const bookingData = {
       bookingCode,
       tourId,
@@ -243,8 +242,8 @@ const createBankPayment = async (req, res) => {
       totalAmount: total,
       departureDate: departureDateObj,
       paymentMethod: paymentMethod || "bank_transfer",
-      paymentStatus: paymentMethod === "cash" ? "pending" : "paid", // ✅ Cash: pending, Bank: paid
-      bookingStatus: "pending", // ✅ Luôn pending (chờ xác nhận)
+      paymentStatus: paymentMethod === "cash" ? "pending" : "paid",
+      bookingStatus: "pending",
     };
 
     if (couponId) {
@@ -295,13 +294,13 @@ const momoCallback = async (req, res) => {
 
     if (resultCode === 0) {
       // Payment successful
-      // ✅ THAY ĐỔI: Chuyển sang paid/pending thay vì paid/confirmed
+
       if (extraData) {
         const booking = await Booking.findById(extraData);
 
         if (booking) {
-          booking.bookingStatus = "pending"; // ✅ Chờ xác nhận (thay vì confirmed)
-          booking.paymentStatus = "paid"; // ✅ Đã thanh toán
+          booking.bookingStatus = "pending";
+          booking.paymentStatus = "paid";
           booking.payments.push({
             amount,
             method: "momo",
@@ -436,19 +435,17 @@ const getUserBookings = async (req, res) => {
 };
 
 // [GET] /api/bookings/admin/all
-// [GET] /api/bookings/admin/all
 const getAllBookings = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const status = req.query.status || ""; // Filter by bookingStatus
-    const paymentStatus = req.query.paymentStatus || ""; // Filter by paymentStatus
-    const search = req.query.search || ""; // Search by bookingCode or customer name
+    const status = req.query.status || "";
+    const paymentStatus = req.query.paymentStatus || "";
+    const search = req.query.search || "";
 
     // Build filter
     const filter = {};
 
-    // ✅ THAY ĐỔI: Xử lý logic lọc kết hợp cho các tab đặc biệt
     if (status === "pre_pending") {
       // Tab "Chờ thanh toán": pending/pending
       filter.bookingStatus = "pending";
@@ -457,6 +454,9 @@ const getAllBookings = async (req, res) => {
       // Tab "Chờ xác nhận": paid/pending
       filter.bookingStatus = "pending";
       filter.paymentStatus = "paid";
+    } else if (status === "refunded_cancelled") {
+      // Tab "Hoàn/Hủy": refunded HOẶC cancelled
+      filter.bookingStatus = { $in: ["refunded", "cancelled"] };
     } else {
       // Các tab khác: lọc bình thường
       if (status) filter.bookingStatus = status;
@@ -516,17 +516,16 @@ const confirmPayment = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
     }
 
-    // ✅ THAY ĐỔI: Cập nhật sang paid/confirmed luôn (thanh toán + xác nhận luôn)
-    booking.bookingStatus = "confirmed"; // ✅ Đã xác nhận (thay vì pending)
-    booking.paymentStatus = "paid"; // ✅ Đã thanh toán
+    booking.bookingStatus = "confirmed";
+    booking.paymentStatus = "paid";
     booking.payments.push({
       amount: booking.totalAmount,
       method: "cash",
       status: "paid",
       paidAt: new Date(),
     });
-    booking.confirmedBy = adminId; // ✅ Thêm thông tin admin xác nhận
-    booking.confirmedAt = new Date(); // ✅ Thêm thời gian xác nhận
+    booking.confirmedBy = adminId;
+    booking.confirmedAt = new Date();
     await booking.save();
 
     // Gửi email xác nhận thanh toán + xác nhận đơn (MOCK)
@@ -569,8 +568,7 @@ const confirmBooking = async (req, res) => {
       });
     }
 
-    // ✅ Cập nhật trạng thái
-    booking.bookingStatus = "confirmed"; // ✅ Chuyển sang đã xác nhận
+    booking.bookingStatus = "confirmed";
     // paymentStatus giữ nguyên "paid" (đã thanh toán rồi)
     booking.confirmedBy = adminId;
     booking.confirmedAt = new Date();
@@ -686,11 +684,23 @@ const requestRefund = async (req, res) => {
   }
 };
 
-// [POST] /api/admin/bookings/approve-refund - Duyệt hoàn tiền
+// [POST] /api/admin/bookings/approve-refund - Xác nhận hoàn tiền
 const approveRefund = async (req, res) => {
   try {
-    const { bookingId, refundPercentage } = req.body;
+    const { bookingId, refundAmount, cancellationFeePercent } = req.body;
     const adminId = req.user.userId;
+
+    if (
+      !bookingId ||
+      refundAmount === undefined ||
+      cancellationFeePercent === undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Thiếu thông tin: bookingId, refundAmount, cancellationFeePercent",
+      });
+    }
 
     const booking = await Booking.findById(bookingId).populate("tourId");
     if (!booking) {
@@ -706,34 +716,53 @@ const approveRefund = async (req, res) => {
       });
     }
 
-    // Tính toán số tiền hoàn
-    const refundAmount = RefundService.calculateRefundAmount(
-      booking.totalAmount,
-      refundPercentage
-    );
+    const parsedRefundAmount = Number(refundAmount);
+    const parsedCancellationFeePercent = Number(cancellationFeePercent);
 
-    // Cập nhật thông tin hoàn tiền
+    if (isNaN(parsedRefundAmount) || isNaN(parsedCancellationFeePercent)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Dữ liệu không hợp lệ: refundAmount hoặc cancellationFeePercent không phải là số",
+      });
+    }
+
+    if (
+      parsedRefundAmount < 0 ||
+      parsedCancellationFeePercent < 0 ||
+      parsedCancellationFeePercent > 100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Dữ liệu không hợp lệ: refundAmount phải >= 0, cancellationFeePercent phải từ 0-100",
+      });
+    }
+
     booking.bookingStatus = "refunded";
-    booking.refundInfo.refundPercentage = refundPercentage;
-    booking.refundInfo.refundAmount = refundAmount;
+    booking.refundInfo = booking.refundInfo || {};
+    booking.refundInfo.refundAmount = parsedRefundAmount;
+    booking.refundInfo.cancellationFeePercent = parsedCancellationFeePercent;
+    booking.refundInfo.cancellationFee =
+      booking.totalAmount - parsedRefundAmount;
     booking.refundInfo.approvedBy = adminId;
     booking.refundInfo.approvedAt = new Date();
     booking.paymentStatus = "refunded";
     await booking.save();
 
     // Gửi email hoàn tiền được duyệt (MOCK)
-    await EmailService.sendRefundApprovedEmail(booking, refundAmount);
+    await EmailService.sendRefundApprovedEmail(booking, parsedRefundAmount);
 
     return res.status(200).json({
       success: true,
-      message: "Duyệt hoàn tiền thành công",
+      message: "Xác nhận hoàn tiền thành công",
       data: booking,
     });
   } catch (error) {
     console.error("Approve refund error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi duyệt hoàn tiền",
+      message: "Lỗi khi xác nhận hoàn tiền",
       error: error.message,
     });
   }

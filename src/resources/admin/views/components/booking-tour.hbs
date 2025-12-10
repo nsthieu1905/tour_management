@@ -62,28 +62,6 @@
             >
           </button>
           <button
-            id="tab-refund-requested"
-            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
-            data-status="refund_requested"
-          >
-            Yêu cầu hoàn tiền
-            <span
-              class="ml-2 bg-red-200 text-red-700 px-2 py-1 rounded-full text-xs font-bold"
-              >0</span
-            >
-          </button>
-          <button
-            id="tab-refunded"
-            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
-            data-status="refunded"
-          >
-            Đã hoàn tiền
-            <span
-              class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
-              >0</span
-            >
-          </button>
-          <button
             id="tab-completed"
             class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
             data-status="completed"
@@ -95,11 +73,22 @@
             >
           </button>
           <button
-            id="tab-cancelled"
+            id="tab-refund-requested"
             class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
-            data-status="cancelled"
+            data-status="refund_requested"
           >
-            Đã hủy
+            Chờ hoàn tiền
+            <span
+              class="ml-2 bg-red-200 text-red-700 px-2 py-1 rounded-full text-xs font-bold"
+              >0</span
+            >
+          </button>
+          <button
+            id="tab-refunded-cancelled"
+            class="tab-btn flex-1 px-4 py-4 text-center font-medium transition-colors border-b-2 border-transparent hover:text-blue-600"
+            data-status="refunded_cancelled"
+          >
+            Hoàn/Hủy
             <span
               class="ml-2 bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
               >0</span
@@ -123,17 +112,12 @@
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             placeholder="Đến ngày"
           />
-
           <select
             id="filterTour"
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Tất cả tour</option>
-            <option>Hạ Long - Sapa</option>
-            <option>Phú Quốc</option>
-            <option>Đà Nẵng - Hội An</option>
           </select>
-
           <input
             type="text"
             id="filterSearch"
