@@ -229,7 +229,7 @@ const createBankPayment = async (req, res) => {
     const bookingCode = "BK" + new Date().getTime();
 
     // Create booking data
-    // ✅ THAY ĐỔI: Tạo với paid/pending vì chưa có API ngân hàng
+    // ✅ CASH: pending/pending (chưa thanh toán)
     const bookingData = {
       bookingCode,
       tourId,
@@ -243,8 +243,8 @@ const createBankPayment = async (req, res) => {
       totalAmount: total,
       departureDate: departureDateObj,
       paymentMethod: paymentMethod || "bank_transfer",
-      paymentStatus: "paid", // ✅ Đã thanh toán (giả định khách đã chuyển khoản)
-      bookingStatus: "pending", // ✅ Chờ xác nhận
+      paymentStatus: paymentMethod === "cash" ? "pending" : "paid", // ✅ Cash: pending, Bank: paid
+      bookingStatus: "pending", // ✅ Luôn pending (chờ xác nhận)
     };
 
     if (couponId) {
@@ -436,6 +436,7 @@ const getUserBookings = async (req, res) => {
 };
 
 // [GET] /api/bookings/admin/all
+// [GET] /api/bookings/admin/all
 const getAllBookings = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -446,8 +447,21 @@ const getAllBookings = async (req, res) => {
 
     // Build filter
     const filter = {};
-    if (status) filter.bookingStatus = status;
-    if (paymentStatus) filter.paymentStatus = paymentStatus;
+
+    // ✅ THAY ĐỔI: Xử lý logic lọc kết hợp cho các tab đặc biệt
+    if (status === "pre_pending") {
+      // Tab "Chờ thanh toán": pending/pending
+      filter.bookingStatus = "pending";
+      filter.paymentStatus = "pending";
+    } else if (status === "pending") {
+      // Tab "Chờ xác nhận": paid/pending
+      filter.bookingStatus = "pending";
+      filter.paymentStatus = "paid";
+    } else {
+      // Các tab khác: lọc bình thường
+      if (status) filter.bookingStatus = status;
+      if (paymentStatus) filter.paymentStatus = paymentStatus;
+    }
 
     if (search) {
       filter.$or = [

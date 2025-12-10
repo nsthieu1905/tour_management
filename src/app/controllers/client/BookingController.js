@@ -44,7 +44,7 @@ const bookingSuccess = async (req, res) => {
         const booking = await Booking.findById(extraData);
 
         if (booking) {
-          booking.bookingStatus = "confirmed";
+          booking.bookingStatus = "pending";
           booking.paymentStatus = "paid";
           booking.payments.push({
             amount: parseInt(amount) || 0,

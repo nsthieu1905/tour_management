@@ -49,13 +49,13 @@ const bookingSchema = new mongoose.Schema(
     bookingStatus: {
       type: String,
       enum: [
-        "pre_booking", // Chờ thanh toán
-        "pending", // Chờ xác nhận (đã thanh toán)
-        "confirmed", // Đã xác nhận
-        "refund_requested", // Yêu cầu hoàn tiền
-        "refunded", // Đã hoàn tiền
-        "completed", // Hoàn thành
-        "cancelled", // Đã hủy
+        "pre_booking",
+        "pending",
+        "confirmed",
+        "refund_requested",
+        "refunded",
+        "completed",
+        "cancelled",
       ],
       default: "pre_booking",
     },
