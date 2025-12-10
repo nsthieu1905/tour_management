@@ -1,5 +1,5 @@
 const { Tour, Booking } = require("../../models/index");
-const MoMoService = require("../../services/MoMoService");
+const MoMoService = require("../../../services/MoMoService");
 
 // GET /booking/:slug
 const bookingPage = async (req, res, next) => {

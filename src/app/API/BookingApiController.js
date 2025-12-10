@@ -1,8 +1,8 @@
 const { Booking, Tour, User, Khuyen_mai } = require("../models/index");
-const MoMoService = require("../services/MoMoService");
-const RefundService = require("../services/RefundService");
-const EmailService = require("../services/EmailService");
-const { PAYMENT_LIMITS } = require("../services/MoMoService");
+const MoMoService = require("../../services/MoMoService");
+const RefundService = require("../../services/RefundService");
+const EmailService = require("../../services/EmailService");
+const { PAYMENT_LIMITS } = require("../../services/MoMoService");
 
 // [POST] /api/bookings/create-momo-payment
 const createMoMoPayment = async (req, res) => {
@@ -667,6 +667,9 @@ const requestRefund = async (req, res) => {
       refundPercentage: refundCalc.percentage, // Suggestion
     };
     await booking.save();
+
+    // Gửi email yêu cầu hoàn tiền được chấp nhận
+    await EmailService.sendRefundRequestApprovedEmail(booking);
 
     return res.status(200).json({
       success: true,

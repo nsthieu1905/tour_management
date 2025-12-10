@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const https = require("https");
-const momoConfig = require("../../config/momo");
+const momoConfig = require("../config/momo");
 
 // MoMo payment amount constraints
 // Note: MoMo sandbox test-payment.momo.vn has max 50M limit
