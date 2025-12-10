@@ -143,32 +143,32 @@ document.addEventListener("DOMContentLoaded", function () {
  * - Mô phỏng thông báo real-time
  * - Hiệu ứng hover cho các card
  */
-document.addEventListener("DOMContentLoaded", function () {
-  // Mô phỏng thông báo real-time
-  setInterval(() => {
-    const badge = document.querySelector(".notification-badge");
-    if (badge) {
-      const currentCount = parseInt(badge.textContent) || 0;
-      if (Math.random() > 0.95) {
-        // 5% xác suất mỗi giây
-        badge.textContent = currentCount + 1;
-      }
-    }
-  }, 1000);
+// document.addEventListener("DOMContentLoaded", function () {
+//   // Mô phỏng thông báo real-time
+//   setInterval(() => {
+//     const badge = document.querySelector(".notification-badge");
+//     if (badge) {
+//       const currentCount = parseInt(badge.textContent) || 0;
+//       if (Math.random() > 0.95) {
+//         // 5% xác suất mỗi giây
+//         badge.textContent = currentCount + 1;
+//       }
+//     }
+//   }, 1000);
 
-  // Thêm hiệu ứng hover cho các card
-  const cards = document.querySelectorAll(".card-hover");
-  cards.forEach((card) => {
-    card.addEventListener("mouseenter", function () {
-      this.style.transform = "translateY(-4px)";
-      this.style.transition = "transform 0.3s ease";
-    });
+//   // Thêm hiệu ứng hover cho các card
+//   const cards = document.querySelectorAll(".card-hover");
+//   cards.forEach((card) => {
+//     card.addEventListener("mouseenter", function () {
+//       this.style.transform = "translateY(-4px)";
+//       this.style.transition = "transform 0.3s ease";
+//     });
 
-    card.addEventListener("mouseleave", function () {
-      this.style.transform = "translateY(0)";
-    });
-  });
-});
+//     card.addEventListener("mouseleave", function () {
+//       this.style.transform = "translateY(0)";
+//     });
+//   });
+// });
 
 // ===========================
 // QUẢN LÝ BIỂU ĐỒ THỐNG KÊ

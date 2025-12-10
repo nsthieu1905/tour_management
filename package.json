@@ -44,6 +44,7 @@
     "mongoose-slug-updater": "^2.4.0",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
+    "socket.io": "^4.8.1",
     "tough-cookie": "^6.0.0"
   },
   "devDependencies": {
