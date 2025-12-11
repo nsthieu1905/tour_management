@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Notification = require("../app/models/Notification");
 
 class NotificationService {
@@ -8,11 +9,12 @@ class NotificationService {
    */
   static async createNotification(notificationData, recipientType = "client") {
     try {
-      // console.log("\n🔔 [NotificationService] Creating notification...");
-      // console.log("   Type:", notificationData.type);
-      // console.log("   Title:", notificationData.title);
-      // console.log("   RecipientType:", recipientType);
-      // console.log("   UserId:", notificationData.userId);
+      console.log("\n🔔 [NotificationService] Creating notification...");
+      console.log("   Type:", notificationData.type);
+      console.log("   Title:", notificationData.title);
+      console.log("   RecipientType:", recipientType);
+      console.log("   UserId:", notificationData.userId);
+      console.log("   UserId type:", typeof notificationData.userId);
 
       const notification = new Notification({
         userId: notificationData.userId,
@@ -28,10 +30,12 @@ class NotificationService {
       });
 
       await notification.save();
-      // console.log(
-      //   "✅ [NotificationService] Notification saved to DB:",
-      //   notification._id
-      // );
+      console.log(
+        "✅ [NotificationService] Notification saved to DB:",
+        notification._id
+      );
+      console.log("   Saved userId:", notification.userId);
+      console.log("   Saved userId type:", typeof notification.userId);
 
       // Broadcast to appropriate room
       const notificationObj = {
@@ -79,11 +83,38 @@ class NotificationService {
    */
   static async getNotifications(userId, limit = 50) {
     try {
-      return await Notification.find({ userId })
+      console.log("📊 [NotificationService.getNotifications] Query params:");
+      console.log("   userId:", userId);
+      console.log("   userId type:", typeof userId);
+      console.log("   userId toString:", userId.toString?.());
+
+      // Convert string userId to ObjectId if needed
+      let queryUserId = userId;
+      if (typeof userId === "string") {
+        queryUserId = new mongoose.Types.ObjectId(userId);
+        console.log("   Converted to ObjectId:", queryUserId);
+      }
+
+      const query = { userId: queryUserId };
+      console.log("   Final query object:", query);
+
+      const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
         .limit(limit);
+
+      console.log("📊 [NotificationService.getNotifications] Result:");
+      console.log("   Found:", notifications.length, "notifications");
+      if (notifications.length > 0) {
+        console.log("   First notification userId:", notifications[0].userId);
+        console.log(
+          "   First notification userId type:",
+          typeof notifications[0].userId
+        );
+      }
+
+      return notifications;
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error("❌ Error fetching notifications:", error);
       throw error;
     }
   }

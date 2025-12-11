@@ -8,15 +8,26 @@ const { generateAccessToken } = require("../app/API/AuthApiController");
 
 const protectClientRoutes = async (req, res, next) => {
   try {
+    console.log("🔒 [protectClientRoutes] Checking authorization...");
+    console.log("   Path:", req.path);
+
     const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
     const refreshToken = req.cookies[process.env.REFRESH_TOKEN_NAME];
+
+    console.log("   Has accessToken:", !!accessToken);
+    console.log("   Has refreshToken:", !!refreshToken);
 
     if (accessToken) {
       try {
         const decoded = jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
+        console.log(
+          "✅ [protectClientRoutes] Access token valid for user:",
+          decoded.userId
+        );
 
         const user = await User.findById(decoded.userId);
         if (!user) {
+          console.log("❌ [protectClientRoutes] User not found");
           return res.redirect("/");
         }
 
@@ -27,6 +38,10 @@ const protectClientRoutes = async (req, res, next) => {
           role: user.role,
           fullName: user.fullName,
         };
+        console.log(
+          "✅ [protectClientRoutes] Auth successful, user:",
+          req.user.userId
+        );
         return next();
       } catch (error) {
         if (error.name === "TokenExpiredError") {

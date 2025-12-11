@@ -3,13 +3,17 @@
  * Dành cho khách hàng - thông báo về tour mới, booking, và cập nhật
  */
 
+console.log("📦 [notifications.js] Script loaded!");
+
 class ClientNotificationManager {
   constructor() {
+    console.log("🚀 [ClientNotificationManager] Initializing...");
     this.notifications = [];
     this.unreadCount = 0;
     this.maxNotifications = 5;
     this.socket = null;
     this.clientId = this.getClientIdFromDom();
+    console.log("   clientId:", this.clientId);
     this.init();
   }
 
@@ -18,14 +22,92 @@ class ClientNotificationManager {
     this.attachEventListeners();
     this.updateBadge();
 
-    // Fetch notifications from server immediately on page load
-    const userId = this.getUserIdFromDom();
-    if (userId) {
-      console.log("📥 [Client] Fetching notifications from server on init");
-      this.fetchNotificationsFromServer(userId);
-    }
+    // Test API
+    console.log("🧪 [Client] Testing API connectivity...");
+    fetch("/api/notifications/test-api")
+      .then((r) => r.json())
+      .then((d) => console.log("✅ [Client] API test response:", d))
+      .catch((e) => console.error("❌ [Client] API test error:", e));
+
+    // Always fetch userId from API to ensure we get current user
+    console.log("🔍 [init] Fetching userId from API...");
+    this.fetchUserIdFromApi();
 
     this.initializeSocket();
+  }
+
+  /**
+   * Fallback: Fetch userId from /api/users/current-user API
+   */
+  async fetchUserIdFromApi() {
+    try {
+      console.log(
+        "📡 [fetchUserIdFromApi] Calling /api/users/current-user endpoint..."
+      );
+      const response = await fetch("/api/users/current-user");
+
+      if (!response.ok) {
+        console.warn(
+          "⚠️ [fetchUserIdFromApi] Failed to fetch user data:",
+          response.status
+        );
+        return;
+      }
+
+      const data = await response.json();
+      console.log("✅ [fetchUserIdFromApi] User data received:", data);
+      console.log("   data keys:", Object.keys(data));
+      console.log("   data.user:", data.user);
+      console.log("   data.data:", data.data);
+      console.log("   data._id:", data._id);
+      if (data.data) {
+        console.log("   data.data keys:", Object.keys(data.data));
+        console.log("   data.data._id:", data.data._id);
+      }
+
+      // Try multiple ways to extract userId
+      let userId = null;
+      if (data.user && data.user._id) {
+        userId = data.user._id;
+        console.log(
+          "🔑 [fetchUserIdFromApi] Got userId from data.user._id:",
+          userId
+        );
+      } else if (data._id) {
+        userId = data._id;
+        console.log(
+          "🔑 [fetchUserIdFromApi] Got userId from data._id:",
+          userId
+        );
+      } else if (data.data && typeof data.data === "object" && data.data._id) {
+        userId = data.data._id;
+        console.log(
+          "🔑 [fetchUserIdFromApi] Got userId from data.data._id:",
+          userId
+        );
+      } else if (
+        data.data &&
+        typeof data.data === "object" &&
+        data.data.user &&
+        data.data.user._id
+      ) {
+        userId = data.data.user._id;
+        console.log(
+          "🔑 [fetchUserIdFromApi] Got userId from data.data.user._id:",
+          userId
+        );
+      }
+
+      if (userId) {
+        this.fetchNotificationsFromServer(userId);
+      } else {
+        console.error(
+          "❌ [fetchUserIdFromApi] Could not extract userId from response"
+        );
+      }
+    } catch (error) {
+      console.error("❌ [fetchUserIdFromApi] Error:", error);
+    }
   }
 
   /**
@@ -45,11 +127,23 @@ class ClientNotificationManager {
    */
   getUserIdFromDom() {
     // Try multiple sources
+    console.log("🔍 [getUserIdFromDom] Looking for userId in DOM...");
+    console.log(
+      "   document.body.dataset.userId:",
+      document.body.dataset.userId
+    );
+    console.log(
+      "   [data-user-id] element:",
+      document.querySelector("[data-user-id]")
+    );
+
     const userId =
       document.body.dataset.userId ||
       document.querySelector("[data-user-id]")?.dataset.userId ||
       document.querySelector("[data-user-id]")?.value ||
       localStorage.getItem("userId");
+
+    console.log("   Final userId:", userId);
     return userId;
   }
 
@@ -222,20 +316,35 @@ class ClientNotificationManager {
         "📥 [Client] Fetching notifications from server for userId:",
         userId
       );
-      const response = await fetch(`/api/notifications/user/${userId}`);
+      console.log("📥 [Client] Calling GET /api/notifications/user...");
+
+      const response = await fetch(`/api/notifications/user`);
+      console.log("📥 [Client] Response received!");
+      console.log("   Status:", response.status);
+      console.log("   StatusText:", response.statusText);
+      console.log("   OK:", response.ok);
 
       if (!response.ok) {
         console.warn("⚠️ Failed to fetch notifications:", response.status);
+        const errorText = await response.text();
+        console.warn("   Error response:", errorText);
         return;
       }
 
       const data = await response.json();
+      console.log("📥 [Client] Raw response data:", data);
+      console.log("   data.success:", data.success);
+      console.log("   data.data:", data.data);
+
       const serverNotifications = data.data || data || [];
 
       console.log(
         "📥 [Client] Received notifications from server:",
         serverNotifications.length
       );
+      if (serverNotifications.length > 0) {
+        console.log("   First notification:", serverNotifications[0]);
+      }
 
       // Merge with existing notifications, avoiding duplicates
       serverNotifications.forEach((serverNotif) => {
@@ -253,6 +362,8 @@ class ClientNotificationManager {
       this.updateBadge();
     } catch (error) {
       console.error("❌ Error fetching notifications from server:", error);
+      console.error("   Error message:", error.message);
+      console.error("   Error stack:", error.stack);
     }
   }
 
@@ -449,7 +560,6 @@ class ClientNotificationManager {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId: this.getUserIdFromDom() }),
       }).catch((err) => console.error("Error marking as read:", err));
 
       if (notif.read) {
@@ -478,7 +588,6 @@ class ClientNotificationManager {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId: this.getUserIdFromDom() }),
       }).catch((err) => console.error("Error deleting notification:", err));
 
       this.updateBadge();
@@ -583,7 +692,9 @@ class ClientNotificationManager {
 // Initialize notification manager when DOM is ready
 let clientNotificationManager;
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("📄 [DOMContentLoaded] Creating ClientNotificationManager...");
   clientNotificationManager = new ClientNotificationManager();
+  console.log("✅ [DOMContentLoaded] ClientNotificationManager created!");
 });
 
 // Export for use with Socket.io

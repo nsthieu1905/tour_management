@@ -3,24 +3,51 @@ const NotificationService = require("../../services/NotificationService");
 
 class NotificationController {
   /**
-   * GET /api/notifications/user/:userId
-   * Get notifications for a user
+   * GET /api/notifications/user
+   * Get notifications for current user
    */
   async getUserNotifications(req, res) {
     try {
-      const { userId } = req.params;
+      console.log("📥 [getUserNotifications] Called");
+      console.log("   req.user:", req.user);
+      console.log("   req.userId:", req.userId);
+
+      const userId = req.user?.userId || req.userId;
+      console.log("   userId extracted:", userId);
+
+      if (!userId) {
+        console.log("❌ [getUserNotifications] No userId found");
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+      }
       const limit = req.query.limit || 50;
 
+      console.log(
+        "📥 [getUserNotifications] Fetching notifications for:",
+        userId,
+        "Type:",
+        typeof userId,
+        userId.toString()
+      );
       const notifications = await NotificationService.getNotifications(
         userId,
         limit
       );
+      console.log(
+        "✅ [getUserNotifications] Found",
+        notifications.length,
+        "notifications"
+      );
+      console.log("   First notification (if exists):", notifications[0]);
 
       res.json({
         success: true,
         data: notifications,
       });
     } catch (error) {
+      console.error("❌ [getUserNotifications] Error:", error);
       res.status(500).json({
         success: false,
         message: error.message,
@@ -29,19 +56,32 @@ class NotificationController {
   }
 
   /**
-   * GET /api/notifications/unread/:userId
-   * Get unread count for a user
+   * GET /api/notifications/unread
+   * Get unread count for current user
    */
   async getUnreadCount(req, res) {
     try {
-      const { userId } = req.params;
+      console.log("📥 [getUnreadCount] Called");
+
+      const userId = req.user?.userId || req.userId;
+      console.log("   userId extracted:", userId);
+
+      if (!userId) {
+        console.log("❌ [getUnreadCount] No userId found");
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+      }
       const count = await NotificationService.getUnreadCount(userId);
+      console.log("✅ [getUnreadCount] Unread count:", count);
 
       res.json({
         success: true,
         unreadCount: count,
       });
     } catch (error) {
+      console.error("❌ [getUnreadCount] Error:", error);
       res.status(500).json({
         success: false,
         message: error.message,
@@ -56,7 +96,13 @@ class NotificationController {
   async markAsRead(req, res) {
     try {
       const { notificationId } = req.params;
-      const { userId } = req.body;
+      const userId = req.user?.userId || req.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+      }
 
       const notification = await NotificationService.markAsRead(
         notificationId,
@@ -82,7 +128,13 @@ class NotificationController {
   async deleteNotification(req, res) {
     try {
       const { notificationId } = req.params;
-      const { userId } = req.body;
+      const userId = req.user?.userId || req.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+      }
 
       await NotificationService.deleteNotification(notificationId, userId);
 
@@ -178,6 +230,19 @@ class NotificationController {
         message: error.message,
       });
     }
+  }
+
+  /**
+   * GET /api/notifications/test-api
+   * Test if API is accessible (no auth required)
+   */
+  async testApi(req, res) {
+    console.log("✅ [testApi] API is working!");
+    res.json({
+      success: true,
+      message: "API is working",
+      timestamp: new Date(),
+    });
   }
 }
 
