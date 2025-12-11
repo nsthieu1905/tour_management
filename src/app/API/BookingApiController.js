@@ -313,6 +313,9 @@ const momoCallback = async (req, res) => {
         const booking = await Booking.findById(extraData).populate("tourId");
 
         if (booking) {
+          // Check if payment was already processed (to prevent duplicate notifications)
+          const wasAlreadyPaid = booking.paymentStatus === "paid";
+
           booking.bookingStatus = "pending";
           booking.paymentStatus = "paid";
           booking.payments.push({
@@ -329,13 +332,21 @@ const momoCallback = async (req, res) => {
             booking._id
           );
 
-          // Gửi thông báo booking mới (cho cả admin và client) - GIỐNG CASH/BANK
-          const user = await User.findById(booking.userId);
-          await sendBookingNotification(
-            booking,
-            booking.tourId,
-            user?.fullName || booking.contactInfo.name
-          );
+          // Gửi thông báo booking mới (cho cả admin và client) - CHỈ LẦN ĐẦU
+          // Nếu đã thanh toán rồi (F5 hoặc retry từ MoMo), không gửi notification lại
+          if (!wasAlreadyPaid) {
+            const user = await User.findById(booking.userId);
+            await sendBookingNotification(
+              booking,
+              booking.tourId,
+              user?.fullName || booking.contactInfo.name
+            );
+            console.log("📧 [momoCallback] Notification sent");
+          } else {
+            console.log(
+              "⏭️ [momoCallback] Booking already paid, skipping notification to prevent duplicate"
+            );
+          }
         } else {
           console.error("MoMo callback - Booking not found:", extraData);
         }

@@ -45,6 +45,9 @@ const bookingSuccess = async (req, res) => {
         const booking = await Booking.findById(extraData).populate("tourId");
 
         if (booking) {
+          // Check if payment was already processed (to prevent duplicate notifications)
+          const wasAlreadyPaid = booking.paymentStatus === "paid";
+
           booking.bookingStatus = "pending";
           booking.paymentStatus = "paid";
           booking.payments.push({
@@ -58,34 +61,41 @@ const bookingSuccess = async (req, res) => {
           await booking.save();
 
           // ==================== SEND NOTIFICATION ====================
-          try {
-            const user = await User.findById(booking.userId);
-            const tour = booking.tourId;
+          // CHỈ GỬI LẦN ĐẦU (không gửi lại khi F5)
+          if (!wasAlreadyPaid) {
+            try {
+              const user = await User.findById(booking.userId);
+              const tour = booking.tourId;
 
-            console.log("🔔 [BookingController] Triggering notifyPayment");
-            console.log("   User ID:", booking.userId);
-            console.log("   Booking ID:", booking._id);
-            console.log("   Customer Name:", user?.fullName || "N/A");
-            console.log("   Amount:", parseInt(amount) || 0);
+              console.log("🔔 [BookingController] Triggering notifyPayment");
+              console.log("   User ID:", booking.userId);
+              console.log("   Booking ID:", booking._id);
+              console.log("   Customer Name:", user?.fullName || "N/A");
+              console.log("   Amount:", parseInt(amount) || 0);
 
-            // Notify both admin and client about payment
-            await notifyPayment({
-              userId: booking.userId?._id,
-              paymentId: booking._id,
-              bookingId: booking._id,
-              bookingCode: booking.bookingCode,
-              customerName: user?.fullName || booking.contactInfo.name,
-              tourName: booking.tourId?.name || "Tour",
-              amount: parseInt(amount) || 0,
-            });
+              // Notify both admin and client about payment
+              await notifyPayment({
+                userId: booking.userId?._id,
+                paymentId: booking._id,
+                bookingId: booking._id,
+                bookingCode: booking.bookingCode,
+                customerName: user?.fullName || booking.contactInfo.name,
+                tourName: booking.tourId?.name || "Tour",
+                amount: parseInt(amount) || 0,
+              });
 
-            console.log("✅ Payment notification sent successfully");
-          } catch (notificationError) {
-            console.error(
-              "⚠️ Error sending payment notification:",
-              notificationError
+              console.log("✅ Payment notification sent successfully");
+            } catch (notificationError) {
+              console.error(
+                "⚠️ Error sending payment notification:",
+                notificationError
+              );
+              // Continue even if notification fails
+            }
+          } else {
+            console.log(
+              "⏭️ [BookingController] Booking already paid, skipping notification to prevent duplicate"
             );
-            // Continue even if notification fails
           }
           // ========================================================
         }

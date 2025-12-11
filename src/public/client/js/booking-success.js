@@ -3,11 +3,19 @@ function formatPrice(num) {
   return new Intl.NumberFormat("vi-VN").format(num);
 }
 
-// Get booking info from sessionStorage first, then fallback to server
-let bookingCode = sessionStorage.getItem("bookingCode");
-let bookingId = sessionStorage.getItem("bookingId") || window.serverBookingId;
-let bookingTotal = sessionStorage.getItem("bookingTotal");
-let paymentMethod = sessionStorage.getItem("paymentMethod");
+// Get booking info from sessionStorage OR localStorage first, then fallback to server
+let bookingCode =
+  sessionStorage.getItem("bookingCode") || localStorage.getItem("bookingCode");
+let bookingId =
+  sessionStorage.getItem("bookingId") ||
+  localStorage.getItem("bookingId") ||
+  window.serverBookingId;
+let bookingTotal =
+  sessionStorage.getItem("bookingTotal") ||
+  localStorage.getItem("bookingTotal");
+let paymentMethod =
+  sessionStorage.getItem("paymentMethod") ||
+  localStorage.getItem("paymentMethod");
 
 console.log("Initial state:", {
   bookingCode,
@@ -98,8 +106,35 @@ function setupViewDetailsButton(id) {
   }
 }
 
-// Clear sessionStorage after reading
+// Clear sessionStorage but keep localStorage for F5 reload
+// Only clear when user leaves the page (by clicking home button or similar)
 sessionStorage.removeItem("bookingId");
 sessionStorage.removeItem("bookingCode");
 sessionStorage.removeItem("bookingTotal");
 sessionStorage.removeItem("paymentMethod");
+
+// Clear localStorage when user navigates away from booking-success
+// Option 1: Clear when user clicks "Về trang chủ" button
+document.querySelectorAll('a[href="/"]').forEach((btn) => {
+  btn.addEventListener("click", () => {
+    localStorage.removeItem("bookingId");
+    localStorage.removeItem("bookingCode");
+    localStorage.removeItem("bookingTotal");
+    localStorage.removeItem("paymentMethod");
+  });
+});
+
+// Option 2: Clear after 30 minutes or when creating a new booking
+// Clean up old booking data if more than 30 minutes have passed
+const lastBookingTime = localStorage.getItem("lastBookingTime");
+const currentTime = new Date().getTime();
+if (
+  lastBookingTime &&
+  currentTime - parseInt(lastBookingTime) > 30 * 60 * 1000
+) {
+  localStorage.removeItem("bookingId");
+  localStorage.removeItem("bookingCode");
+  localStorage.removeItem("bookingTotal");
+  localStorage.removeItem("paymentMethod");
+  localStorage.removeItem("lastBookingTime");
+}

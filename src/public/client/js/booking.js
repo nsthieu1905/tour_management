@@ -591,6 +591,13 @@ async function confirmPayment() {
         sessionStorage.setItem("bookingTotal", bookingState.total);
         sessionStorage.setItem("paymentMethod", "bank_transfer");
 
+        // Lưu vào localStorage để tồn tại sau khi F5
+        localStorage.setItem("bookingId", result.data.bookingId);
+        localStorage.setItem("bookingCode", result.data.bookingCode);
+        localStorage.setItem("bookingTotal", bookingState.total);
+        localStorage.setItem("paymentMethod", "bank_transfer");
+        localStorage.setItem("lastBookingTime", new Date().getTime());
+
         window.location.href = "/booking-success";
       } else {
         Notification.error(result.message || "Có lỗi xảy ra, vui lòng thử lại");
@@ -634,6 +641,13 @@ async function confirmPayment() {
         sessionStorage.setItem("bookingCode", result.data.bookingCode);
         sessionStorage.setItem("bookingTotal", bookingState.total);
         sessionStorage.setItem("paymentMethod", "cash");
+
+        // Lưu vào localStorage để tồn tại sau khi F5
+        localStorage.setItem("bookingId", result.data.bookingId);
+        localStorage.setItem("bookingCode", result.data.bookingCode);
+        localStorage.setItem("bookingTotal", bookingState.total);
+        localStorage.setItem("paymentMethod", "cash");
+        localStorage.setItem("lastBookingTime", new Date().getTime());
 
         window.location.href = "/booking-success";
       } else {
@@ -680,6 +694,13 @@ async function confirmPayment() {
       sessionStorage.setItem("bookingCode", result.data.bookingCode);
       sessionStorage.setItem("bookingTotal", bookingState.total);
       sessionStorage.setItem("paymentMethod", "momo");
+
+      // Lưu vào localStorage để tồn tại sau khi F5
+      localStorage.setItem("bookingId", result.data.bookingId);
+      localStorage.setItem("bookingCode", result.data.bookingCode);
+      localStorage.setItem("bookingTotal", bookingState.total);
+      localStorage.setItem("paymentMethod", "momo");
+      localStorage.setItem("lastBookingTime", new Date().getTime());
 
       window.location.href = result.data.payUrl;
     } else {
