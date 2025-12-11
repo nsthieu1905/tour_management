@@ -7,17 +7,24 @@
   top: 80px;
   width: 420px;
   max-height: calc(100vh - 100px);
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   display: none;
-  flex-direction: column;
   animation: slideIn 0.3s ease-out;
 }
 
 .notification-modal.active {
+  display: block;
+}
+
+/* Notification Modal Wrapper - New wrapper div */
+.notification-modal-wrapper {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 100px);
+  overflow: hidden;
 }
 
 @keyframes slideIn {
@@ -145,6 +152,26 @@
   background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
+/* Notification Avatar - Background Colors */
+.notification-avatar.bg-blue-100 {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.notification-avatar.bg-green-100 {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.notification-avatar.bg-amber-100 {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.notification-avatar.bg-red-100 {
+  background: #fee2e2;
+  color: #991b1b;
+}
 /* Notification Body */
 .notification-body {
   flex: 1;
@@ -473,6 +500,63 @@
 
 .notification-modal-content::-webkit-scrollbar-thumb:hover {
   background: #999;
+}
+
+/* Notification Avatar - Background Colors */
+.notification-avatar {
+  &.bg-blue-100 {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  &.bg-green-100 {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.bg-amber-100 {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &.bg-red-100 {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+/* Text/Icon Colors */
+.text-blue-900 {
+  color: #1e40af;
+}
+
+.text-green-900 {
+  color: #15803d;
+}
+
+.text-amber-900 {
+  color: #92400e;
+}
+
+.text-red-900 {
+  color: #991b1b;
+}
+
+/* Background Colors */
+.bg-blue-100 {
+  background-color: #dbeafe;
+}
+
+.bg-green-100 {
+  background-color: #dcfce7;
+}
+
+.bg-amber-100 {
+  background-color: #fef3c7;
+}
+
+.bg-red-100 {
+  background-color: #fee2e2;
 }
 
 /* Responsive */

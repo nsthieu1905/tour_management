@@ -18,6 +18,8 @@
   <body class="{{bodyClass}}">
     {{> header_admin}} {{> sidebar}} {{{body}}} {{> footer_admin}}
 
+    <!-- Socket.io for real-time notifications -->
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/admin/js/notifications.js"></script>
   </body>
 </html>

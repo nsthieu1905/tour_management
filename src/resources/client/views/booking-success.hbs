@@ -1,4 +1,4 @@
-<div class="bg-gray-50 min-h-screen py-8">
+<div class="bg-gray-50 min-h-screen py-8" {{#if user}}data-user-id="{{user._id}}"{{/if}}>
   <div class="max-w-2xl mx-auto px-4">
     <!-- Success Header -->
     <div class="text-center mb-8">
@@ -145,4 +145,8 @@
   </div>
 </div>
 
+<script type="module">
+  // Pass bookingId from server to client-side script
+  window.serverBookingId = "{{bookingId}}";
+</script>
 <script type="module" src="/client/js/booking-success.js"></script>

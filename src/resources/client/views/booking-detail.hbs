@@ -159,6 +159,109 @@
             </div>
           </div>
         </div>
+
+        <!-- REFUND STATUS SECTION -->
+        <div id="refund-section" class="hidden border-t pt-6">
+          <h3
+            class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4"
+          >
+            Thông tin hoàn tiền / Hủy đơn
+          </h3>
+          <div
+            class="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4"
+          >
+            <!-- Refund Requested Status -->
+            <div id="refund-requested-status" class="hidden">
+              <div class="flex items-start space-x-3">
+                <div class="bg-amber-100 rounded-full p-2 flex-shrink-0">
+                  <i class="bi bi-hourglass-split text-amber-600 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-amber-900">
+                    Chờ xử lý hoàn tiền
+                  </h4>
+                  <p id="refund-reason" class="text-sm text-amber-700 mt-1"></p>
+                  <p
+                    id="refund-requested-at"
+                    class="text-xs text-amber-600 mt-2"
+                  ></p>
+                  <p
+                    id="refund-estimated-timeline"
+                    class="text-xs text-amber-600 mt-1"
+                  ></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Refunded Status -->
+            <div id="refunded-status" class="hidden">
+              <div class="flex items-start space-x-3">
+                <div class="bg-green-100 rounded-full p-2 flex-shrink-0">
+                  <i class="bi bi-check-circle text-green-600 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-green-900">
+                    Hoàn tiền thành công
+                  </h4>
+                  <div class="mt-3 space-y-2 text-sm">
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Lý do yêu cầu:</span>
+                      <span
+                        id="refund-reason-confirm"
+                        class="font-semibold text-gray-900"
+                      ></span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Phí hủy:</span>
+                      <span
+                        id="cancellation-fee"
+                        class="font-semibold text-red-600"
+                      ></span>
+                    </div>
+                    <div
+                      class="flex justify-between pt-2 border-t border-green-200"
+                    >
+                      <span class="text-gray-700 font-semibold"
+                        >Số tiền hoàn:</span
+                      >
+                      <span
+                        id="refund-amount"
+                        class="font-bold text-green-600 text-lg"
+                      ></span>
+                    </div>
+                  </div>
+                  <p
+                    id="refund-approved-at"
+                    class="text-xs text-green-600 mt-3"
+                  ></p>
+                  <p class="text-xs text-green-600 mt-1">
+                    Tiền sẽ được hoàn về tài khoản của bạn trong vòng 3-5 ngày
+                    làm việc
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cancelled Status -->
+            <div id="cancelled-status" class="hidden">
+              <div class="flex items-start space-x-3">
+                <div class="bg-red-100 rounded-full p-2 flex-shrink-0">
+                  <i class="bi bi-x-circle text-red-600 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-red-900">
+                    Đơn đặt tour đã bị hủy
+                  </h4>
+                  <p
+                    id="cancellation-reason"
+                    class="text-sm text-red-700 mt-2"
+                  ></p>
+                  <p id="cancelled-at" class="text-xs text-red-600 mt-3"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="flex gap-4">

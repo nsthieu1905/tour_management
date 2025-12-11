@@ -12,9 +12,11 @@
 
     <link rel="stylesheet" href="/client/css/app.css" />
   </head>
-  <body class="{{bodyClass}}">
+  <body class="{{bodyClass}}" {{#if user}}data-client-id="{{user._id}}" data-user-id="{{user._id}}"{{/if}}>
     {{> header_client}} {{{body}}} {{> footer_client}}
 
+    <!-- Socket.io for real-time notifications -->
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/client/js/notifications.js"></script>
   </body>
 </html>

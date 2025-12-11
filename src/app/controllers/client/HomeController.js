@@ -8,6 +8,7 @@ const home = async (req, res) => {
     return res.render("home", {
       bodyClass: "bg-gray-50",
       tours: tours,
+      user: req.user,
     });
   } catch (error) {
     console.error("Home page error:", error);
@@ -41,6 +42,7 @@ const favorites = async (req, res) => {
       bodyClass: "bg-gray-50",
       favorites: favoriteTours,
       count: favoriteTours.length,
+      user: req.user,
     });
   } catch (error) {
     console.error("Favorites page error:", error);

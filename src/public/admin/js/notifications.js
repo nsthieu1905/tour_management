@@ -1,13 +1,15 @@
 /**
- * Client Notification System
- * Dành cho khách hàng - thông báo về tour mới và cập nhật
+ * Admin Notification System
+ * Dành cho admin - thông báo về đơn booking, tours mới, etc
  */
 
-class ClientNotificationManager {
+class AdminNotificationManager {
   constructor() {
     this.notifications = [];
     this.unreadCount = 0;
     this.maxNotifications = 5;
+    this.socket = null;
+    this.adminId = this.getAdminIdFromDom();
     this.init();
   }
 
@@ -16,7 +18,110 @@ class ClientNotificationManager {
     this.attachEventListeners();
     this.loadNotificationsFromStorage();
     this.updateBadge();
-    this.startFakeNotifications(); // Fake notifications for demo
+    this.initializeSocket();
+  }
+
+  /**
+   * Get admin ID from DOM (from user profile or data attribute)
+   */
+  getAdminIdFromDom() {
+    // Try to get from localStorage or data attribute
+    const adminId =
+      localStorage.getItem("adminId") ||
+      document.body.dataset.adminId ||
+      document.querySelector("[data-admin-id]")?.dataset.adminId;
+    return adminId || "admin_" + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Initialize Socket.io connection
+   */
+  initializeSocket() {
+    console.log("🔔 [Admin] Initializing Socket.io connection");
+
+    if (typeof io === "undefined") {
+      console.warn("🔔 [Admin] Socket.io not loaded");
+      // Fallback to fake notifications if socket.io not available
+      this.startFakeNotifications();
+      return;
+    }
+
+    console.log("🔔 [Admin] Socket.io found, creating connection");
+    this.socket = io();
+
+    this.socket.on("connect", () => {
+      console.log(
+        "🔔 [Admin] Connected to notification server. Socket ID:",
+        this.socket.id
+      );
+      console.log("🔔 [Admin] Emitting admin:join with adminId:", this.adminId);
+      this.socket.emit("admin:join", this.adminId);
+    });
+
+    // Listen for new notifications
+    this.socket.on("notification:new", (notification) => {
+      console.log(
+        "🔔 [Admin] Received notification:new event with data:",
+        notification
+      );
+
+      // Deduplication: Check if notification already exists
+      const isDuplicate = this.notifications.some((n) => {
+        // Check by ID
+        if (n.id === notification.id) return true;
+        // Check by title + message + timestamp (within 1 second)
+        if (
+          n.title === notification.title &&
+          n.message === notification.message
+        ) {
+          const timeDiff = Math.abs(
+            new Date(n.time) - new Date(notification.time)
+          );
+          if (timeDiff < 1000) return true; // Within 1 second = duplicate
+        }
+        return false;
+      });
+
+      if (isDuplicate) {
+        console.log(
+          "⚠️ [Admin] Duplicate notification detected, skipping:",
+          notification.id
+        );
+        return;
+      }
+
+      this.addNotification(notification);
+    });
+
+    // Listen for read status updates
+    this.socket.on("notification:read", (notificationId) => {
+      console.log(
+        "🔔 [Admin] Received notification:read for ID:",
+        notificationId
+      );
+      const notif = this.notifications.find((n) => n.id === notificationId);
+      if (notif) {
+        notif.read = true;
+      }
+    });
+
+    // Listen for delete notifications
+    this.socket.on("notification:delete", (notificationId) => {
+      console.log(
+        "🔔 [Admin] Received notification:delete for ID:",
+        notificationId
+      );
+      this.deleteNotification(notificationId);
+    });
+
+    this.socket.on("disconnect", () => {
+      console.log("🔔 [Admin] Disconnected from notification server");
+    });
+
+    // Catch-all listener for debugging
+    this.socket.onAny((eventName, ...args) => {
+      console.log("🔔 [Admin] Socket event received:", eventName, args);
+    });
   }
 
   createNotificationUI() {
@@ -31,16 +136,18 @@ class ClientNotificationManager {
     modal.className = "notification-modal";
     modal.id = "notificationModal";
     modal.innerHTML = `
-      <div class="notification-modal-header">
-        <h3>Thông báo</h3>
-        <button class="notification-modal-close" id="notificationClose">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="notification-modal-content" id="notificationContent">
-        <div class="notification-empty">
-          <i class="fas fa-bell"></i>
-          <p>Không có thông báo nào</p>
+      <div class="notification-modal-wrapper">
+        <div class="notification-modal-header">
+          <h3>Thông báo</h3>
+          <button class="notification-modal-close" id="notificationClose">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="notification-modal-content" id="notificationContent">
+          <div class="notification-empty">
+            <i class="fas fa-bell"></i>
+            <p>Không có thông báo nào</p>
+          </div>
         </div>
       </div>
     `;
@@ -105,6 +212,8 @@ class ClientNotificationManager {
   }
 
   addNotification(notification) {
+    console.log("🔔 [Admin] addNotification called with:", notification);
+
     // Cấu trúc: { id, type, icon, title, message, time, read }
     const newNotif = {
       id: `notif-${Date.now()}`,
@@ -116,11 +225,25 @@ class ClientNotificationManager {
       read: false,
     };
 
+    console.log("🔔 [Admin] Created notification object:", newNotif);
+
     this.notifications.unshift(newNotif);
+    console.log(
+      "🔔 [Admin] Added to notifications array. Total count:",
+      this.notifications.length
+    );
+
     this.unreadCount++;
+    console.log("🔔 [Admin] Updated unreadCount:", this.unreadCount);
+
     this.updateBadge();
+    console.log("🔔 [Admin] Updated badge");
+
     this.saveNotificationsToStorage();
+    console.log("🔔 [Admin] Saved to localStorage");
+
     this.showToast(newNotif);
+    console.log("🔔 [Admin] Called showToast()");
   }
 
   renderNotifications() {
@@ -141,12 +264,13 @@ class ClientNotificationManager {
     displayNotifications.forEach((notif) => {
       const timeStr = this.formatTime(notif.time);
       const unreadClass = notif.read ? "" : "unread";
-      const avatarType = notif.type;
+      // Use iconBg if available, otherwise default to type-based styling
+      const avatarClass = notif.iconBg ? notif.iconBg : notif.type;
 
       html += `
         <div class="notification-item ${unreadClass}" data-id="${notif.id}">
           ${notif.read ? "" : '<div class="notification-unread-dot"></div>'}
-          <div class="notification-avatar ${avatarType}">
+          <div class="notification-avatar ${avatarClass}">
             <i class="fas ${notif.icon}"></i>
           </div>
           <div class="notification-body">
@@ -342,106 +466,36 @@ class ClientNotificationManager {
 
   saveNotificationsToStorage() {
     localStorage.setItem(
-      "clientNotifications",
+      "adminNotifications",
       JSON.stringify(this.notifications)
     );
   }
 
   loadNotificationsFromStorage() {
-    const stored = localStorage.getItem("clientNotifications");
+    const stored = localStorage.getItem("adminNotifications");
     if (stored) {
       this.notifications = JSON.parse(stored);
       this.unreadCount = this.notifications.filter((n) => !n.read).length;
     }
   }
 
-  // Fake notifications for demo
+  // Fake notifications for demo (DISABLED - Use real notifications from server)
   startFakeNotifications() {
-    const fakeData = [
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour mới: Đà Lạt 3 ngày 2 đêm",
-        message:
-          "Tận hưởng không khí lạnh mát tại thành phố ngàn hoa với giá chỉ từ 2.500.000 VND",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour Hot: Hạ Long - Cát Bà 2 ngày",
-        message:
-          "Khám phá vịnh Hạ Long kỳ bí, đảo Cát Bà xinh đẹp. Mua ngay, tặng voucher 500k",
-      },
-      {
-        type: "promotion",
-        icon: "fa-tag",
-        title: "Khuyến mại tháng 12",
-        message: "Giảm 30% tất cả tour nước ngoài. Áp dụng từ 1/12 đến 31/12",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour mới: Phuket 4 ngày 3 đêm",
-        message:
-          "Biển xanh, cát trắng, chủng môn tuyệt vời. Giá từ 5.500.000 VND",
-      },
-      {
-        type: "booking",
-        icon: "fa-calendar",
-        title: "Đơn booking của bạn được xác nhận",
-        message:
-          "Tour Nha Trang - Ninh Chữ đã được xác nhận. Vui lòng thanh toán trước ngày 25/12",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour flash sale: Maldives 7 ngày",
-        message: "Giá sốc chỉ có hôm nay. Từ 15.000.000 VND. Còn 5 chỗ thôi!",
-      },
-      {
-        type: "promotion",
-        icon: "fa-tag",
-        title: "Coupon 20% cho khách VIP",
-        message: "Bạn được tặng coupon 20% cho tất cả tour. Mã: VIP2024",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour mới: Sapa 3 ngày giảm 40%",
-        message: "Khám phá vẻ đẹp núi rừng, gặp gỡ đồng bào dân tộc thiểu số",
-      },
-      {
-        type: "booking",
-        icon: "fa-calendar",
-        title: "Đơn hoàn tiền của bạn đã được duyệt",
-        message:
-          "Số tiền 8.000.000 VND sẽ được chuyển vào tài khoản trong 3-5 ngày",
-      },
-      {
-        type: "promotion",
-        icon: "fa-tag",
-        title: "Bạn bè giới thiệu - Nhận 300k",
-        message: "Mời bạn bè đặt tour, bạn sẽ nhận 300k mỗi lần",
-      },
-    ];
-
-    let index = 0;
-    setInterval(() => {
-      if (index < fakeData.length) {
-        this.addNotification(fakeData[index]);
-        index++;
-      }
-    }, 10000); // 10 giây một cái (để test nhanh)
+    // Fake notifications disabled - all notifications come from server via Socket.io
+    console.log("✅ Admin waiting for real notifications from server...");
+    // This method is no longer needed but kept for fallback purposes
   }
 }
 
 // Initialize notification manager when DOM is ready
-let clientNotificationManager;
+let adminNotificationManager;
 document.addEventListener("DOMContentLoaded", () => {
-  clientNotificationManager = new ClientNotificationManager();
+  adminNotificationManager = new AdminNotificationManager();
+  // Make it globally accessible for other scripts
+  window.adminNotificationManager = adminNotificationManager;
 });
 
-// Export for use with Socket.io later
+// Export for use with Socket.io
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = ClientNotificationManager;
+  module.exports = AdminNotificationManager;
 }

@@ -29,6 +29,35 @@ function formatPrice(price) {
   return new Intl.NumberFormat("vi-VN").format(Math.round(price)) + " VNĐ";
 }
 
+// Show toast notification (non-blocking)
+function showActionToast(message, type = "success") {
+  // Find AdminNotificationManager instance (global)
+  if (
+    window.adminNotificationManager &&
+    typeof window.adminNotificationManager.showToast === "function"
+  ) {
+    window.adminNotificationManager.showToast({
+      type: type,
+      title:
+        type === "success"
+          ? "✅ Thành công"
+          : type === "error"
+          ? "❌ Lỗi"
+          : "ℹ️ Thông báo",
+      message: message,
+      icon:
+        type === "success"
+          ? "fa-check-circle"
+          : type === "error"
+          ? "fa-exclamation-circle"
+          : "fa-info-circle",
+    });
+  } else {
+    // Fallback: if notification manager not available, just log
+    console.log(`[${type.toUpperCase()}] ${message}`);
+  }
+}
+
 // Get status badge - Kết hợp cả bookingStatus và paymentStatus
 function getStatusBadge(bookingStatus, paymentStatus) {
   if (bookingStatus === "pending" && paymentStatus === "pending") {
@@ -449,15 +478,15 @@ function confirmPayment(bookingId) {
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Xác nhận thanh toán thành công!");
+          showActionToast("Xác nhận thanh toán thành công!", "success");
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
-          alert("Lỗi: " + res.message);
+          showActionToast("Lỗi: " + res.message, "error");
         }
       })
       .catch((err) => {
-        alert("Lỗi kết nối: " + err.message);
+        showActionToast("Lỗi kết nối: " + err.message, "error");
       });
   }
 }
@@ -472,15 +501,18 @@ function confirmBooking(bookingId) {
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Xác nhận đơn thành công! Email đã được gửi.");
+          showActionToast(
+            "Xác nhận đơn thành công! Email đã được gửi.",
+            "success"
+          );
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
-          alert("Lỗi: " + res.message);
+          showActionToast("Lỗi: " + res.message, "error");
         }
       })
       .catch((err) => {
-        alert("Lỗi kết nối: " + err.message);
+        showActionToast("Lỗi kết nối: " + err.message, "error");
       });
   }
 }
@@ -495,15 +527,18 @@ function completeBooking(bookingId) {
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Hoàn thành tour! Email cảm ơn đã được gửi.");
+          showActionToast(
+            "Hoàn thành tour! Email cảm ơn đã được gửi.",
+            "success"
+          );
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
-          alert("Lỗi: " + res.message);
+          showActionToast("Lỗi: " + res.message, "error");
         }
       })
       .catch((err) => {
-        alert("Lỗi kết nối: " + err.message);
+        showActionToast("Lỗi kết nối: " + err.message, "error");
       });
   }
 }
@@ -519,15 +554,15 @@ function requestRefund(bookingId) {
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Yêu cầu hoàn tiền đã được ghi nhận!");
+          showActionToast("Yêu cầu hoàn tiền đã được ghi nhận!", "success");
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
-          alert("Lỗi: " + res.message);
+          showActionToast("Lỗi: " + res.message, "error");
         }
       })
       .catch((err) => {
-        alert("Lỗi kết nối: " + err.message);
+        showActionToast("Lỗi kết nối: " + err.message, "error");
       });
   }
 }
@@ -537,8 +572,9 @@ function approveRefund(bookingId, totalAmount, departureDate) {
   const refundInfo = calculateRefundInfo(departureDate, totalAmount);
 
   if (isNaN(refundInfo.refundAmount) || isNaN(refundInfo.cancellationFee)) {
-    alert(
-      "Lỗi: Không thể tính toán số tiền hoàn lại. Vui lòng kiểm tra lại thông tin."
+    showActionToast(
+      "Lỗi: Không thể tính toán số tiền hoàn lại. Vui lòng kiểm tra lại thông tin.",
+      "error"
     );
     return;
   }
@@ -567,15 +603,15 @@ Xác nhận hoàn tiền?
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Xác nhận hoàn tiền thành công!");
+          showActionToast("Xác nhận hoàn tiền thành công!", "success");
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
-          alert("Lỗi: " + res.message);
+          showActionToast("Lỗi: " + res.message, "error");
         }
       })
       .catch((err) => {
-        alert("Lỗi kết nối: " + err.message);
+        showActionToast("Lỗi kết nối: " + err.message, "error");
       });
   }
 }
@@ -591,15 +627,15 @@ function cancelBooking(bookingId) {
       .then((r) => r.json())
       .then((res) => {
         if (res.success) {
-          alert("Hủy đơn thành công!");
+          showActionToast("Hủy đơn thành công!", "success");
           fetchBookings(currentPage, currentStatus);
           fetchAllCounts();
         } else {
-          alert("Lỗi: " + res.message);
+          showActionToast("Lỗi: " + res.message, "error");
         }
       })
       .catch((err) => {
-        alert("Lỗi kết nối: " + err.message);
+        showActionToast("Lỗi kết nối: " + err.message, "error");
       });
   }
 }

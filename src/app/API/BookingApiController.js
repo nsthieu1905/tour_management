@@ -2,40 +2,148 @@ const { Booking, Tour, User, Khuyen_mai } = require("../models/index");
 const MoMoService = require("../../services/MoMoService");
 const RefundService = require("../../services/RefundService");
 const EmailService = require("../../services/EmailService");
+const {
+  notifyNewBooking,
+  notifyBookingPaid,
+  notifyRefundRequested,
+  notifyRefundConfirmed,
+  notifyCancellation,
+  notifyBookingCompleted,
+} = require("../../utils/NotificationHelper");
 const { PAYMENT_LIMITS } = require("../../services/MoMoService");
+
+// ==================== HELPER FUNCTIONS ====================
+const sendBookingNotification = async (booking, tour, customerName) => {
+  try {
+    console.log("🔔 [sendBookingNotification] Sending booking notification");
+    console.log("   User ID:", booking.userId);
+    console.log("   Customer Name:", customerName);
+    console.log("   Tour Name:", tour?.name || "N/A");
+
+    await notifyNewBooking({
+      userId: booking.userId,
+      bookingId: booking._id,
+      tourId: booking.tourId,
+      userName: customerName,
+      tourName: tour?.name || "Tour",
+      passengers: booking.numberOfPeople,
+      paymentDeadline: "27/12",
+    });
+
+    console.log("✅ [sendBookingNotification] Notification sent successfully");
+  } catch (error) {
+    console.error("⚠️ [sendBookingNotification] Error:", error.message);
+  }
+};
+
+/**
+ * Helper: Validate và parse booking data
+ */
+const validateAndParseBookingData = (body) => {
+  const {
+    tourId,
+    customerName,
+    customerEmail,
+    customerPhone,
+    guestCount,
+    departureDate,
+    total,
+  } = body;
+
+  if (
+    !tourId ||
+    !customerName ||
+    !customerEmail ||
+    !customerPhone ||
+    !guestCount ||
+    !departureDate ||
+    !total
+  ) {
+    throw new Error("Vui lòng điền đầy đủ thông tin");
+  }
+
+  // Parse and validate departureDate
+  const departureDateObj = new Date(departureDate);
+  if (isNaN(departureDateObj.getTime())) {
+    throw new Error("Ngày khởi hành không hợp lệ");
+  }
+
+  return {
+    tourId,
+    customerName,
+    customerEmail,
+    customerPhone,
+    guestCount,
+    departureDate: departureDateObj,
+    total,
+  };
+};
+
+/**
+ * Helper: Tạo booking data object
+ */
+const createBookingDataObject = async (params) => {
+  const {
+    userId,
+    tourId,
+    customerName,
+    customerEmail,
+    customerPhone,
+    guestCount,
+    departureDate,
+    total,
+    couponCode,
+    paymentMethod,
+    bookingStatus,
+    paymentStatus,
+  } = params;
+
+  // Handle coupon code
+  let couponId = null;
+  if (couponCode) {
+    const coupon = await Khuyen_mai.findOne({
+      code: couponCode.toUpperCase(),
+    });
+    if (coupon) {
+      couponId = coupon._id;
+    }
+  }
+
+  // Generate unique booking code
+  const bookingCode = "BK" + new Date().getTime();
+
+  const bookingData = {
+    bookingCode,
+    tourId,
+    userId,
+    contactInfo: {
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
+    },
+    numberOfPeople: guestCount,
+    totalAmount: total,
+    departureDate,
+    paymentMethod: paymentMethod || "momo",
+    bookingStatus: bookingStatus || "pre_booking",
+    paymentStatus: paymentStatus || "pending",
+  };
+
+  if (couponId) {
+    bookingData.couponId = couponId;
+  }
+
+  return bookingData;
+};
+
+// ==================== API CONTROLLERS ====================
 
 // [POST] /api/bookings/create-momo-payment
 const createMoMoPayment = async (req, res) => {
   try {
-    const {
-      tourId,
-      customerName,
-      customerEmail,
-      customerPhone,
-      guestCount,
-      departureDate,
-      paymentMethod,
-      couponCode,
-      subtotal,
-      total,
-    } = req.body;
     const userId = req.user.userId;
-
-    // Validate required fields
-    if (
-      !tourId ||
-      !customerName ||
-      !customerEmail ||
-      !customerPhone ||
-      !guestCount ||
-      !departureDate ||
-      !total
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Vui lòng điền đầy đủ thông tin",
-      });
-    }
+    const validatedData = validateAndParseBookingData(req.body);
+    const { tourId, customerName, total, couponCode } = req.body;
 
     // Find tour
     const tour = await Tour.findById(tourId);
@@ -65,53 +173,15 @@ const createMoMoPayment = async (req, res) => {
       });
     }
 
-    // Generate unique booking code
-    const bookingCode = "BK" + new Date().getTime();
-
-    // Parse and validate departureDate
-    let departureDateObj = null;
-    if (departureDate) {
-      departureDateObj = new Date(departureDate);
-      if (isNaN(departureDateObj.getTime())) {
-        return res.status(400).json({
-          success: false,
-          message: "Ngày khởi hành không hợp lệ",
-        });
-      }
-    }
-
-    // Handle coupon code
-    let couponId = null;
-    if (couponCode) {
-      const coupon = await Khuyen_mai.findOne({
-        code: couponCode.toUpperCase(),
-      });
-      if (coupon) {
-        couponId = coupon._id;
-      }
-    }
-
     // Create pre-booking (auto expires after 5 minutes)
-    const bookingData = {
-      bookingCode,
-      tourId,
+    const bookingData = await createBookingDataObject({
       userId,
-      contactInfo: {
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-      },
-      numberOfPeople: guestCount,
-      totalAmount: total,
-      departureDate: departureDateObj,
-      paymentMethod: paymentMethod || "momo",
+      ...validatedData,
+      couponCode,
+      paymentMethod: "momo",
       bookingStatus: "pre_booking",
       paymentStatus: "pending",
-    };
-
-    if (couponId) {
-      bookingData.couponId = couponId;
-    }
+    });
 
     const booking = new Booking(bookingData);
     await booking.save();
@@ -132,7 +202,7 @@ const createMoMoPayment = async (req, res) => {
         message: "Tạo yêu cầu thanh toán thành công",
         data: {
           bookingId: booking._id,
-          bookingCode,
+          bookingCode: bookingData.bookingCode,
           payUrl: momoResponse.payUrl,
           requestId: momoResponse.requestId,
         },
@@ -155,7 +225,7 @@ const createMoMoPayment = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      message: "Lỗi server, vui lòng thử lại sau",
+      message: error.message || "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
@@ -163,35 +233,9 @@ const createMoMoPayment = async (req, res) => {
 // [POST] /api/bookings/create-bank-payment
 const createBankPayment = async (req, res) => {
   try {
-    const {
-      tourId,
-      customerName,
-      customerEmail,
-      customerPhone,
-      guestCount,
-      departureDate,
-      couponCode,
-      subtotal,
-      total,
-      paymentMethod,
-    } = req.body;
     const userId = req.user.userId;
-
-    // Validate required fields
-    if (
-      !tourId ||
-      !customerName ||
-      !customerEmail ||
-      !customerPhone ||
-      !guestCount ||
-      !departureDate ||
-      !total
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Vui lòng điền đầy đủ thông tin",
-      });
-    }
+    const validatedData = validateAndParseBookingData(req.body);
+    const { tourId, customerName, couponCode, paymentMethod } = req.body;
 
     // Find tour
     const tour = await Tour.findById(tourId);
@@ -202,56 +246,21 @@ const createBankPayment = async (req, res) => {
       });
     }
 
-    // Parse and validate departureDate
-    let departureDateObj = null;
-    if (departureDate) {
-      departureDateObj = new Date(departureDate);
-      if (isNaN(departureDateObj.getTime())) {
-        return res.status(400).json({
-          success: false,
-          message: "Ngày khởi hành không hợp lệ",
-        });
-      }
-    }
-
-    // Handle coupon code
-    let couponId = null;
-    if (couponCode) {
-      const coupon = await Khuyen_mai.findOne({
-        code: couponCode.toUpperCase(),
-      });
-      if (coupon) {
-        couponId = coupon._id;
-      }
-    }
-
-    // Generate unique booking code
-    const bookingCode = "BK" + new Date().getTime();
-
     // Create booking data
-    const bookingData = {
-      bookingCode,
-      tourId,
+    const bookingData = await createBookingDataObject({
       userId,
-      contactInfo: {
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-      },
-      numberOfPeople: guestCount,
-      totalAmount: total,
-      departureDate: departureDateObj,
+      ...validatedData,
+      couponCode,
       paymentMethod: paymentMethod || "bank_transfer",
-      paymentStatus: paymentMethod === "cash" ? "pending" : "paid",
       bookingStatus: "pending",
-    };
-
-    if (couponId) {
-      bookingData.couponId = couponId;
-    }
+      paymentStatus: paymentMethod === "cash" ? "pending" : "paid",
+    });
 
     const booking = new Booking(bookingData);
     await booking.save();
+
+    // Gửi thông báo booking mới (cho cả admin và client)
+    await sendBookingNotification(booking, tour, customerName);
 
     return res.status(200).json({
       success: true,
@@ -259,7 +268,7 @@ const createBankPayment = async (req, res) => {
         "Tạo đơn đặt tour thành công. Vui lòng chuyển khoản để xác nhận.",
       data: {
         bookingId: booking._id,
-        bookingCode,
+        bookingCode: bookingData.bookingCode,
       },
     });
   } catch (error) {
@@ -271,7 +280,7 @@ const createBankPayment = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      message: "Lỗi server, vui lòng thử lại sau",
+      message: error.message || "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
@@ -292,11 +301,15 @@ const momoCallback = async (req, res) => {
       extraData,
     } = req.body;
 
+    console.log("🔔 [momoCallback] Nhận callback từ MoMo:");
+    console.log("   resultCode:", resultCode);
+    console.log("   extraData (bookingId):", extraData);
+    console.log("   amount:", amount);
+
     if (resultCode === 0) {
       // Payment successful
-
       if (extraData) {
-        const booking = await Booking.findById(extraData);
+        const booking = await Booking.findById(extraData).populate("tourId");
 
         if (booking) {
           booking.bookingStatus = "pending";
@@ -310,6 +323,18 @@ const momoCallback = async (req, res) => {
           });
 
           await booking.save();
+          console.log(
+            "✅ [momoCallback] Booking cập nhật thành công:",
+            booking._id
+          );
+
+          // Gửi thông báo booking mới (cho cả admin và client) - GIỐNG CASH/BANK
+          const user = await User.findById(booking.userId);
+          await sendBookingNotification(
+            booking,
+            booking.tourId,
+            user?.fullName || booking.contactInfo.name
+          );
         } else {
           console.error("MoMo callback - Booking not found:", extraData);
         }
@@ -474,10 +499,53 @@ const getAllBookings = async (req, res) => {
     const total = await Booking.countDocuments(filter);
 
     // Get paginated bookings
-    const bookings = await Booking.find(filter)
+    let query = Booking.find(filter)
       .populate("tourId", "name slug")
       .populate("userId", "fullName email")
-      .populate("couponId", "code discountPercentage")
+      .populate("couponId", "code discountPercentage");
+
+    // Sắp xếp cho tab "Hoàn/Hủy": dùng refundInfo.approvedAt cho refunded, cancelledAt cho cancelled
+    if (status === "refunded_cancelled") {
+      // Sử dụng aggregation pipeline để sắp xếp đúng
+      const bookings = await Booking.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            sortDate: {
+              $cond: [
+                { $eq: ["$bookingStatus", "refunded"] },
+                "$refundInfo.approvedAt",
+                "$cancelledAt",
+              ],
+            },
+          },
+        },
+        { $sort: { sortDate: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+      ]);
+
+      // Populate data
+      await Booking.populate(bookings, [
+        { path: "tourId", select: "name slug" },
+        { path: "userId", select: "fullName email" },
+        { path: "couponId", select: "code discountPercentage" },
+      ]);
+
+      return res.status(200).json({
+        success: true,
+        data: bookings,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit),
+        },
+      });
+    }
+
+    // Sắp xếp mặc định cho các tab khác
+    const bookings = await query
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -518,6 +586,7 @@ const confirmPayment = async (req, res) => {
 
     booking.bookingStatus = "confirmed";
     booking.paymentStatus = "paid";
+    booking.paymentMethod = "cash"; // Thanh toán tại quầy
     booking.payments.push({
       amount: booking.totalAmount,
       method: "cash",
@@ -528,9 +597,17 @@ const confirmPayment = async (req, res) => {
     booking.confirmedAt = new Date();
     await booking.save();
 
-    // Gửi email xác nhận thanh toán + xác nhận đơn (MOCK)
+    // Gửi email xác nhận thanh toán + xác nhận đơn
     await EmailService.sendPaymentConfirmationEmail(booking, booking.tourId);
     await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
+
+    // Gửi notification cho client
+    await notifyBookingPaid({
+      userId: booking.userId,
+      bookingId: booking._id,
+      tourName: booking.tourId?.name || "Tour",
+      paymentMethod: booking.paymentMethod,
+    });
 
     return res.status(200).json({
       success: true,
@@ -574,8 +651,10 @@ const confirmBooking = async (req, res) => {
     booking.confirmedAt = new Date();
     await booking.save();
 
-    // Gửi email xác nhận (MOCK)
+    // Gửi email xác nhận
     await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
+
+    // Chỉ gửi email, không gửi notification khi xác nhận
 
     return res.status(200).json({
       success: true,
@@ -615,8 +694,15 @@ const completeBooking = async (req, res) => {
     booking.bookingStatus = "completed";
     await booking.save();
 
-    // Gửi email cảm ơn (MOCK)
+    // Gửi email cảm ơn
     await EmailService.sendCompletionThankYouEmail(booking, booking.tourId);
+
+    // Gửi notification cho client
+    await notifyBookingCompleted({
+      userId: booking.userId,
+      bookingId: booking._id,
+      tourName: booking.tourId?.name || "Tour",
+    });
 
     return res.status(200).json({
       success: true,
@@ -669,7 +755,20 @@ const requestRefund = async (req, res) => {
     await booking.save();
 
     // Gửi email yêu cầu hoàn tiền được chấp nhận
-    await EmailService.sendRefundRequestApprovedEmail(booking);
+    const emailSent = await EmailService.sendRefundRequestApprovedEmail(
+      booking
+    );
+    console.log("Gửi mail yêu cầu hoàn tiền:", emailSent);
+
+    // Gửi notification cho client
+    const notification = await notifyRefundRequested({
+      userId: booking.userId,
+      bookingId: booking._id,
+      bookingCode: booking.bookingCode,
+      tourName: booking.tourId?.name || "Tour",
+    });
+
+    console.log("Gửi mail yêu cầu hoàn tiền:", notification);
 
     return res.status(200).json({
       success: true,
@@ -753,8 +852,16 @@ const approveRefund = async (req, res) => {
     booking.paymentStatus = "refunded";
     await booking.save();
 
-    // Gửi email hoàn tiền được duyệt (MOCK)
+    // Gửi email hoàn tiền được duyệt
     await EmailService.sendRefundApprovedEmail(booking, parsedRefundAmount);
+
+    // Gửi notification cho client
+    await notifyRefundConfirmed({
+      userId: booking.userId,
+      bookingId: booking._id,
+      bookingCode: booking.bookingCode,
+      tourName: booking.tourId?.name || "Tour",
+    });
 
     return res.status(200).json({
       success: true,
@@ -795,7 +902,7 @@ const rejectRefund = async (req, res) => {
     booking.bookingStatus = "confirmed"; // Quay lại trạng thái confirmed
     await booking.save();
 
-    // Gửi email từ chối hoàn tiền (MOCK)
+    // Gửi email từ chối hoàn tiền
     await EmailService.sendRefundRejectedEmail(booking, rejectionReason);
 
     return res.status(200).json({
@@ -819,7 +926,7 @@ const cancelBooking = async (req, res) => {
     const { bookingId, reason } = req.body;
     const adminId = req.user.userId;
 
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId).populate("tourId");
     if (!booking) {
       return res
         .status(404)
@@ -832,6 +939,15 @@ const cancelBooking = async (req, res) => {
     booking.cancelledBy = adminId;
     booking.cancelledAt = new Date();
     await booking.save();
+
+    // Gửi notification cho client
+    await notifyCancellation({
+      userId: booking.userId,
+      bookingId: booking._id,
+      bookingCode: booking.bookingCode,
+      tourName: booking.tourId?.name || "Tour",
+      cancellationReason: reason,
+    });
 
     return res.status(200).json({
       success: true,

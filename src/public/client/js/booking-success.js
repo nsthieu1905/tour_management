@@ -3,22 +3,70 @@ function formatPrice(num) {
   return new Intl.NumberFormat("vi-VN").format(num);
 }
 
-// Get booking info from sessionStorage
-let bookingCode = sessionStorage.getItem("bookingCode") || "BK000000";
-let bookingId = sessionStorage.getItem("bookingId");
-let bookingTotal = sessionStorage.getItem("bookingTotal") || "0";
+// Get booking info from sessionStorage first, then fallback to server
+let bookingCode = sessionStorage.getItem("bookingCode");
+let bookingId = sessionStorage.getItem("bookingId") || window.serverBookingId;
+let bookingTotal = sessionStorage.getItem("bookingTotal");
 let paymentMethod = sessionStorage.getItem("paymentMethod");
 
-console.log("Initial sessionStorage:", {
+console.log("Initial state:", {
   bookingCode,
   bookingId,
   bookingTotal,
   paymentMethod,
+  serverBookingId: window.serverBookingId,
 });
 
-document.getElementById("booking-code").textContent = bookingCode;
-document.getElementById("booking-total").textContent =
-  formatPrice(parseInt(bookingTotal)) + "₫";
+// Function to update UI with booking data
+function updateBookingUI(booking) {
+  if (booking.bookingCode) {
+    document.getElementById("booking-code").textContent = booking.bookingCode;
+  }
+  if (booking.totalPrice) {
+    document.getElementById("booking-total").textContent =
+      formatPrice(parseInt(booking.totalPrice)) + "₫";
+  }
+
+  // Determine payment method from payment status
+  const paymentMethod = booking.paymentStatus === "paid" ? "momo" : "cash";
+  updateStatusBadge(paymentMethod);
+
+  setupViewDetailsButton(booking._id);
+}
+
+// If sessionStorage is empty (after F5), fetch from server
+if (!bookingCode || !bookingTotal) {
+  if (bookingId) {
+    console.log(
+      "SessionStorage empty, fetching from server for bookingId:",
+      bookingId
+    );
+    fetch(`/api/bookings/${bookingId}`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success && result.data) {
+          console.log("Got booking from API:", result.data);
+          updateBookingUI(result.data);
+        } else {
+          console.log("Could not fetch booking from API");
+          // Show default/error state
+          document.getElementById("booking-code").textContent = "BK000000";
+          document.getElementById("booking-total").textContent = "--";
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching booking:", err);
+        document.getElementById("booking-code").textContent = "BK000000";
+        document.getElementById("booking-total").textContent = "--";
+      });
+  }
+} else {
+  // SessionStorage has data, use it
+  console.log("Using data from sessionStorage");
+  document.getElementById("booking-code").textContent = bookingCode;
+  document.getElementById("booking-total").textContent =
+    formatPrice(parseInt(bookingTotal)) + "₫";
+}
 
 // Function to update status badge
 function updateStatusBadge(method) {
@@ -42,37 +90,6 @@ function updateStatusBadge(method) {
   }
 }
 
-// If paymentMethod not found in sessionStorage, try to fetch from booking
-if (!paymentMethod && bookingId) {
-  console.log("Fetching booking details to get paymentMethod...");
-  fetch(`/api/bookings/${bookingId}`)
-    .then((res) => res.json())
-    .then((result) => {
-      if (result.success && result.data) {
-        paymentMethod = result.data.paymentMethod;
-        console.log("Got paymentMethod from API:", paymentMethod);
-        updateStatusBadge(paymentMethod);
-
-        // Set up view details button
-        setupViewDetailsButton(bookingId);
-      } else {
-        console.log("Could not fetch booking, using default (momo)");
-        updateStatusBadge("momo");
-      }
-    })
-    .catch((err) => {
-      console.error("Error fetching booking:", err);
-      updateStatusBadge("momo");
-    });
-} else {
-  updateStatusBadge(paymentMethod);
-
-  // Set up view details button
-  if (bookingId) {
-    setupViewDetailsButton(bookingId);
-  }
-}
-
 // Function to set up view details button
 function setupViewDetailsButton(id) {
   const viewDetailsBtn = document.getElementById("view-details-btn");
@@ -81,7 +98,7 @@ function setupViewDetailsButton(id) {
   }
 }
 
-// Clear sessionStorage
+// Clear sessionStorage after reading
 sessionStorage.removeItem("bookingId");
 sessionStorage.removeItem("bookingCode");
 sessionStorage.removeItem("bookingTotal");

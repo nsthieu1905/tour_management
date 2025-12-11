@@ -52,7 +52,8 @@ h1 {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -361,7 +362,8 @@ h1 {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -405,17 +407,24 @@ h1 {
   top: 80px;
   width: 420px;
   max-height: calc(100vh - 100px);
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   display: none;
-  flex-direction: column;
   animation: slideIn 0.3s ease-out;
 }
 
 .notification-modal.active {
+  display: block;
+}
+
+/* Notification Modal Wrapper - New wrapper div */
+.notification-modal-wrapper {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 100px);
+  overflow: hidden;
 }
 
 @keyframes slideIn {

@@ -7,8 +7,23 @@ const route = require("./routes");
 const db = require("./config/db");
 const methodOverride = require("method-override");
 const cookieParser = require("cookie-parser");
+const http = require("http");
+const socketIO = require("socket.io");
 
 const port = process.env.PORT || 3000;
+
+// Create HTTP server and Socket.io instance
+const server = http.createServer(app);
+const io = socketIO(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+// Store socket instance globally for use in controllers/services
+global.io = io;
+global.connectedUsers = new Map(); // Map to store userId -> socketId
 
 app.use(methodOverride("_method"));
 
@@ -16,7 +31,7 @@ app.use(methodOverride("_method"));
 db.connect();
 
 //Http logger
-app.use(morgan("combined"));
+// app.use(morgan("combined"));
 
 //config static files
 app.use(express.static("./src/public"));
@@ -96,7 +111,48 @@ app.set("views", [
 
 route(app);
 
-app.listen(port, () => {
+// Socket.io connection handling
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // User joins - store the socket connection
+  socket.on("user:join", (userId) => {
+    global.connectedUsers.set(userId, socket.id);
+    socket.join(`user:${userId}`);
+    console.log(`User ${userId} joined with socket ${socket.id}`);
+  });
+
+  // Admin joins notification room
+  socket.on("admin:join", (adminId) => {
+    global.connectedUsers.set(`admin:${adminId}`, socket.id);
+    socket.join("admin-notifications");
+    console.log(`Admin ${adminId} joined admin notifications`);
+  });
+
+  // Client joins notification room
+  socket.on("client:join", (clientId) => {
+    console.log("🎯 [Server] Received client:join event");
+    console.log("   Socket ID:", socket.id);
+    console.log("   ClientId:", clientId);
+    global.connectedUsers.set(`client:${clientId}`, socket.id);
+    socket.join("client-notifications");
+    console.log("✅ [Server] Client joined client-notifications room");
+  });
+
+  // Disconnect handler
+  socket.on("disconnect", () => {
+    // Remove user from map
+    for (let [key, value] of global.connectedUsers.entries()) {
+      if (value === socket.id) {
+        global.connectedUsers.delete(key);
+        console.log(`User ${key} disconnected`);
+        break;
+      }
+    }
+  });
+});
+
+server.listen(port, () => {
   console.log(
     `Admin app listening on http://localhost:${port}/admin/dashboard`
   );

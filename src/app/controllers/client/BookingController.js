@@ -1,5 +1,6 @@
-const { Tour, Booking } = require("../../models/index");
+const { Tour, Booking, User } = require("../../models/index");
 const MoMoService = require("../../../services/MoMoService");
+const { notifyPayment } = require("../../../utils/NotificationHelper");
 
 // GET /booking/:slug
 const bookingPage = async (req, res, next) => {
@@ -41,7 +42,7 @@ const bookingSuccess = async (req, res) => {
       // Process payment callback
       if (resultCode === "0" && extraData) {
         // Payment successful
-        const booking = await Booking.findById(extraData);
+        const booking = await Booking.findById(extraData).populate("tourId");
 
         if (booking) {
           booking.bookingStatus = "pending";
@@ -55,6 +56,38 @@ const bookingSuccess = async (req, res) => {
           });
 
           await booking.save();
+
+          // ==================== SEND NOTIFICATION ====================
+          try {
+            const user = await User.findById(booking.userId);
+            const tour = booking.tourId;
+
+            console.log("🔔 [BookingController] Triggering notifyPayment");
+            console.log("   User ID:", booking.userId);
+            console.log("   Booking ID:", booking._id);
+            console.log("   Customer Name:", user?.fullName || "N/A");
+            console.log("   Amount:", parseInt(amount) || 0);
+
+            // Notify both admin and client about payment
+            await notifyPayment({
+              userId: booking.userId?._id,
+              paymentId: booking._id,
+              bookingId: booking._id,
+              bookingCode: booking.bookingCode,
+              customerName: user?.fullName || booking.contactInfo.name,
+              tourName: booking.tourId?.name || "Tour",
+              amount: parseInt(amount) || 0,
+            });
+
+            console.log("✅ Payment notification sent successfully");
+          } catch (notificationError) {
+            console.error(
+              "⚠️ Error sending payment notification:",
+              notificationError
+            );
+            // Continue even if notification fails
+          }
+          // ========================================================
         }
       } else if (extraData) {
         // Payment failed
@@ -74,7 +107,9 @@ const bookingSuccess = async (req, res) => {
       }
     }
 
-    res.render("booking-success");
+    res.render("booking-success", {
+      user: req.user,
+    });
   } catch (error) {
     console.error("Booking success page error:", error);
     res.status(500).json({

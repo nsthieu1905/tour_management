@@ -1,6 +1,6 @@
 /**
  * Client Notification System
- * Dành cho khách hàng - thông báo về tour mới và cập nhật
+ * Dành cho khách hàng - thông báo về tour mới, booking, và cập nhật
  */
 
 class ClientNotificationManager {
@@ -8,6 +8,8 @@ class ClientNotificationManager {
     this.notifications = [];
     this.unreadCount = 0;
     this.maxNotifications = 5;
+    this.socket = null;
+    this.clientId = this.getClientIdFromDom();
     this.init();
   }
 
@@ -16,7 +18,113 @@ class ClientNotificationManager {
     this.attachEventListeners();
     this.loadNotificationsFromStorage();
     this.updateBadge();
-    this.startFakeNotifications(); // Fake notifications for demo
+
+    // Fetch notifications from server immediately on page load
+    const userId = this.getUserIdFromDom();
+    if (userId) {
+      console.log("📥 [Client] Fetching notifications from server on init");
+      this.fetchNotificationsFromServer(userId);
+    }
+
+    this.initializeSocket();
+  }
+
+  /**
+   * Get client ID from DOM (from user profile or data attribute)
+   */
+  getClientIdFromDom() {
+    // Try to get from localStorage or data attribute
+    const clientId =
+      localStorage.getItem("clientId") ||
+      document.body.dataset.clientId ||
+      document.querySelector("[data-client-id]")?.dataset.clientId;
+    return clientId || "client_" + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Get user ID from DOM (for logged-in users)
+   */
+  getUserIdFromDom() {
+    // Try multiple sources
+    const userId =
+      document.body.dataset.userId ||
+      document.querySelector("[data-user-id]")?.dataset.userId ||
+      document.querySelector("[data-user-id]")?.value ||
+      localStorage.getItem("userId");
+    return userId;
+  }
+
+  /**
+   * Initialize Socket.io connection
+   */
+  initializeSocket() {
+    if (typeof io === "undefined") {
+      console.warn("⚠️ Socket.io not loaded");
+      // Fallback to fake notifications if socket.io not available
+      this.startFakeNotifications();
+      return;
+    }
+
+    console.log("🔌 [Client] Initializing Socket.io...");
+    this.socket = io();
+
+    // Set up all listeners BEFORE connect event fires
+    // Listen for new notifications
+    this.socket.on("notification:new", (notification) => {
+      console.log("🔔 [Client] Received notification event:");
+      console.log("   Type:", notification.type);
+      console.log("   Title:", notification.title);
+      console.log("   Message:", notification.message);
+      this.addNotification(notification);
+    });
+
+    // Listen for read status updates
+    this.socket.on("notification:read", (notificationId) => {
+      console.log("📖 [Client] Notification marked as read:", notificationId);
+      const notif = this.notifications.find((n) => n.id === notificationId);
+      if (notif) {
+        notif.read = true;
+      }
+    });
+
+    // Listen for delete notifications
+    this.socket.on("notification:delete", (notificationId) => {
+      console.log("🗑️ [Client] Notification deleted:", notificationId);
+      this.deleteNotification(notificationId);
+    });
+
+    this.socket.on("disconnect", () => {
+      console.log("❌ [Client] Socket.io disconnected");
+    });
+
+    // Debug: log all socket events
+    this.socket.onAny((event, ...args) => {
+      console.log(`🔊 [Socket Event] ${event}:`, args);
+    });
+
+    // NOW handle connect event
+    this.socket.on("connect", () => {
+      console.log("✅ [Client] Socket.io connected:", this.socket.id);
+
+      // Emit client:join for general notifications
+      console.log(
+        `🎯 [Client] Emitting client:join with clientId:`,
+        this.clientId
+      );
+      this.socket.emit("client:join", this.clientId);
+      console.log("✅ [Client] client:join emitted to server");
+
+      // If logged in, emit user:join with userId for personal notifications
+      const userId = this.getUserIdFromDom();
+      if (userId) {
+        console.log(`🎯 [Client] Emitting user:join with userId:`, userId);
+        this.socket.emit("user:join", userId);
+        console.log("✅ [Client] user:join emitted to server");
+
+        // Fetch notifications from server to catch any that were missed
+        this.fetchNotificationsFromServer(userId);
+      }
+    });
   }
 
   createNotificationUI() {
@@ -31,16 +139,18 @@ class ClientNotificationManager {
     modal.className = "notification-modal";
     modal.id = "notificationModal";
     modal.innerHTML = `
-      <div class="notification-modal-header">
-        <h3>Thông báo</h3>
-        <button class="notification-modal-close" id="notificationClose">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="notification-modal-content" id="notificationContent">
-        <div class="notification-empty">
-          <i class="fas fa-bell"></i>
-          <p>Không có thông báo nào</p>
+      <div class="notification-modal-wrapper">
+        <div class="notification-modal-header">
+          <h3>Thông báo</h3>
+          <button class="notification-modal-close" id="notificationClose">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="notification-modal-content" id="notificationContent">
+          <div class="notification-empty">
+            <i class="fas fa-bell"></i>
+            <p>Không có thông báo nào</p>
+          </div>
         </div>
       </div>
     `;
@@ -104,7 +214,78 @@ class ClientNotificationManager {
     bellBtn.classList.remove("active");
   }
 
+  /**
+   * Fetch notifications from server API to catch any missed realtime updates
+   */
+  async fetchNotificationsFromServer(userId) {
+    try {
+      console.log(
+        "📥 [Client] Fetching notifications from server for userId:",
+        userId
+      );
+      const response = await fetch(`/api/notifications/user/${userId}`);
+
+      if (!response.ok) {
+        console.warn("⚠️ Failed to fetch notifications:", response.status);
+        return;
+      }
+
+      const data = await response.json();
+      const serverNotifications = data.data || data || [];
+
+      console.log(
+        "📥 [Client] Received notifications from server:",
+        serverNotifications.length
+      );
+
+      // Merge with existing notifications, avoiding duplicates
+      serverNotifications.forEach((serverNotif) => {
+        // Check if notification already exists
+        const exists = this.notifications.some((n) => n.id === serverNotif._id);
+        if (!exists) {
+          console.log(
+            "📥 [Client] Adding server notification:",
+            serverNotif._id
+          );
+          this.addNotificationFromServer(serverNotif);
+        }
+      });
+
+      this.updateBadge();
+    } catch (error) {
+      console.error("❌ Error fetching notifications from server:", error);
+    }
+  }
+
+  /**
+   * Add notification fetched from server database
+   */
+  addNotificationFromServer(serverNotif) {
+    const notification = {
+      id: serverNotif._id,
+      type: serverNotif.type || "booking",
+      icon: serverNotif.icon || "fa-bell",
+      iconBg: serverNotif.iconBg || "bg-blue-100",
+      title: serverNotif.title,
+      message: serverNotif.message,
+      time: serverNotif.createdAt
+        ? new Date(serverNotif.createdAt)
+        : new Date(),
+      read: serverNotif.read || false,
+      link: serverNotif.link,
+    };
+
+    this.notifications.unshift(notification);
+    if (!notification.read) {
+      this.unreadCount++;
+    }
+
+    this.saveNotificationsToStorage();
+  }
+
   addNotification(notification) {
+    console.log("🔔 [addNotification] Called with:", notification);
+
     // Cấu trúc: { id, type, icon, title, message, time, read }
     const newNotif = {
       id: `notif-${Date.now()}`,
@@ -116,11 +297,25 @@ class ClientNotificationManager {
       read: false,
     };
 
+    console.log("🔔 [addNotification] Created notification object:", newNotif);
+
     this.notifications.unshift(newNotif);
+    console.log(
+      "🔔 [addNotification] Added to notifications array. Total count:",
+      this.notifications.length
+    );
+
     this.unreadCount++;
+    console.log("🔔 [addNotification] Updated unreadCount:", this.unreadCount);
+
     this.updateBadge();
+    console.log("🔔 [addNotification] Updated badge");
+
     this.saveNotificationsToStorage();
+    console.log("🔔 [addNotification] Saved to localStorage");
+
     this.showToast(newNotif);
+    console.log("🔔 [addNotification] Called showToast()");
   }
 
   renderNotifications() {
@@ -141,12 +336,13 @@ class ClientNotificationManager {
     displayNotifications.forEach((notif) => {
       const timeStr = this.formatTime(notif.time);
       const unreadClass = notif.read ? "" : "unread";
-      const avatarType = notif.type;
+      // Use iconBg if available, otherwise default to type-based styling
+      const avatarClass = notif.iconBg ? notif.iconBg : notif.type;
 
       html += `
         <div class="notification-item ${unreadClass}" data-id="${notif.id}">
           ${notif.read ? "" : '<div class="notification-unread-dot"></div>'}
-          <div class="notification-avatar ${avatarType}">
+          <div class="notification-avatar ${avatarClass}">
             <i class="fas ${notif.icon}"></i>
           </div>
           <div class="notification-body">
@@ -287,6 +483,11 @@ class ClientNotificationManager {
   }
 
   showToast(notification) {
+    console.log(
+      "🔔 [showToast] Creating toast element for:",
+      notification.title
+    );
+
     const toast = document.createElement("div");
     toast.className = `notification-toast ${notification.type}`;
     toast.innerHTML = `
@@ -302,7 +503,12 @@ class ClientNotificationManager {
       </button>
     `;
 
+    console.log("🔔 [showToast] Toast element created, appending to DOM");
     document.body.appendChild(toast);
+    console.log(
+      "🔔 [showToast] Toast element appended. Checking DOM:",
+      document.querySelector(".notification-toast") ? "VISIBLE" : "NOT FOUND"
+    );
 
     // Auto remove after 10 seconds
     const timeout = setTimeout(() => {
@@ -355,83 +561,11 @@ class ClientNotificationManager {
     }
   }
 
-  // Fake notifications for demo
+  // Fake notifications for demo (DISABLED - Use real notifications from server)
   startFakeNotifications() {
-    const fakeData = [
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour mới: Đà Lạt 3 ngày 2 đêm",
-        message:
-          "Tận hưởng không khí lạnh mát tại thành phố ngàn hoa với giá chỉ từ 2.500.000 VND",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour Hot: Hạ Long - Cát Bà 2 ngày",
-        message:
-          "Khám phá vịnh Hạ Long kỳ bí, đảo Cát Bà xinh đẹp. Mua ngay, tặng voucher 500k",
-      },
-      {
-        type: "promotion",
-        icon: "fa-tag",
-        title: "Khuyến mại tháng 12",
-        message: "Giảm 30% tất cả tour nước ngoài. Áp dụng từ 1/12 đến 31/12",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour mới: Phuket 4 ngày 3 đêm",
-        message:
-          "Biển xanh, cát trắng, chủng môn tuyệt vời. Giá từ 5.500.000 VND",
-      },
-      {
-        type: "booking",
-        icon: "fa-calendar",
-        title: "Đơn booking của bạn được xác nhận",
-        message:
-          "Tour Nha Trang - Ninh Chữ đã được xác nhận. Vui lòng thanh toán trước ngày 25/12",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour flash sale: Maldives 7 ngày",
-        message: "Giá sốc chỉ có hôm nay. Từ 15.000.000 VND. Còn 5 chỗ thôi!",
-      },
-      {
-        type: "promotion",
-        icon: "fa-tag",
-        title: "Coupon 20% cho khách VIP",
-        message: "Bạn được tặng coupon 20% cho tất cả tour. Mã: VIP2024",
-      },
-      {
-        type: "tour",
-        icon: "fa-map",
-        title: "Tour mới: Sapa 3 ngày giảm 40%",
-        message: "Khám phá vẻ đẹp núi rừng, gặp gỡ đồng bào dân tộc thiểu số",
-      },
-      {
-        type: "booking",
-        icon: "fa-calendar",
-        title: "Đơn hoàn tiền của bạn đã được duyệt",
-        message:
-          "Số tiền 8.000.000 VND sẽ được chuyển vào tài khoản trong 3-5 ngày",
-      },
-      {
-        type: "promotion",
-        icon: "fa-tag",
-        title: "Bạn bè giới thiệu - Nhận 300k",
-        message: "Mời bạn bè đặt tour, bạn sẽ nhận 300k mỗi lần",
-      },
-    ];
-
-    let index = 0;
-    setInterval(() => {
-      if (index < fakeData.length) {
-        this.addNotification(fakeData[index]);
-        index++;
-      }
-    }, 10000); // 10 giây một cái (để test nhanh)
+    // Fake notifications disabled - all notifications come from server via Socket.io
+    console.log("✅ Waiting for real notifications from server...");
+    // This method is no longer needed but kept for fallback purposes
   }
 }
 
@@ -441,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
   clientNotificationManager = new ClientNotificationManager();
 });
 
-// Export for use with Socket.io later
+// Export for use with Socket.io
 if (typeof module !== "undefined" && module.exports) {
   module.exports = ClientNotificationManager;
 }

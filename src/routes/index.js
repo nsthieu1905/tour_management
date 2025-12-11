@@ -12,6 +12,9 @@ const clientAuthRoutes = require("./client/auth");
 const favoriteRoutes = require("./client/favorites");
 const bookingRoutes = require("./client/bookings");
 
+// Notifications
+const notificationRoutes = require("./api/notifications");
+
 function route(app) {
   // Admin
   app.use("/auth", authRoutes);
@@ -20,6 +23,7 @@ function route(app) {
   app.use("/api/coupons", couponApiRoutes);
   app.use("/api/users", usersApiRoutes);
   app.use("/api/admin/bookings", adminBookingRoutes);
+  app.use("/api/notifications", notificationRoutes);
 
   // Client
   app.use("/client/auth", clientAuthRoutes);

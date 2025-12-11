@@ -5,11 +5,24 @@ const notificationSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+    },
+    recipientType: {
+      type: String,
+      enum: ["admin", "client", "user"],
+      default: "user",
     },
     type: {
       type: String,
-      enum: ["booking", "payment", "tour_update", "promotion", "system"],
+      enum: [
+        "booking",
+        "payment",
+        "refund",
+        "tour_update",
+        "promotion",
+        "alert",
+        "system",
+      ],
       required: true,
     },
     title: { type: String, required: true },
