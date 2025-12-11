@@ -99,6 +99,55 @@ class NotificationController {
   }
 
   /**
+   * GET /api/notifications/admin/all
+   * Get all admin notifications
+   */
+  async getAdminNotifications(req, res) {
+    try {
+      const limit = req.query.limit || 50;
+
+      const notifications = await Notification.find({
+        recipientType: "admin",
+      })
+        .sort({ createdAt: -1 })
+        .limit(limit);
+
+      res.json({
+        success: true,
+        data: notifications,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * GET /api/notifications/admin/unread
+   * Get unread count for admin
+   */
+  async getAdminUnreadCount(req, res) {
+    try {
+      const count = await Notification.countDocuments({
+        recipientType: "admin",
+        read: false,
+      });
+
+      res.json({
+        success: true,
+        unreadCount: count,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
    * POST /api/notifications/test
    * Test notification (for development only)
    */

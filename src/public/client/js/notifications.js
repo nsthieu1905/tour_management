@@ -16,7 +16,6 @@ class ClientNotificationManager {
   init() {
     this.createNotificationUI();
     this.attachEventListeners();
-    this.loadNotificationsFromStorage();
     this.updateBadge();
 
     // Fetch notifications from server immediately on page load
@@ -279,8 +278,6 @@ class ClientNotificationManager {
     if (!notification.read) {
       this.unreadCount++;
     }
-
-    this.saveNotificationsToStorage();
   }
 
   addNotification(notification) {
@@ -288,13 +285,15 @@ class ClientNotificationManager {
 
     // Cấu trúc: { id, type, icon, title, message, time, read }
     const newNotif = {
-      id: `notif-${Date.now()}`,
+      id: notification.id || `notif-${Date.now()}`,
       type: notification.type || "tour", // tour, booking, promotion, alert
       icon: notification.icon || "fa-bell",
+      iconBg: notification.iconBg || "bg-blue-100",
       title: notification.title,
       message: notification.message,
       time: new Date(),
-      read: false,
+      read: notification.read || false,
+      link: notification.link,
     };
 
     console.log("🔔 [addNotification] Created notification object:", newNotif);
@@ -305,14 +304,13 @@ class ClientNotificationManager {
       this.notifications.length
     );
 
-    this.unreadCount++;
+    if (!newNotif.read) {
+      this.unreadCount++;
+    }
     console.log("🔔 [addNotification] Updated unreadCount:", this.unreadCount);
 
     this.updateBadge();
     console.log("🔔 [addNotification] Updated badge");
-
-    this.saveNotificationsToStorage();
-    console.log("🔔 [addNotification] Saved to localStorage");
 
     this.showToast(newNotif);
     console.log("🔔 [addNotification] Called showToast()");
@@ -445,6 +443,15 @@ class ClientNotificationManager {
   toggleRead(id) {
     const notif = this.notifications.find((n) => n.id === id);
     if (notif) {
+      // Update server
+      fetch(`/api/notifications/${id}/read`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: this.getUserIdFromDom() }),
+      }).catch((err) => console.error("Error marking as read:", err));
+
       if (notif.read) {
         notif.read = false;
         this.unreadCount++;
@@ -453,7 +460,6 @@ class ClientNotificationManager {
         this.unreadCount--;
       }
       this.updateBadge();
-      this.saveNotificationsToStorage();
     }
   }
 
@@ -465,8 +471,17 @@ class ClientNotificationManager {
         this.unreadCount--;
       }
       this.notifications.splice(index, 1);
+
+      // Delete from server
+      fetch(`/api/notifications/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: this.getUserIdFromDom() }),
+      }).catch((err) => console.error("Error deleting notification:", err));
+
       this.updateBadge();
-      this.saveNotificationsToStorage();
     }
   }
 
@@ -547,18 +562,14 @@ class ClientNotificationManager {
   }
 
   saveNotificationsToStorage() {
-    localStorage.setItem(
-      "clientNotifications",
-      JSON.stringify(this.notifications)
-    );
+    // No longer saving to localStorage - all data from server
+    console.log("ℹ️ Notifications stored in database, not localStorage");
   }
 
   loadNotificationsFromStorage() {
-    const stored = localStorage.getItem("clientNotifications");
-    if (stored) {
-      this.notifications = JSON.parse(stored);
-      this.unreadCount = this.notifications.filter((n) => !n.read).length;
-    }
+    // No longer loading from localStorage - all data from server
+    this.notifications = [];
+    this.unreadCount = 0;
   }
 
   // Fake notifications for demo (DISABLED - Use real notifications from server)

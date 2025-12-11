@@ -16,8 +16,12 @@ class AdminNotificationManager {
   init() {
     this.createNotificationUI();
     this.attachEventListeners();
-    this.loadNotificationsFromStorage();
     this.updateBadge();
+
+    // Fetch notifications from server immediately on page load
+    console.log("📥 [Admin] Fetching notifications from server on init");
+    this.fetchNotificationsFromServer();
+
     this.initializeSocket();
   }
 
@@ -211,18 +215,85 @@ class AdminNotificationManager {
     bellBtn.classList.remove("active");
   }
 
+  /**
+   * Fetch notifications from server API (admin only)
+   */
+  async fetchNotificationsFromServer() {
+    try {
+      console.log("📥 [Admin] Fetching notifications from server");
+      const response = await fetch("/api/notifications/admin/all");
+
+      if (!response.ok) {
+        console.warn(
+          "⚠️ Failed to fetch admin notifications:",
+          response.status
+        );
+        return;
+      }
+
+      const data = await response.json();
+      const serverNotifications = data.data || data || [];
+
+      console.log(
+        "📥 [Admin] Received notifications from server:",
+        serverNotifications.length
+      );
+
+      // Replace notifications with fresh data from server
+      this.notifications = [];
+      this.unreadCount = 0;
+
+      serverNotifications.forEach((serverNotif) => {
+        this.addNotificationFromServer(serverNotif);
+      });
+
+      this.updateBadge();
+    } catch (error) {
+      console.error(
+        "❌ Error fetching admin notifications from server:",
+        error
+      );
+    }
+  }
+
+  /**
+   * Add notification fetched from server database
+   */
+  addNotificationFromServer(serverNotif) {
+    const notification = {
+      id: serverNotif._id,
+      type: serverNotif.type || "booking",
+      icon: serverNotif.icon || "fa-bell",
+      iconBg: serverNotif.iconBg || "bg-blue-100",
+      title: serverNotif.title,
+      message: serverNotif.message,
+      time: serverNotif.createdAt
+        ? new Date(serverNotif.createdAt)
+        : new Date(),
+      read: serverNotif.read || false,
+      link: serverNotif.link,
+    };
+
+    this.notifications.unshift(notification);
+    if (!notification.read) {
+      this.unreadCount++;
+    }
+  }
+
   addNotification(notification) {
     console.log("🔔 [Admin] addNotification called with:", notification);
 
     // Cấu trúc: { id, type, icon, title, message, time, read }
     const newNotif = {
-      id: `notif-${Date.now()}`,
+      id: notification.id || `notif-${Date.now()}`,
       type: notification.type || "tour", // tour, booking, promotion, alert
       icon: notification.icon || "fa-bell",
+      iconBg: notification.iconBg || "bg-blue-100",
       title: notification.title,
       message: notification.message,
       time: new Date(),
-      read: false,
+      read: notification.read || false,
+      link: notification.link,
     };
 
     console.log("🔔 [Admin] Created notification object:", newNotif);
@@ -233,14 +304,13 @@ class AdminNotificationManager {
       this.notifications.length
     );
 
-    this.unreadCount++;
+    if (!newNotif.read) {
+      this.unreadCount++;
+    }
     console.log("🔔 [Admin] Updated unreadCount:", this.unreadCount);
 
     this.updateBadge();
     console.log("🔔 [Admin] Updated badge");
-
-    this.saveNotificationsToStorage();
-    console.log("🔔 [Admin] Saved to localStorage");
 
     this.showToast(newNotif);
     console.log("🔔 [Admin] Called showToast()");
@@ -373,6 +443,15 @@ class AdminNotificationManager {
   toggleRead(id) {
     const notif = this.notifications.find((n) => n.id === id);
     if (notif) {
+      // Update server
+      fetch(`/api/notifications/${id}/read`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: "admin" }),
+      }).catch((err) => console.error("Error marking as read:", err));
+
       if (notif.read) {
         notif.read = false;
         this.unreadCount++;
@@ -381,7 +460,6 @@ class AdminNotificationManager {
         this.unreadCount--;
       }
       this.updateBadge();
-      this.saveNotificationsToStorage();
     }
   }
 
@@ -393,8 +471,17 @@ class AdminNotificationManager {
         this.unreadCount--;
       }
       this.notifications.splice(index, 1);
+
+      // Delete from server
+      fetch(`/api/notifications/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: "admin" }),
+      }).catch((err) => console.error("Error deleting notification:", err));
+
       this.updateBadge();
-      this.saveNotificationsToStorage();
     }
   }
 
@@ -465,18 +552,14 @@ class AdminNotificationManager {
   }
 
   saveNotificationsToStorage() {
-    localStorage.setItem(
-      "adminNotifications",
-      JSON.stringify(this.notifications)
-    );
+    // No longer saving to localStorage - all data from server
+    console.log("ℹ️ Notifications stored in database, not localStorage");
   }
 
   loadNotificationsFromStorage() {
-    const stored = localStorage.getItem("adminNotifications");
-    if (stored) {
-      this.notifications = JSON.parse(stored);
-      this.unreadCount = this.notifications.filter((n) => !n.read).length;
-    }
+    // No longer loading from localStorage - all data from server
+    this.notifications = [];
+    this.unreadCount = 0;
   }
 
   // Fake notifications for demo (DISABLED - Use real notifications from server)

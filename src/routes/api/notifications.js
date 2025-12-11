@@ -8,6 +8,12 @@ router.get("/user/:userId", NotificationController.getUserNotifications);
 // Get unread count
 router.get("/unread/:userId", NotificationController.getUnreadCount);
 
+// Get all admin notifications
+router.get("/admin/all", NotificationController.getAdminNotifications);
+
+// Get unread count for admin
+router.get("/admin/unread", NotificationController.getAdminUnreadCount);
+
 // Mark as read
 router.put("/:notificationId/read", NotificationController.markAsRead);
 

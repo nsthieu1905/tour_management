@@ -51,7 +51,7 @@ class NotificationService {
           .emit("notification:new", notificationObj);
         // console.log("✅ Emitted to admin-notifications");
       } else {
-        // Broadcast to specific user or all clients
+        // Broadcast to specific user ONLY (not to all clients)
         if (notificationData.userId) {
           // console.log(
           //   `📢 Broadcasting to user:${notificationData.userId} room`
@@ -61,11 +61,6 @@ class NotificationService {
             .emit("notification:new", notificationObj);
           // console.log(`✅ Emitted to user:${notificationData.userId}`);
         }
-        // console.log("📢 Broadcasting to client-notifications room");
-        global.io
-          .to("client-notifications")
-          .emit("notification:new", notificationObj);
-        // console.log("✅ Emitted to client-notifications");
       }
 
       // console.log("✅ [NotificationService] Notification sent successfully!\n");
