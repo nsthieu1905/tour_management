@@ -24,6 +24,7 @@ const sendBookingNotification = async (booking, tour, customerName) => {
       userId: booking.userId,
       bookingId: booking._id,
       tourId: booking.tourId,
+      bookingCode: booking.bookingCode,
       userName: customerName,
       tourName: tour?.name || "Tour",
       passengers: booking.numberOfPeople,
