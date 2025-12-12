@@ -27,6 +27,7 @@
   "homepage": "https://github.com/nsthieu1905/tour_management#readme",
   "description": "",
   "dependencies": {
+    "@google/genai": "^1.33.0",
     "axios": "^1.13.2",
     "axios-cookiejar-support": "^6.0.4",
     "bcrypt": "^6.0.0",

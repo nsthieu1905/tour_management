@@ -1,0 +1,50 @@
+<!-- Chatbot Modal -->
+<div id="chatbotModal" class="chatbot-modal">
+  <div class="chatbot-container">
+    <!-- Header -->
+    <div class="chatbot-header">
+      <div class="chatbot-title">
+        <span>🤖 Trợ lý du lịch</span>
+      </div>
+      <button class="chatbot-close" id="chatbotClose">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="chatbot-messages" id="chatbotMessages">
+      <div class="message bot-message">
+        <div class="message-content">
+          <p>
+            👋 Xin chào! Tôi là trợ lý du lịch của bạn. Hôm nay tôi có thể giúp
+            gì cho bạn?
+          </p>
+        </div>
+        <div class="message-time">Just now</div>
+      </div>
+    </div>
+
+    <!-- Quick Replies -->
+    <div class="quick-replies" id="quickReplies">
+      <button class="quick-reply-btn">Tư vấn tour du lịch 🌴</button>
+      <button class="quick-reply-btn">Xem tour hot 🔥</button>
+      <button class="quick-reply-btn">Tra cứu đặt tour 📋</button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chatbot-input-area">
+      <form id="chatbotForm" class="chatbot-input-form">
+        <input
+          type="text"
+          id="chatbotInput"
+          class="chatbot-input"
+          placeholder="Nhập tin nhắn..."
+          autocomplete="off"
+        />
+        <button type="submit" class="chatbot-send-btn">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
