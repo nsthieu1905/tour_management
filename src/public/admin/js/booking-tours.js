@@ -13,6 +13,65 @@ let currentFilters = {
 };
 
 // ============================================
+// SOCKET.IO REAL-TIME UPDATES
+// ============================================
+let bookingSocket = null;
+
+function initBookingSocket() {
+  if (bookingSocket) return;
+  bookingSocket = io();
+
+  // Listen for booking status changes
+  bookingSocket.on("booking:payment-confirmed", (data) => {
+    console.log("💰 [Booking] Received payment-confirmed:", data);
+    if (document.getElementById("bookingsTableBody")) {
+      fetchBookings(currentPage, currentStatus);
+      fetchAllCounts();
+    }
+  });
+
+  bookingSocket.on("booking:confirmed", (data) => {
+    console.log("✅ [Booking] Received confirmed:", data);
+    if (document.getElementById("bookingsTableBody")) {
+      fetchBookings(currentPage, currentStatus);
+      fetchAllCounts();
+    }
+  });
+
+  bookingSocket.on("booking:completed", (data) => {
+    console.log("🏁 [Booking] Received completed:", data);
+    if (document.getElementById("bookingsTableBody")) {
+      fetchBookings(currentPage, currentStatus);
+      fetchAllCounts();
+    }
+  });
+
+  bookingSocket.on("booking:refund-requested", (data) => {
+    console.log("🔄 [Booking] Received refund-requested:", data);
+    if (document.getElementById("bookingsTableBody")) {
+      fetchBookings(currentPage, currentStatus);
+      fetchAllCounts();
+    }
+  });
+
+  bookingSocket.on("booking:refund-approved", (data) => {
+    console.log("✨ [Booking] Received refund-approved:", data);
+    if (document.getElementById("bookingsTableBody")) {
+      fetchBookings(currentPage, currentStatus);
+      fetchAllCounts();
+    }
+  });
+
+  bookingSocket.on("booking:cancelled", (data) => {
+    console.log("❌ [Booking] Received cancelled:", data);
+    if (document.getElementById("bookingsTableBody")) {
+      fetchBookings(currentPage, currentStatus);
+      fetchAllCounts();
+    }
+  });
+}
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
@@ -712,13 +771,9 @@ document.getElementById("nextBtnMobile")?.addEventListener("click", () => {
   if (currentPage < totalPages) goToPage(currentPage + 1);
 });
 
-// Filter inputs - debounce search
-let searchTimeout;
+// Filter inputs - search with direct application
 document.getElementById("filterSearch")?.addEventListener("input", (e) => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 500);
+  applyFilters();
 });
 
 // Date filters
@@ -735,6 +790,9 @@ document.getElementById("filterTour")?.addEventListener("change", applyFilters);
 // ============================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize Socket.io for real-time updates
+  initBookingSocket();
+
   // Set initial active tab
   const initialTab = document.querySelector('[data-status="pre_pending"]');
   if (initialTab) {

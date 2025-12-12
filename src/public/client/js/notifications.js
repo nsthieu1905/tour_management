@@ -51,19 +51,11 @@ class ClientNotificationManager {
           "⚠️ [fetchUserIdFromApi] Failed to fetch user data:",
           response.status
         );
-        return;
+        return null;
       }
 
       const data = await response.json();
       console.log("✅ [fetchUserIdFromApi] User data received:", data);
-      console.log("   data keys:", Object.keys(data));
-      console.log("   data.user:", data.user);
-      console.log("   data.data:", data.data);
-      console.log("   data._id:", data._id);
-      if (data.data) {
-        console.log("   data.data keys:", Object.keys(data.data));
-        console.log("   data.data._id:", data.data._id);
-      }
 
       // Try multiple ways to extract userId
       let userId = null;
@@ -99,14 +91,17 @@ class ClientNotificationManager {
       }
 
       if (userId) {
-        this.fetchNotificationsFromServer(userId);
+        console.log("✅ [fetchUserIdFromApi] Returning userId:", userId);
+        return userId;
       } else {
         console.error(
           "❌ [fetchUserIdFromApi] Could not extract userId from response"
         );
+        return null;
       }
     } catch (error) {
       console.error("❌ [fetchUserIdFromApi] Error:", error);
+      return null;
     }
   }
 
@@ -208,16 +203,53 @@ class ClientNotificationManager {
       console.log("✅ [Client] client:join emitted to server");
 
       // If logged in, emit user:join with userId for personal notifications
-      const userId = this.getUserIdFromDom();
-      if (userId) {
-        console.log(`🎯 [Client] Emitting user:join with userId:`, userId);
-        this.socket.emit("user:join", userId);
-        console.log("✅ [Client] user:join emitted to server");
+      let userId = this.getUserIdFromDom();
+      console.log(
+        "🔑 [Client] userId from DOM:",
+        userId,
+        "Type:",
+        typeof userId
+      );
 
+      if (!userId) {
+        console.warn("⚠️ [Client] userId not in DOM, fetching from API...");
+        // Fallback: fetch from API
+        this.fetchUserIdFromApi().then((apiUserId) => {
+          if (apiUserId) {
+            userId = apiUserId;
+            console.log("🔑 [Client] userId from API:", userId);
+            this.emitUserJoin(userId);
+            // Fetch notifications after getting userId from API
+            this.fetchNotificationsFromServer(userId);
+          } else {
+            console.error("❌ [Client] Could not get userId from API either");
+          }
+        });
+      } else {
+        this.emitUserJoin(userId);
         // Fetch notifications from server to catch any that were missed
         this.fetchNotificationsFromServer(userId);
       }
     });
+  }
+
+  /**
+   * Helper to emit user:join
+   */
+  emitUserJoin(userId) {
+    if (!userId) {
+      console.error("❌ [emitUserJoin] No userId provided");
+      return;
+    }
+
+    console.log(
+      `🎯 [Client] Emitting user:join with userId:`,
+      userId,
+      "Type:",
+      typeof userId
+    );
+    this.socket.emit("user:join", userId);
+    console.log("✅ [Client] user:join emitted to server");
   }
 
   createNotificationUI() {

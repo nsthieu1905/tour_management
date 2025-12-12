@@ -178,6 +178,16 @@ const create = async (req, res) => {
       console.error("Error sending tour update notification:", err.message);
     }
 
+    // Emit socket event for admin panel real-time update
+    if (global.io) {
+      global.io.emit("tour:created", {
+        tourId: tour._id,
+        name: tour.name,
+        tourType: tour.tourType,
+      });
+      console.log("📢 [Socket] Emitted tour:created for admin panels");
+    }
+
     return res.status(201).json({
       success: true,
       message: "Tạo tour thành công",
@@ -201,6 +211,12 @@ const softDelete = async (req, res) => {
         success: false,
         message: "Xoá tour thất bại",
       });
+
+    // Emit socket event for real-time update
+    if (global.io) {
+      global.io.emit("tour:deleted", { tourId: req.params.id });
+      console.log("📢 [Socket] Emitted tour:deleted for id:", req.params.id);
+    }
 
     return res.status(200).json({
       success: true,
@@ -241,6 +257,16 @@ const deleteOne = async (req, res) => {
         console.log(error);
       }
     }
+
+    // Emit socket event for real-time update
+    if (global.io) {
+      global.io.emit("tour:deleted", { tourId: req.params.id });
+      console.log(
+        "📢 [Socket] Emitted tour:deleted (permanent) for id:",
+        req.params.id
+      );
+    }
+
     return res.status(200).json({
       success: true,
       message: "Xoá tour và ảnh thành công",
@@ -263,6 +289,12 @@ const restore = async (req, res) => {
         success: false,
         message: "Khôi phục tour thất bại",
       });
+
+    // Emit socket event for real-time update
+    if (global.io) {
+      global.io.emit("tour:restored", { tourId: req.params.id });
+      console.log("📢 [Socket] Emitted tour:restored for id:", req.params.id);
+    }
 
     return res.status(200).json({
       success: true,

@@ -119,6 +119,15 @@ const create = async (req, res) => {
       console.error("Error sending promotion notification:", err.message);
     }
 
+    // Emit socket event for admin panel real-time update
+    if (global.io) {
+      global.io.emit("coupon:created", {
+        couponId: newCoupon._id,
+        code: newCoupon.code,
+      });
+      console.log("📢 [Socket] Emitted coupon:created for admin panels");
+    }
+
     return res.status(201).json({
       success: true,
       message: "Thêm mã giảm giá thành công",
@@ -194,6 +203,12 @@ const update = async (req, res) => {
       });
     }
 
+    // Emit socket event for real-time update
+    if (global.io) {
+      global.io.emit("coupon:updated", { couponId: req.params.id });
+      console.log("📢 [Socket] Emitted coupon:updated for id:", req.params.id);
+    }
+
     return res.status(200).json({
       success: true,
       message: "Cập nhật mã giảm giá thành công",
@@ -218,6 +233,12 @@ const deleteOne = async (req, res) => {
         success: false,
         message: "Mã giảm giá không tồn tại",
       });
+    }
+
+    // Emit socket event for real-time update
+    if (global.io) {
+      global.io.emit("coupon:deleted", { couponId: req.params.id });
+      console.log("📢 [Socket] Emitted coupon:deleted for id:", req.params.id);
     }
 
     return res.status(200).json({

@@ -117,9 +117,27 @@ io.on("connection", (socket) => {
 
   // User joins - store the socket connection
   socket.on("user:join", (userId) => {
-    global.connectedUsers.set(userId, socket.id);
-    socket.join(`user:${userId}`);
-    console.log(`User ${userId} joined with socket ${socket.id}`);
+    console.log("\n🎯 [Server user:join] Received user:join event");
+    console.log("   Socket ID:", socket.id);
+    console.log("   UserId:", userId);
+    console.log("   UserId type:", typeof userId);
+
+    if (!userId) {
+      console.error("❌ No userId provided in user:join event!");
+      return;
+    }
+
+    const userIdStr = userId.toString ? userId.toString() : userId;
+    const roomName = `user:${userIdStr}`;
+
+    global.connectedUsers.set(userIdStr, socket.id);
+    socket.join(roomName);
+
+    console.log(
+      `✅ User ${userIdStr} joined room ${roomName} with socket ${socket.id}`
+    );
+    console.log(`   Rooms for this socket:`, Array.from(socket.rooms));
+    console.log("🎯 [Server user:join] Done\n");
   });
 
   // Admin joins notification room

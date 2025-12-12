@@ -20,9 +20,55 @@ import {
 // QUẢN LÝ TOUR - qly-tours.js
 //================================
 
+// Socket.io initialization
+let tourSocket = null;
+function initTourSocket() {
+  if (tourSocket) return;
+  tourSocket = io();
+
+  // Listen for tour updates from other admins
+  tourSocket.on("tour:updated", (data) => {
+    console.log("🔄 [Tour] Received tour update:", data);
+    if (document.getElementById("tours-list")) {
+      getTours();
+    }
+  });
+
+  // Listen for tour deletions
+  tourSocket.on("tour:deleted", (data) => {
+    console.log("🗑️ [Tour] Received tour delete:", data);
+    if (document.getElementById("tours-list")) {
+      getTours();
+    }
+    if (document.getElementById("trash-list")) {
+      getToursTrash();
+    }
+  });
+
+  // Listen for tour restoration
+  tourSocket.on("tour:restored", (data) => {
+    console.log("♻️ [Tour] Received tour restore:", data);
+    if (document.getElementById("tours-list")) {
+      getTours();
+    }
+    if (document.getElementById("trash-list")) {
+      getToursTrash();
+    }
+  });
+
+  // Listen for tour creation (for admins viewing the list)
+  tourSocket.on("tour:created", (data) => {
+    console.log("✨ [Tour] Received tour creation:", data);
+    if (document.getElementById("tours-list")) {
+      getTours();
+    }
+  });
+}
+
 // Chờ DOM load xong
 document.addEventListener("DOMContentLoaded", function () {
   initTourManagement();
+  initTourSocket();
   if (document.getElementById("tours-list")) getTours();
   if (document.getElementById("trash-list")) getToursTrash();
   if (document.getElementById("addTourForm")) createTour();

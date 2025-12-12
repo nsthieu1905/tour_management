@@ -9,11 +9,37 @@ let coupons = [];
 let modalMode = "create"; // 'create' hoặc 'edit'
 let currentCouponId = null;
 
+// Socket.io initialization for coupons
+let couponSocket = null;
+function initCouponSocket() {
+  if (couponSocket) return;
+  couponSocket = io();
+
+  // Listen for coupon updates
+  couponSocket.on("coupon:updated", (data) => {
+    console.log("🔄 [Coupon] Received coupon update:", data);
+    getCoupons();
+  });
+
+  // Listen for coupon deletions
+  couponSocket.on("coupon:deleted", (data) => {
+    console.log("🗑️ [Coupon] Received coupon delete:", data);
+    getCoupons();
+  });
+
+  // Listen for coupon creation
+  couponSocket.on("coupon:created", (data) => {
+    console.log("✨ [Coupon] Received coupon creation:", data);
+    getCoupons();
+  });
+}
+
 // ============================================================================
 // KHỞI TẠO
 // ============================================================================
 document.addEventListener("DOMContentLoaded", function () {
   getCoupons();
+  initCouponSocket();
   setupModalHandlers();
   setupFormHandlers();
 });

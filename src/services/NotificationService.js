@@ -44,36 +44,48 @@ class NotificationService {
         read: false,
       };
 
-      // console.log("📡 [NotificationService] Broadcasting notification...");
-      // console.log("   global.io exists?", !!global.io);
+      console.log("📡 [NotificationService] Broadcasting notification...");
+      console.log("   global.io exists?", !!global.io);
+      console.log("   notificationData.userId:", notificationData.userId);
+      console.log("   userId type:", typeof notificationData.userId);
 
       if (recipientType === "admin") {
         // Broadcast to all admins
-        // console.log("📢 Broadcasting to admin-notifications room");
+        console.log("📢 Broadcasting to admin-notifications room");
         global.io
           .to("admin-notifications")
           .emit("notification:new", notificationObj);
-        // console.log("✅ Emitted to admin-notifications");
+        console.log("✅ Emitted to admin-notifications");
       } else {
         // Broadcast to specific user ONLY (not to all clients)
         if (notificationData.userId) {
-          // console.log(
-          //   `📢 Broadcasting to user:${notificationData.userId} room`
-          // );
-          global.io
-            .to(`user:${notificationData.userId}`)
-            .emit("notification:new", notificationObj);
-          // console.log(`✅ Emitted to user:${notificationData.userId}`);
+          // Convert ObjectId to string for room name
+          const userIdStr = notificationData.userId.toString
+            ? notificationData.userId.toString()
+            : notificationData.userId;
+          const roomName = `user:${userIdStr}`;
+
+          console.log(`📢 Broadcasting to ${roomName} room`);
+          console.log(`   Room name:`, roomName);
+          console.log(
+            `   Total sockets connected:`,
+            global.io?.engine?.clientsCount
+          );
+
+          global.io.to(roomName).emit("notification:new", notificationObj);
+          console.log(`✅ Emitted to ${roomName}`);
+        } else {
+          console.error("❌ No userId in notificationData for broadcast!");
         }
       }
 
-      // console.log("✅ [NotificationService] Notification sent successfully!\n");
+      console.log("✅ [NotificationService] Notification sent successfully!\n");
       return notification;
     } catch (error) {
-      // console.error(
-      //   "❌ [NotificationService] Error creating notification:",
-      //   error
-      // );
+      console.error(
+        "❌ [NotificationService] Error creating notification:",
+        error
+      );
       throw error;
     }
   }

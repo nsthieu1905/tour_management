@@ -609,17 +609,48 @@ const confirmPayment = async (req, res) => {
     booking.confirmedAt = new Date();
     await booking.save();
 
+    console.log("\n=== confirmPayment Debug ===");
+    console.log("1. Booking ID:", booking._id);
+    console.log("2. User ID:", booking.userId);
+
     // Gửi email xác nhận thanh toán + xác nhận đơn
+    console.log("3. Sending emails...");
     await EmailService.sendPaymentConfirmationEmail(booking, booking.tourId);
     await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
+    console.log("✅ Emails sent");
 
     // Gửi notification cho client
-    await notifyBookingPaid({
-      userId: booking.userId,
-      bookingId: booking._id,
-      tourName: booking.tourId?.name || "Tour",
-      paymentMethod: booking.paymentMethod,
-    });
+    console.log("4. Sending client notification...");
+    try {
+      await notifyBookingPaid({
+        userId: booking.userId,
+        bookingId: booking._id,
+        tourName: booking.tourId?.name || "Tour",
+        paymentMethod: booking.paymentMethod,
+      });
+      console.log("✅ Client notification sent");
+    } catch (notifError) {
+      console.error(
+        "❌ Error sending client notification:",
+        notifError.message
+      );
+    }
+
+    // Emit socket event for admin panel real-time update
+    console.log("5. Emitting admin socket event...");
+    if (global.io) {
+      global.io.emit("booking:payment-confirmed", {
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+      });
+      console.log(
+        "📢 [Socket] Emitted booking:payment-confirmed for id:",
+        booking._id
+      );
+    } else {
+      console.error("❌ global.io not available!");
+    }
+    console.log("=== confirmPayment Done ===\n");
 
     return res.status(200).json({
       success: true,
@@ -663,10 +694,44 @@ const confirmBooking = async (req, res) => {
     booking.confirmedAt = new Date();
     await booking.save();
 
-    // Gửi email xác nhận
-    await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
+    console.log("\n=== confirmBooking Debug ===");
+    console.log("1. Booking ID:", booking._id);
+    console.log("2. User ID:", booking.userId);
 
-    // Chỉ gửi email, không gửi notification khi xác nhận
+    // Gửi email xác nhận
+    console.log("3. Sending confirmation email...");
+    await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
+    console.log("✅ Email sent");
+
+    // Gửi notification cho client (chỉnh sửa lại)
+    console.log("4. Sending client notification...");
+    try {
+      await notifyBookingPaid({
+        userId: booking.userId,
+        bookingId: booking._id,
+        tourName: booking.tourId?.name || "Tour",
+        paymentMethod: booking.paymentMethod || "online",
+      });
+      console.log("✅ Client notification sent");
+    } catch (notifError) {
+      console.error(
+        "❌ Error sending client notification:",
+        notifError.message
+      );
+    }
+
+    // Emit socket event for admin panel real-time update
+    console.log("5. Emitting admin socket event...");
+    if (global.io) {
+      global.io.emit("booking:confirmed", {
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+      });
+      console.log("📢 [Socket] Emitted booking:confirmed for id:", booking._id);
+    } else {
+      console.error("❌ global.io not available!");
+    }
+    console.log("=== confirmBooking Done ===\n");
 
     return res.status(200).json({
       success: true,
@@ -704,17 +769,49 @@ const completeBooking = async (req, res) => {
     }
 
     booking.bookingStatus = "completed";
+    booking.completedAt = new Date();
     await booking.save();
 
+    console.log("\n=== completeBooking Debug ===");
+    console.log("1. Booking ID:", booking._id);
+    console.log("2. User ID:", booking.userId);
+
     // Gửi email cảm ơn
-    await EmailService.sendCompletionThankYouEmail(booking, booking.tourId);
+    console.log("3. Sending thank you email...");
+    const emailSent = await EmailService.sendCompletionThankYouEmail(
+      booking,
+      booking.tourId
+    );
+    console.log("✅ Email sent:", emailSent);
 
     // Gửi notification cho client
-    await notifyBookingCompleted({
-      userId: booking.userId,
-      bookingId: booking._id,
-      tourName: booking.tourId?.name || "Tour",
-    });
+    console.log("4. Sending client notification...");
+    try {
+      await notifyBookingCompleted({
+        userId: booking.userId,
+        bookingId: booking._id,
+        tourName: booking.tourId?.name || "Tour",
+      });
+      console.log("✅ Client notification sent");
+    } catch (notifError) {
+      console.error(
+        "❌ Error sending client notification:",
+        notifError.message
+      );
+    }
+
+    // Emit socket event for admin panel real-time update
+    console.log("5. Emitting admin socket event...");
+    if (global.io) {
+      global.io.emit("booking:completed", {
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+      });
+      console.log("📢 [Socket] Emitted booking:completed for id:", booking._id);
+    } else {
+      console.error("❌ global.io not available!");
+    }
+    console.log("=== completeBooking Done ===\n");
 
     return res.status(200).json({
       success: true,
@@ -773,14 +870,37 @@ const requestRefund = async (req, res) => {
     console.log("Gửi mail yêu cầu hoàn tiền:", emailSent);
 
     // Gửi notification cho client
+    console.log("\n=== requestRefund Debug ===");
+    console.log("1. Booking ID:", booking._id);
+    console.log("2. User ID:", booking.userId);
+    console.log("3. Sending client notification...");
+
     const notification = await notifyRefundRequested({
       userId: booking.userId,
       bookingId: booking._id,
       bookingCode: booking.bookingCode,
       tourName: booking.tourId?.name || "Tour",
     });
+    console.log(
+      "✅ Client notification sent:",
+      notification ? "Success" : "Failed"
+    );
 
-    console.log("Gửi mail yêu cầu hoàn tiền:", notification);
+    // Emit socket event for admin panel real-time update
+    console.log("4. Emitting admin socket event...");
+    if (global.io) {
+      global.io.emit("booking:refund-requested", {
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+      });
+      console.log(
+        "📢 [Socket] Emitted booking:refund-requested for id:",
+        booking._id
+      );
+    } else {
+      console.error("❌ global.io not available!");
+    }
+    console.log("=== requestRefund Done ===\n");
 
     return res.status(200).json({
       success: true,
@@ -864,16 +984,48 @@ const approveRefund = async (req, res) => {
     booking.paymentStatus = "refunded";
     await booking.save();
 
+    console.log("\n=== approveRefund Debug ===");
+    console.log("1. Booking ID:", booking._id);
+    console.log("2. User ID:", booking.userId);
+    console.log("3. Refund Amount:", parsedRefundAmount);
+
     // Gửi email hoàn tiền được duyệt
+    console.log("4. Sending refund approved email...");
     await EmailService.sendRefundApprovedEmail(booking, parsedRefundAmount);
+    console.log("✅ Email sent");
 
     // Gửi notification cho client
-    await notifyRefundConfirmed({
-      userId: booking.userId,
-      bookingId: booking._id,
-      bookingCode: booking.bookingCode,
-      tourName: booking.tourId?.name || "Tour",
-    });
+    console.log("5. Sending client notification...");
+    try {
+      await notifyRefundConfirmed({
+        userId: booking.userId,
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+        tourName: booking.tourId?.name || "Tour",
+      });
+      console.log("✅ Client notification sent");
+    } catch (notifError) {
+      console.error(
+        "❌ Error sending client notification:",
+        notifError.message
+      );
+    }
+
+    // Emit socket event for admin panel real-time update
+    console.log("6. Emitting admin socket event...");
+    if (global.io) {
+      global.io.emit("booking:refund-approved", {
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+      });
+      console.log(
+        "📢 [Socket] Emitted booking:refund-approved for id:",
+        booking._id
+      );
+    } else {
+      console.error("❌ global.io not available!");
+    }
+    console.log("=== approveRefund Done ===\n");
 
     return res.status(200).json({
       success: true,
@@ -952,14 +1104,41 @@ const cancelBooking = async (req, res) => {
     booking.cancelledAt = new Date();
     await booking.save();
 
+    console.log("\n=== cancelBooking Debug ===");
+    console.log("1. Booking ID:", booking._id);
+    console.log("2. User ID:", booking.userId);
+    console.log("3. Cancellation Reason:", reason);
+
     // Gửi notification cho client
-    await notifyCancellation({
-      userId: booking.userId,
-      bookingId: booking._id,
-      bookingCode: booking.bookingCode,
-      tourName: booking.tourId?.name || "Tour",
-      cancellationReason: reason,
-    });
+    console.log("4. Sending client notification...");
+    try {
+      await notifyCancellation({
+        userId: booking.userId,
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+        tourName: booking.tourId?.name || "Tour",
+        cancellationReason: reason,
+      });
+      console.log("✅ Client notification sent");
+    } catch (notifError) {
+      console.error(
+        "❌ Error sending client notification:",
+        notifError.message
+      );
+    }
+
+    // Emit socket event for admin panel real-time update
+    console.log("5. Emitting admin socket event...");
+    if (global.io) {
+      global.io.emit("booking:cancelled", {
+        bookingId: booking._id,
+        bookingCode: booking.bookingCode,
+      });
+      console.log("📢 [Socket] Emitted booking:cancelled for id:", booking._id);
+    } else {
+      console.error("❌ global.io not available!");
+    }
+    console.log("=== cancelBooking Done ===\n");
 
     return res.status(200).json({
       success: true,
