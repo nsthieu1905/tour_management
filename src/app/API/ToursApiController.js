@@ -1,6 +1,7 @@
 const { Tour } = require("../models/index");
 const path = require("path");
 const fs = require("fs-extra");
+const { notifyTourUpdate } = require("../../utils/NotificationHelper");
 
 // [GET] /api/tours
 const findAll = async (req, res) => {
@@ -165,6 +166,17 @@ const create = async (req, res) => {
         success: false,
         message: "Tạo tour thất bại",
       });
+
+    // Gửi notification đến tất cả clients về tour mới
+    try {
+      await notifyTourUpdate({
+        name: tour.name,
+        description: tour.description,
+        tourId: tour._id,
+      });
+    } catch (err) {
+      console.error("Error sending tour update notification:", err.message);
+    }
 
     return res.status(201).json({
       success: true,

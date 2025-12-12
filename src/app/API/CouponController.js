@@ -1,4 +1,5 @@
 const { Khuyen_mai } = require("../models/index");
+const { notifyPromotion } = require("../../utils/NotificationHelper");
 
 // [GET] /api/coupons
 const findAll = async (req, res) => {
@@ -99,6 +100,24 @@ const create = async (req, res) => {
     });
 
     await newCoupon.save();
+
+    // Gửi notification đến tất cả clients về mã giảm giá mới
+    try {
+      await notifyPromotion({
+        title: `Mã giảm giá mới: ${newCoupon.code}`,
+        description:
+          newCoupon.description ||
+          `Giảm ${
+            newCoupon.type === "percentage"
+              ? newCoupon.value + "%"
+              : newCoupon.value.toLocaleString() + " VNĐ"
+          }`,
+        link: "/",
+        promotionId: newCoupon._id,
+      });
+    } catch (err) {
+      console.error("Error sending promotion notification:", err.message);
+    }
 
     return res.status(201).json({
       success: true,

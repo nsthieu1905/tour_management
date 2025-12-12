@@ -504,4 +504,6 @@ module.exports = {
   notifyRefundConfirmed,
   notifyCancellation,
   notifyBookingCompleted,
+  notifyTourUpdate,
+  notifyPromotion,
 };
