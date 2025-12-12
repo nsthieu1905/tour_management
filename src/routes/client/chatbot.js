@@ -12,6 +12,6 @@ router.post("/message", chatbotController.sendMessage);
 router.post("/suggest-tours", chatbotController.suggestTours);
 
 // Lấy quick replies
-router.get("/quick-replies", chatbotController.getQuickReplies);
+// router.get("/quick-replies", chatbotController.getQuickReplies);
 
 module.exports = router;

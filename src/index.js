@@ -128,15 +128,74 @@ io.on("connection", (socket) => {
   });
 
   // Admin joins notification room
-  socket.on("admin:join", (adminId) => {
+  socket.on("admin:join", (data) => {
+    const adminId = data.adminId || data;
     global.connectedUsers.set(`admin:${adminId}`, socket.id);
     socket.join("admin-notifications");
+    socket.join("admin-messages"); // Admin messages room
   });
 
   // Client joins notification room
-  socket.on("client:join", (clientId) => {
+  socket.on("client:join", (data) => {
+    const clientId = data.userId || data;
     global.connectedUsers.set(`client:${clientId}`, socket.id);
     socket.join("client-notifications");
+    socket.join(`client:${clientId}`); // Individual client room
+  });
+
+  // ===== MESSAGING EVENTS =====
+
+  /**
+   * Message:send - Gửi tin nhắn
+   */
+  socket.on("message:send", (data) => {
+    const { conversationId, message } = data;
+
+    // Broadcast đến tất cả user trong cuộc hội thoại
+    io.to(`conversation:${conversationId}`).emit("message:new", message);
+
+    // Notify admin nếu tin nhắn từ client
+    if (message.senderType === "client") {
+      io.to("admin-messages").emit("message:new", message);
+    }
+
+    // Notify client nếu tin nhắn từ admin
+    if (message.senderType === "admin") {
+      const clientIdStr = message.recipientId?.toString
+        ? message.recipientId.toString()
+        : message.recipientId;
+      io.to(`client:${clientIdStr}`).emit("message:new", message);
+    }
+  });
+
+  /**
+   * Conversation:join - Join vào phòng cuộc hội thoại
+   */
+  socket.on("conversation:join", (conversationId) => {
+    socket.join(`conversation:${conversationId}`);
+  });
+
+  /**
+   * Conversation:leave - Rời khỏi phòng cuộc hội thoại
+   */
+  socket.on("conversation:leave", (conversationId) => {
+    socket.leave(`conversation:${conversationId}`);
+  });
+
+  /**
+   * Conversation:read - Đánh dấu cuộc hội thoại đã đọc
+   */
+  socket.on("conversation:read", (data) => {
+    const { conversationId } = data;
+    io.to(`conversation:${conversationId}`).emit("conversation:read", data);
+  });
+
+  /**
+   * Conversation:closed - Đóng cuộc hội thoại
+   */
+  socket.on("conversation:closed", (data) => {
+    const { conversationId } = data;
+    io.to(`conversation:${conversationId}`).emit("conversation:closed", data);
   });
 
   // Disconnect handler

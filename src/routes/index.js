@@ -19,6 +19,9 @@ const bookingRoutes = require("./client/bookings");
 // Notifications
 const notificationRoutes = require("./api/notifications");
 
+// Messages
+const messageRoutes = require("./api/messages");
+
 function route(app) {
   // Admin
   app.use("/auth", authRoutes);
@@ -29,6 +32,7 @@ function route(app) {
   app.use("/api/admin/bookings", adminBookingRoutes);
   app.use("/api/admin/staff", adminStaffRoutes);
   app.use("/api/notifications", notificationRoutes);
+  app.use("/api/messages", messageRoutes);
 
   // Chatbot
   app.use("/api/chatbot", chatbotApiRoutes);

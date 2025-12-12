@@ -25,4 +25,6 @@ router.get("/settings", siteController.settings);
 
 router.get("/ma-giam-gia", siteController.maGiamGia);
 
+router.get("/qly-nhan-tin", siteController.qlyNhanTin);
+
 module.exports = router;

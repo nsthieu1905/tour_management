@@ -1,31 +1,35 @@
-<div class="ml-64 min-h-screen bg-gray-50 p-8">
-  <div class="max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="mb-8">
-      <div class="flex justify-between items-center">
+<div class="flex pt-16">
+  <main class="flex-1 ml-64 p-6">
+    <!-- Coupon Management Section -->
+    <div id="coupon" class="section">
+      <div class="flex justify-between items-center mb-6">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Quản lý Mã giảm giá</h1>
-          <p class="text-gray-500 mt-1">
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            Quản lý Mã giảm giá
+          </h2>
+          <p class="text-gray-600">
             Quản lý tất cả mã khuyến mãi và mã giảm giá
           </p>
         </div>
-        <button
-          onclick="showAddCouponModal()"
-          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center"
-        >
-          <i class="fas fa-plus mr-2"></i>Thêm mã mới
-        </button>
+        <div class="flex space-x-3">
+          <button
+            onclick="showAddCouponModal()"
+            class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <i class="fas fa-plus mr-2"></i>Thêm mã mới
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- List Container -->
-    <div class="bg-white rounded-xl shadow-sm">
-      <div id="coupons-list" class="divide-y">
-        <!-- Coupon items will be rendered here -->
+      <!-- Coupons List -->
+      <div class="bg-white rounded-lg shadow-sm">
+        <div id="coupons-list" class="divide-y">
+          <!-- Coupon items will be rendered here -->
+        </div>
+        <div id="empty-coupons-list"></div>
       </div>
-      <div id="empty-coupons-list"></div>
     </div>
-  </div>
+  </main>
 </div>
 
 <!-- Add/Edit Modal -->

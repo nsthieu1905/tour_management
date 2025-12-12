@@ -135,19 +135,19 @@ document.getElementById("compareBtn").addEventListener("click", function () {
 // ============================================
 
 // Nút AI Assistant - cuộn đến phần chat
-document.getElementById("aiAssistant").addEventListener("click", function () {
-  showNotification("Chào mừng đến với AI Assistant!", "info");
-});
+// document.getElementById("aiAssistant").addEventListener("click", function () {
+//   showNotification("Chào mừng đến với AI Assistant!", "info");
+// });
 
 // Nút đặt nhanh
-document.getElementById("quickBooking").addEventListener("click", function () {
-  showNotification("Tính năng đặt nhanh sẽ sớm ra mắt!", "info");
-});
+// document.getElementById("quickBooking").addEventListener("click", function () {
+//   showNotification("Tính năng đặt nhanh sẽ sớm ra mắt!", "info");
+// });
 
 // Nút trợ giúp khẩn cấp
-document.getElementById("emergencyHelp").addEventListener("click", function () {
-  showNotification("Hotline khẩn cấp: 1900-1234", "warning");
-});
+// document.getElementById("emergencyHelp").addEventListener("click", function () {
+//   showNotification("Hotline khẩn cấp: 1900-1234", "warning");
+// });
 
 // ============================================
 // ĐỊNH GIÁ ĐỘNG THEO NHU CẦU

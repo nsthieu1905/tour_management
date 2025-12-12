@@ -12,7 +12,7 @@ class ChatbotHandler {
 
     this.initElements();
     this.attachEventListeners();
-    this.loadInitialQuickReplies();
+    // this.loadInitialQuickReplies();
   }
 
   /**
@@ -43,15 +43,6 @@ class ChatbotHandler {
       this.closeModal();
     });
 
-    // Quick reply buttons
-    this.quickRepliesContainer.addEventListener("click", (e) => {
-      if (e.target.classList.contains("quick-reply-btn")) {
-        const message = e.target.textContent.trim();
-        this.inputField.value = message;
-        this.sendMessage();
-      }
-    });
-
     // Input focus
     this.inputField.addEventListener("focus", () => {
       this.hideQuickReplies();
@@ -70,19 +61,19 @@ class ChatbotHandler {
   /**
    * Tải quick replies ban đầu
    */
-  async loadInitialQuickReplies() {
-    try {
-      const response = await fetch(`${this.apiBaseUrl}/quick-replies`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          this.updateQuickReplies(data.data);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading quick replies:", error);
-    }
-  }
+  // async loadInitialQuickReplies() {
+  //   try {
+  //     const response = await fetch(`${this.apiBaseUrl}/quick-replies`);
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       if (data.success && data.data) {
+  //         this.updateQuickReplies(data.data);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error loading quick replies:", error);
+  //   }
+  // }
 
   /**
    * Gửi tin nhắn
@@ -370,7 +361,7 @@ class ChatbotHandler {
       </div>
     `;
     this.currentTourId = null;
-    this.loadInitialQuickReplies();
+    // this.loadInitialQuickReplies();
   }
 }
 

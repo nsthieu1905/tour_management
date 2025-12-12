@@ -147,6 +147,21 @@ const maGiamGia = (req, res) => {
   }
 };
 
+// [GET] /admin/qly-nhan-tin
+const qlyNhanTin = (req, res) => {
+  try {
+    return res.render("components/qly-nhan-tin", {
+      bodyClass: "bg-gray-50 transition-all duration-300",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
+    });
+  }
+};
+
 module.exports = {
   dashboard,
   qlyTour,
@@ -158,4 +173,5 @@ module.exports = {
   thongKe,
   settings,
   maGiamGia,
+  qlyNhanTin,
 };

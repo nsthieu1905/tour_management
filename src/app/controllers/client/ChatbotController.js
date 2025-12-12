@@ -175,51 +175,51 @@ class ChatbotController {
 
    */
 
-  async getQuickReplies(req, res) {
-    try {
-      const quickReplies = {
-        general: [
-          "Có những tour nào hot trong tháng này?",
+  // async getQuickReplies(req, res) {
+  //   try {
+  //     const quickReplies = {
+  //       general: [
+  //         "Có những tour nào hot trong tháng này?",
 
-          "Tour du lịch biển giá rẻ",
+  //         "Tour du lịch biển giá rẻ",
 
-          "Tour leo núi cuối tuần",
+  //         "Tour leo núi cuối tuần",
 
-          "Tour team building công ty",
-        ],
+  //         "Tour team building công ty",
+  //       ],
 
-        pricing: [
-          "Tour dưới 3 triệu có gì?",
+  //       pricing: [
+  //         "Tour dưới 3 triệu có gì?",
 
-          "Có khuyến mãi gì không?",
+  //         "Có khuyến mãi gì không?",
 
-          "Chính sách hủy tour như thế nào?",
-        ],
+  //         "Chính sách hủy tour như thế nào?",
+  //       ],
 
-        booking: [
-          "Cách đặt tour?",
+  //       booking: [
+  //         "Cách đặt tour?",
 
-          "Thanh toán như thế nào?",
+  //         "Thanh toán như thế nào?",
 
-          "Cần giấy tờ gì để đặt tour?",
-        ],
-      };
+  //         "Cần giấy tờ gì để đặt tour?",
+  //       ],
+  //     };
 
-      res.json({
-        success: true,
+  //     res.json({
+  //       success: true,
 
-        data: quickReplies,
-      });
-    } catch (error) {
-      console.error("Error in getQuickReplies:", error);
+  //       data: quickReplies,
+  //     });
+  //   } catch (error) {
+  //     console.error("Error in getQuickReplies:", error);
 
-      res.status(500).json({
-        success: false,
+  //     res.status(500).json({
+  //       success: false,
 
-        message: "Đã có lỗi xảy ra",
-      });
-    }
-  }
+  //       message: "Đã có lỗi xảy ra",
+  //     });
+  //   }
+  // }
 }
 
 module.exports = new ChatbotController();
