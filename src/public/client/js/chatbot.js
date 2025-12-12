@@ -151,6 +151,7 @@ class ChatbotHandler {
 
       if (data.success) {
         const botMessage = data.data.message;
+        const isMarkdown = data.data.isMarkdown || false;
 
         // Thêm vào lịch sử
         this.conversationHistory.push({
@@ -159,7 +160,7 @@ class ChatbotHandler {
         });
 
         // Thêm vào UI
-        this.addMessageToUI(botMessage, "bot");
+        this.addMessageToUI(botMessage, "bot", isMarkdown);
 
         // Cập nhật quick replies nếu có
         if (data.data.quickReplies) {
@@ -189,8 +190,9 @@ class ChatbotHandler {
 
   /**
    * Thêm tin nhắn vào UI
+   * Hỗ trợ markdown rendering cho links và bold text
    */
-  addMessageToUI(message, type) {
+  addMessageToUI(message, type, isMarkdown = false) {
     const messageEl = document.createElement("div");
     messageEl.className = `message ${type}-message`;
 
@@ -198,7 +200,25 @@ class ChatbotHandler {
     contentEl.className = "message-content";
 
     const textEl = document.createElement("p");
-    textEl.textContent = message;
+
+    if (isMarkdown) {
+      // Render markdown: **text** → <strong>, [text](url) → <a href="">
+      let html = message
+        // Bold: **text** → <strong>text</strong>
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        // Links: [text](url) → <a href="url" target="_blank">text</a>
+        .replace(
+          /\[(.+?)\]\((.+?)\)/g,
+          '<a href="$2" target="_blank" style="color: #5b6eff; text-decoration: underline;">$1</a>'
+        )
+        // Line breaks: \n\n → </p><p>, \n → <br>
+        .replace(/\n\n/g, "</p><p>")
+        .replace(/\n/g, "<br>");
+
+      textEl.innerHTML = `<p>${html}</p>`;
+    } else {
+      textEl.textContent = message;
+    }
 
     contentEl.appendChild(textEl);
 
@@ -344,7 +364,7 @@ class ChatbotHandler {
     this.messagesContainer.innerHTML = `
       <div class="message bot-message">
         <div class="message-content">
-          <p>👋 Xin chào! Tôi là trợ lý du lịch của bạn. Hôm nay tôi có thể giúp gì cho bạn?</p>
+          <p>Xin chào! Tôi là trợ lý du lịch của bạn. Hôm nay tôi có thể giúp gì cho bạn?</p>
         </div>
         <div class="message-time">${this.getCurrentTime()}</div>
       </div>

@@ -968,7 +968,6 @@ body {
 .bot-message .message-content p {
   background: white;
   color: #333;
-  border-left: 3px solid #667eea;
 }
 
 .user-message .message-content p {
