@@ -572,10 +572,103 @@ const register = async (req, res) => {
   }
 };
 
+// [POST] admin/add-staff
+const addAdmin = async (req, res) => {
+  try {
+    const { fullName, email, phone, password, passwordConfirm } = req.body;
+
+    // Validate required fields
+    const errors = {};
+
+    if (!fullName || fullName.trim().length === 0) {
+      errors.fullName = "Vui lòng nhập tên nhân viên";
+    }
+
+    if (!email) {
+      errors.email = "Vui lòng nhập email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Email không hợp lệ (vd: user@example.com)";
+    }
+
+    if (!phone) {
+      errors.phone = "Vui lòng nhập số điện thoại";
+    } else if (!/^(?:\+84|0|84)[1-9]\d{8}$/.test(phone.replace(/\s/g, ""))) {
+      errors.phone = "Số điện thoại không hợp lệ";
+    }
+
+    if (!password) {
+      errors.password = "Vui lòng nhập mật khẩu";
+    } else if (password.length < 6) {
+      errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
+    }
+
+    if (!passwordConfirm) {
+      errors.passwordConfirm = "Vui lòng xác nhận mật khẩu";
+    } else if (password !== passwordConfirm) {
+      errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
+    }
+
+    // Nếu có lỗi validation, trả về ngay
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng điền đầy đủ thông tin",
+        errors: errors,
+      });
+    }
+
+    // Kiểm tra email đã tồn tại
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email đã được đăng ký",
+        errors: {
+          email: "Email đã được đăng ký",
+        },
+      });
+    }
+
+    // Tạo user mới với role mặc định là 'admin'
+    const newAdmin = new User({
+      fullName: fullName.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone || null,
+      password: password,
+      role: "admin",
+      status: "active",
+    });
+
+    await newAdmin.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Thêm nhân viên thành công!",
+      data: {
+        user: {
+          id: newAdmin._id,
+          fullName: newAdmin.fullName,
+          email: newAdmin.email,
+          phone: newAdmin.phone,
+          role: newAdmin.role,
+          status: newAdmin.status,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Add admin error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
+  }
+};
+
 module.exports = {
   adminLogin,
   clientLogin,
   register,
+  addAdmin,
   refreshToken,
   logout,
   checkToken,

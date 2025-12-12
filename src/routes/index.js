@@ -5,6 +5,7 @@ const toursApiRoutes = require("./admin/tours");
 const couponApiRoutes = require("./admin/coupon");
 const usersApiRoutes = require("./admin/users");
 const adminBookingRoutes = require("./admin/bookings");
+const adminStaffRoutes = require("./admin/staff");
 
 // Client
 const homeRoutes = require("./client/home");
@@ -23,6 +24,7 @@ function route(app) {
   app.use("/api/coupons", couponApiRoutes);
   app.use("/api/users", usersApiRoutes);
   app.use("/api/admin/bookings", adminBookingRoutes);
+  app.use("/api/admin/staff", adminStaffRoutes);
   app.use("/api/notifications", notificationRoutes);
 
   // Client

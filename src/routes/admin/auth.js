@@ -9,6 +9,7 @@ router.get("/admin", authController.login);
 router.post("/login", authApiController.adminLogin);
 router.post("/client-login", authApiController.clientLogin);
 router.post("/register", authApiController.register);
+router.post("/add-staff", protectAdminRoutes, authApiController.addAdmin);
 router.post("/check-token", authApiController.checkToken);
 router.post("/refresh", authApiController.refreshToken);
 router.post("/logout", authApiController.logout);

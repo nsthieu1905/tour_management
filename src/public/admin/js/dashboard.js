@@ -5,69 +5,8 @@
 let currentFilter = "all";
 let currentDepartmentFilter = "all";
 
-// Dữ liệu nhân viên
-let staffData = [
-  {
-    id: 1,
-    name: "Nguyễn Văn An",
-    email: "nguyenvanan@company.com",
-    phone: "0901234567",
-    position: "Trưởng phòng Kinh doanh",
-    department: "Kinh doanh",
-    joinDate: "2020-03-15",
-    salary: 25000000,
-    status: "active",
-    performance: 95,
-  },
-  {
-    id: 2,
-    name: "Trần Thị Bình",
-    email: "tranthibinh@company.com",
-    phone: "0912345678",
-    position: "Nhân viên Marketing",
-    department: "Marketing",
-    joinDate: "2021-07-20",
-    salary: 15000000,
-    status: "leave",
-    performance: 88,
-  },
-  {
-    id: 3,
-    name: "Lê Minh Cường",
-    email: "leminhcuong@company.com",
-    phone: "0923456789",
-    position: "Nhân viên Vận hành",
-    department: "Vận hành",
-    joinDate: "2022-01-10",
-    salary: 18000000,
-    status: "active",
-    performance: 92,
-  },
-  {
-    id: 4,
-    name: "Phạm Thị Hoa",
-    email: "phamthihoa@company.com",
-    phone: "0934567890",
-    position: "Kế toán trưởng",
-    department: "Tài chính",
-    joinDate: "2019-11-05",
-    salary: 22000000,
-    status: "active",
-    performance: 90,
-  },
-  {
-    id: 5,
-    name: "Vũ Minh Đức",
-    email: "vuminhduc@company.com",
-    phone: "0945678901",
-    position: "Chuyên viên Nhân sự",
-    department: "Nhân sự",
-    joinDate: "2021-09-12",
-    salary: 16000000,
-    status: "leave",
-    performance: 85,
-  },
-];
+// Dữ liệu nhân viên (lấy từ API)
+let staffData = [];
 
 // ===========================
 // KHỞI TẠO ỨNG DỤNG
@@ -97,12 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
     statsSection.classList.add("hidden");
   }
 
-  // Khởi tạo phần quản lý nhân viên (nếu có)
-  const staffTableBody = document.getElementById("staffTableBody");
-  if (staffTableBody) {
-    renderStaffTable();
-    updateStaffStats();
-  }
+  // Khởi tạo phần quản lý nhân viên sẽ được xử lý bởi qly-nhan-viens.js
 
   // Thêm sự kiện click cho các item sidebar
   const sidebarItems = document.querySelectorAll(".sidebar-item");
@@ -120,22 +54,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Thêm chức năng tìm kiếm nhân viên
-  const staffSearchInput = document.getElementById("staffSearchInput");
-  if (staffSearchInput) {
-    staffSearchInput.addEventListener("input", function (e) {
-      searchStaff(e.target.value);
-    });
-  }
+  // Thêm chức năng tìm kiếm nhân viên sẽ được xử lý bởi qly-nhan-viens.js
 
-  // Xử lý submit form thêm nhân viên
-  const addStaffForm = document.getElementById("addStaffForm");
-  if (addStaffForm) {
-    addStaffForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      addNewStaff();
-    });
-  }
+  // Xử lý submit form thêm nhân viên sẽ được xử lý bởi qly-nhan-viens.js
 });
 
 /**
@@ -616,326 +537,42 @@ function highlightCurrentPage() {
  * Render bảng danh sách nhân viên
  * Áp dụng các bộ lọc (trạng thái, phòng ban) trước khi hiển thị
  */
-function renderStaffTable() {
-  const tbody = document.getElementById("staffTableBody");
-  if (!tbody) return;
-
-  let filteredData = staffData;
-
-  // Áp dụng bộ lọc trạng thái
-  if (currentFilter !== "all") {
-    filteredData = filteredData.filter(
-      (staff) => staff.status === currentFilter
-    );
-  }
-
-  // Áp dụng bộ lọc phòng ban
-  if (currentDepartmentFilter !== "all") {
-    filteredData = filteredData.filter(
-      (staff) => staff.department === currentDepartmentFilter
-    );
-  }
-
-  tbody.innerHTML = filteredData
-    .map(
-      (staff) => `
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <img class="h-10 w-10 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23${getRandomColor()}'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3E${getInitials(
-        staff.name
-      )}%3C/text%3E%3C/svg%3E" alt="">
-                        <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">${
-                              staff.name
-                            }</div>
-                            <div class="text-sm text-gray-500">${
-                              staff.email
-                            }</div>
-                            <div class="text-sm text-gray-500">${
-                              staff.phone
-                            }</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">${
-                      staff.position
-                    }</div>
-                    <div class="text-sm text-gray-500">${staff.department}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusClass(
-                      staff.status
-                    )}">
-                        ${getStatusText(staff.status)}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(
-                  staff.joinDate
-                )}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${formatCurrency(
-                  staff.salary
-                )}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <div class="text-sm font-medium text-gray-900">${
-                          staff.performance
-                        }%</div>
-                        <div class="ml-2 w-16 bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${
-                              staff.performance
-                            }%"></div>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button onclick="viewStaff(${
-                      staff.id
-                    })" class="text-blue-600 hover:text-blue-900">Xem</button>
-                    <button onclick="editStaff(${
-                      staff.id
-                    })" class="text-green-600 hover:text-green-900">Sửa</button>
-                    <button onclick="deleteStaff(${
-                      staff.id
-                    })" class="text-red-600 hover:text-red-900">Xóa</button>
-                </td>
-            </tr>
-        `
-    )
-    .join("");
-}
+/**
+ * Render bảng danh sách nhân viên
+ * Hàm này đã được chuyển sang qly-nhan-viens.js
+ */
 
 /**
  * Cập nhật các thống kê nhân viên
- * Hiển thị tổng số, số đang làm, số nghỉ phép và hiệu suất trung bình
+ * Hàm này đã được chuyển sang qly-nhan-viens.js
  */
-function updateStaffStats() {
-  const total = staffData.length;
-  const active = staffData.filter((s) => s.status === "active").length;
-  const onLeave = staffData.filter((s) => s.status === "leave").length;
-  const avgPerformance = Math.round(
-    staffData.reduce((sum, s) => sum + s.performance, 0) / total
-  );
-
-  const totalEl = document.getElementById("totalStaffCount");
-  const activeEl = document.getElementById("activeStaffCount");
-  const leaveEl = document.getElementById("onLeaveCount");
-  const perfEl = document.getElementById("avgPerformanceCount");
-
-  if (totalEl) totalEl.textContent = total;
-  if (activeEl) activeEl.textContent = active;
-  if (leaveEl) leaveEl.textContent = onLeave;
-  if (perfEl) perfEl.textContent = avgPerformance + "%";
-}
 
 /**
  * Lọc nhân viên theo trạng thái (active, leave, all)
- * @param {string} status - Trạng thái cần lọc
+ * Hàm này đã được chuyển sang qly-nhan-viens.js
  */
-function filterStaffByStatus(status) {
-  currentFilter = status;
-
-  // Cập nhật trạng thái các nút lọc
-  document.querySelectorAll(".status-filter").forEach((btn) => {
-    btn.classList.remove("active");
-    btn.classList.add("bg-gray-200", "text-gray-700");
-  });
-
-  if (event && event.target) {
-    event.target.classList.add("active");
-    event.target.classList.remove("bg-gray-200", "text-gray-700");
-  }
-
-  renderStaffTable();
-}
 
 /**
  * Lọc nhân viên theo phòng ban
- * @param {string} department - Tên phòng ban cần lọc
+ * Hàm này đã được chuyển sang qly-nhan-viens.js
  */
-function filterStaffByDepartment(department) {
-  currentDepartmentFilter = department;
-  renderStaffTable();
-}
 
 /**
  * Tìm kiếm nhân viên theo từ khóa
- * Tìm trong tên, email, chức vụ và phòng ban
- * @param {string} query - Từ khóa tìm kiếm
+ * Hàm này đã được chuyển sang qly-nhan-viens.js
  */
-function searchStaff(query) {
-  const tbody = document.getElementById("staffTableBody");
-  if (!tbody) return;
-
-  let filteredData = staffData.filter(
-    (staff) =>
-      staff.name.toLowerCase().includes(query.toLowerCase()) ||
-      staff.email.toLowerCase().includes(query.toLowerCase()) ||
-      staff.position.toLowerCase().includes(query.toLowerCase()) ||
-      staff.department.toLowerCase().includes(query.toLowerCase())
-  );
-
-  // Áp dụng các bộ lọc khác
-  if (currentFilter !== "all") {
-    filteredData = filteredData.filter(
-      (staff) => staff.status === currentFilter
-    );
-  }
-  if (currentDepartmentFilter !== "all") {
-    filteredData = filteredData.filter(
-      (staff) => staff.department === currentDepartmentFilter
-    );
-  }
-
-  tbody.innerHTML = filteredData
-    .map(
-      (staff) => `
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <img class="h-10 w-10 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23${getRandomColor()}'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3E${getInitials(
-        staff.name
-      )}%3C/text%3E%3C/svg%3E" alt="">
-                        <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">${
-                              staff.name
-                            }</div>
-                            <div class="text-sm text-gray-500">${
-                              staff.email
-                            }</div>
-                            <div class="text-sm text-gray-500">${
-                              staff.phone
-                            }</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">${
-                      staff.position
-                    }</div>
-                    <div class="text-sm text-gray-500">${staff.department}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusClass(
-                      staff.status
-                    )}">
-                        ${getStatusText(staff.status)}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(
-                  staff.joinDate
-                )}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${formatCurrency(
-                  staff.salary
-                )}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <div class="text-sm font-medium text-gray-900">${
-                          staff.performance
-                        }%</div>
-                        <div class="ml-2 w-16 bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${
-                              staff.performance
-                            }%"></div>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button onclick="viewStaff(${
-                      staff.id
-                    })" class="text-blue-600 hover:text-blue-900">Xem</button>
-                    <button onclick="editStaff(${
-                      staff.id
-                    })" class="text-green-600 hover:text-green-900">Sửa</button>
-                    <button onclick="deleteStaff(${
-                      staff.id
-                    })" class="text-red-600 hover:text-red-900">Xóa</button>
-                </td>
-            </tr>
-        `
-    )
-    .join("");
-}
 
 /**
  * Thêm nhân viên mới vào danh sách
- * Lấy dữ liệu từ form và thêm vào mảng staffData
+ * Hàm này đã được chuyển sang qly-nhan-viens.js
  */
-function addNewStaff() {
-  const form = document.getElementById("addStaffForm");
-  if (!form) return;
 
-  const formData = new FormData(form);
-  const newStaff = {
-    id: staffData.length + 1,
-    name: formData.get("staffName"),
-    email: formData.get("staffEmail"),
-    phone: formData.get("staffPhone"),
-    position: formData.get("staffPosition"),
-    department: formData.get("staffDepartment"),
-    joinDate: formData.get("joinDate"),
-    salary: parseInt(formData.get("salary")),
-    status: "active",
-    performance: Math.floor(Math.random() * 20) + 80, // Hiệu suất ngẫu nhiên 80-100%
-  };
+// ===========================
+// QUẢN LÝ NHÂN VIÊN - Xem qly-nhan-viens.js
+// ===========================
 
-  staffData.push(newStaff);
-  renderStaffTable();
-  updateStaffStats();
-  hideAddStaffModal();
-
-  alert("Thêm nhân viên thành công!");
-}
-
-/**
- * Xem chi tiết thông tin nhân viên
- * @param {number} id - ID của nhân viên
- */
-function viewStaff(id) {
-  const staff = staffData.find((s) => s.id === id);
-  if (staff) {
-    alert(
-      `Xem chi tiết nhân viên: ${staff.name}\nChức vụ: ${staff.position}\nPhòng ban: ${staff.department}`
-    );
-  }
-}
-
-/**
- * Chỉnh sửa thông tin nhân viên
- * @param {number} id - ID của nhân viên
- */
-function editStaff(id) {
-  const staff = staffData.find((s) => s.id === id);
-  if (staff) {
-    const newName = prompt("Nhập tên mới:", staff.name);
-    if (newName && newName !== staff.name) {
-      staff.name = newName;
-      renderStaffTable();
-      alert("Cập nhật thông tin thành công!");
-    }
-  }
-}
-
-/**
- * Xóa nhân viên khỏi danh sách
- * @param {number} id - ID của nhân viên
- */
-function deleteStaff(id) {
-  if (confirm("Bạn có chắc chắn muốn xóa nhân viên này?")) {
-    staffData = staffData.filter((s) => s.id !== id);
-    renderStaffTable();
-    updateStaffStats();
-    alert("Xóa nhân viên thành công!");
-  }
-}
-
-/**
- * Xuất dữ liệu nhân viên ra file Excel
- */
-function exportStaffData() {
-  alert("Chức năng xuất Excel đang được phát triển!");
-}
+// Tất cả các hàm quản lý nhân viên đã được chuyển sang qly-nhan-viens.js
+// để tránh conflict và dễ bảo trì
 
 // ===========================
 // UTILITY FUNCTIONS
