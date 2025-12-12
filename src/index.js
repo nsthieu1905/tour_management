@@ -113,17 +113,9 @@ route(app);
 
 // Socket.io connection handling
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
   // User joins - store the socket connection
   socket.on("user:join", (userId) => {
-    console.log("\n🎯 [Server user:join] Received user:join event");
-    console.log("   Socket ID:", socket.id);
-    console.log("   UserId:", userId);
-    console.log("   UserId type:", typeof userId);
-
     if (!userId) {
-      console.error("❌ No userId provided in user:join event!");
       return;
     }
 
@@ -132,29 +124,18 @@ io.on("connection", (socket) => {
 
     global.connectedUsers.set(userIdStr, socket.id);
     socket.join(roomName);
-
-    console.log(
-      `✅ User ${userIdStr} joined room ${roomName} with socket ${socket.id}`
-    );
-    console.log(`   Rooms for this socket:`, Array.from(socket.rooms));
-    console.log("🎯 [Server user:join] Done\n");
   });
 
   // Admin joins notification room
   socket.on("admin:join", (adminId) => {
     global.connectedUsers.set(`admin:${adminId}`, socket.id);
     socket.join("admin-notifications");
-    console.log(`Admin ${adminId} joined admin notifications`);
   });
 
   // Client joins notification room
   socket.on("client:join", (clientId) => {
-    console.log("🎯 [Server] Received client:join event");
-    console.log("   Socket ID:", socket.id);
-    console.log("   ClientId:", clientId);
     global.connectedUsers.set(`client:${clientId}`, socket.id);
     socket.join("client-notifications");
-    console.log("✅ [Server] Client joined client-notifications room");
   });
 
   // Disconnect handler
@@ -163,7 +144,6 @@ io.on("connection", (socket) => {
     for (let [key, value] of global.connectedUsers.entries()) {
       if (value === socket.id) {
         global.connectedUsers.delete(key);
-        console.log(`User ${key} disconnected`);
         break;
       }
     }

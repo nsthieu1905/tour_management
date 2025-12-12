@@ -8,46 +8,26 @@ class NotificationController {
    */
   async getUserNotifications(req, res) {
     try {
-      console.log("📥 [getUserNotifications] Called");
-      console.log("   req.user:", req.user);
-      console.log("   req.userId:", req.userId);
-
       const userId = req.user?.userId || req.userId;
-      console.log("   userId extracted:", userId);
 
       if (!userId) {
-        console.log("❌ [getUserNotifications] No userId found");
         return res.status(401).json({
           success: false,
           message: "User not authenticated",
         });
       }
       const limit = req.query.limit || 50;
-
-      console.log(
-        "📥 [getUserNotifications] Fetching notifications for:",
-        userId,
-        "Type:",
-        typeof userId,
-        userId.toString()
-      );
       const notifications = await NotificationService.getNotifications(
         userId,
         limit
       );
-      console.log(
-        "✅ [getUserNotifications] Found",
-        notifications.length,
-        "notifications"
-      );
-      console.log("   First notification (if exists):", notifications[0]);
 
       res.json({
         success: true,
         data: notifications,
       });
     } catch (error) {
-      console.error("❌ [getUserNotifications] Error:", error);
+      console.error("Error:", error);
       res.status(500).json({
         success: false,
         message: error.message,
@@ -61,27 +41,22 @@ class NotificationController {
    */
   async getUnreadCount(req, res) {
     try {
-      console.log("📥 [getUnreadCount] Called");
-
       const userId = req.user?.userId || req.userId;
-      console.log("   userId extracted:", userId);
 
       if (!userId) {
-        console.log("❌ [getUnreadCount] No userId found");
         return res.status(401).json({
           success: false,
           message: "User not authenticated",
         });
       }
       const count = await NotificationService.getUnreadCount(userId);
-      console.log("✅ [getUnreadCount] Unread count:", count);
 
       res.json({
         success: true,
         unreadCount: count,
       });
     } catch (error) {
-      console.error("❌ [getUnreadCount] Error:", error);
+      console.error("Error:", error);
       res.status(500).json({
         success: false,
         message: error.message,
@@ -236,14 +211,13 @@ class NotificationController {
    * GET /api/notifications/test-api
    * Test if API is accessible (no auth required)
    */
-  async testApi(req, res) {
-    console.log("✅ [testApi] API is working!");
-    res.json({
-      success: true,
-      message: "API is working",
-      timestamp: new Date(),
-    });
-  }
+  // async testApi(req, res) {
+  //   res.json({
+  //     success: true,
+  //     message: "API is working",
+  //     timestamp: new Date(),
+  //   });
+  // }
 }
 
 module.exports = new NotificationController();

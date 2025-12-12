@@ -17,19 +17,16 @@ function initCouponSocket() {
 
   // Listen for coupon updates
   couponSocket.on("coupon:updated", (data) => {
-    console.log("🔄 [Coupon] Received coupon update:", data);
     getCoupons();
   });
 
   // Listen for coupon deletions
   couponSocket.on("coupon:deleted", (data) => {
-    console.log("🗑️ [Coupon] Received coupon delete:", data);
     getCoupons();
   });
 
   // Listen for coupon creation
   couponSocket.on("coupon:created", (data) => {
-    console.log("✨ [Coupon] Received coupon creation:", data);
     getCoupons();
   });
 }

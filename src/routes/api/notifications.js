@@ -41,6 +41,6 @@ router.delete(
 router.post("/test", NotificationController.testNotification);
 
 // Test API endpoint (no auth required)
-router.get("/test-api", NotificationController.testApi);
+// router.get("/test-api", NotificationController.testApi);
 
 module.exports = router;

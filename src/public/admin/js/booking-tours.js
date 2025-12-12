@@ -1,3 +1,4 @@
+import { Notification, Modal } from "../../utils/modal.js";
 // ============================================
 // STATE MANAGEMENT
 // ============================================
@@ -23,7 +24,6 @@ function initBookingSocket() {
 
   // Listen for booking status changes
   bookingSocket.on("booking:payment-confirmed", (data) => {
-    console.log("💰 [Booking] Received payment-confirmed:", data);
     if (document.getElementById("bookingsTableBody")) {
       fetchBookings(currentPage, currentStatus);
       fetchAllCounts();
@@ -31,7 +31,6 @@ function initBookingSocket() {
   });
 
   bookingSocket.on("booking:confirmed", (data) => {
-    console.log("✅ [Booking] Received confirmed:", data);
     if (document.getElementById("bookingsTableBody")) {
       fetchBookings(currentPage, currentStatus);
       fetchAllCounts();
@@ -39,7 +38,6 @@ function initBookingSocket() {
   });
 
   bookingSocket.on("booking:completed", (data) => {
-    console.log("🏁 [Booking] Received completed:", data);
     if (document.getElementById("bookingsTableBody")) {
       fetchBookings(currentPage, currentStatus);
       fetchAllCounts();
@@ -47,7 +45,6 @@ function initBookingSocket() {
   });
 
   bookingSocket.on("booking:refund-requested", (data) => {
-    console.log("🔄 [Booking] Received refund-requested:", data);
     if (document.getElementById("bookingsTableBody")) {
       fetchBookings(currentPage, currentStatus);
       fetchAllCounts();
@@ -55,7 +52,6 @@ function initBookingSocket() {
   });
 
   bookingSocket.on("booking:refund-approved", (data) => {
-    console.log("✨ [Booking] Received refund-approved:", data);
     if (document.getElementById("bookingsTableBody")) {
       fetchBookings(currentPage, currentStatus);
       fetchAllCounts();
@@ -63,7 +59,6 @@ function initBookingSocket() {
   });
 
   bookingSocket.on("booking:cancelled", (data) => {
-    console.log("❌ [Booking] Received cancelled:", data);
     if (document.getElementById("bookingsTableBody")) {
       fetchBookings(currentPage, currentStatus);
       fetchAllCounts();
@@ -89,33 +84,33 @@ function formatPrice(price) {
 }
 
 // Show toast notification (non-blocking)
-function showActionToast(message, type = "success") {
-  // Find AdminNotificationManager instance (global)
-  if (
-    window.adminNotificationManager &&
-    typeof window.adminNotificationManager.showToast === "function"
-  ) {
-    window.adminNotificationManager.showToast({
-      type: type,
-      title:
-        type === "success"
-          ? "✅ Thành công"
-          : type === "error"
-          ? "❌ Lỗi"
-          : "ℹ️ Thông báo",
-      message: message,
-      icon:
-        type === "success"
-          ? "fa-check-circle"
-          : type === "error"
-          ? "fa-exclamation-circle"
-          : "fa-info-circle",
-    });
-  } else {
-    // Fallback: if notification manager not available, just log
-    console.log(`[${type.toUpperCase()}] ${message}`);
-  }
-}
+// function showActionToast(message, type = "success") {
+//   // Find AdminNotificationManager instance (global)
+//   if (
+//     window.adminNotificationManager &&
+//     typeof window.adminNotificationManager.showToast === "function"
+//   ) {
+//     window.adminNotificationManager.showToast({
+//       type: type,
+//       title:
+//         type === "success"
+//           ? "Thành công"
+//           : type === "error"
+//           ? "Lỗi"
+//           : "ℹThông báo",
+//       message: message,
+//       icon:
+//         type === "success"
+//           ? "fa-check-circle"
+//           : type === "error"
+//           ? "fa-exclamation-circle"
+//           : "fa-info-circle",
+//     });
+//   } else {
+//     // Fallback: if notification manager not available, just log
+//     console.log(`[${type.toUpperCase()}] ${message}`);
+//   }
+// }
 
 // Get status badge - Kết hợp cả bookingStatus và paymentStatus
 function getStatusBadge(bookingStatus, paymentStatus) {
@@ -143,7 +138,6 @@ function getStatusBadge(bookingStatus, paymentStatus) {
 // Calculate refund amount based on days until departure
 function calculateRefundInfo(departureDate, totalAmount) {
   if (!departureDate || !totalAmount) {
-    console.error("Invalid input:", { departureDate, totalAmount });
     return {
       daysUntilDeparture: 0,
       cancellationFeePercent: 100,
@@ -156,7 +150,6 @@ function calculateRefundInfo(departureDate, totalAmount) {
   const departure = new Date(departureDate);
 
   if (isNaN(departure.getTime())) {
-    console.error("Invalid departure date:", departureDate);
     return {
       daysUntilDeparture: 0,
       cancellationFeePercent: 100,
@@ -259,7 +252,6 @@ async function fetchBookings(page = 1, status = currentStatus) {
       throw new Error(result.message || "Không thể tải dữ liệu");
     }
   } catch (error) {
-    console.error("Error fetching bookings:", error);
     const tbody = document.getElementById("bookingsTableBody");
     tbody.innerHTML = `
       <tr>
@@ -528,102 +520,117 @@ function updatePagination(pagination) {
 // ============================================
 
 function confirmPayment(bookingId) {
-  if (confirm("Xác nhận thanh toán tại quầy cho đơn này?")) {
-    fetch(`/api/admin/bookings/confirm-payment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId }),
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) {
-          showActionToast("Xác nhận thanh toán thành công!", "success");
-          fetchBookings(currentPage, currentStatus);
-          fetchAllCounts();
-        } else {
-          showActionToast("Lỗi: " + res.message, "error");
-        }
-      })
-      .catch((err) => {
-        showActionToast("Lỗi kết nối: " + err.message, "error");
+  Modal.confirm({
+    title: "Xác nhận thanh toán",
+    message: "Xác nhận thanh toán tại quầy cho đơn này?",
+    icon: "fa-credit-card",
+    iconColor: "green",
+    confirmText: "Xác nhận",
+    confirmColor: "green",
+    onConfirm: async () => {
+      const response = await fetch(`/api/admin/bookings/confirm-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
       });
-  }
+      const res = await response.json();
+
+      if (res.success) {
+        Notification.show("Xác nhận thanh toán thành công!", "success");
+        fetchBookings(currentPage, currentStatus);
+        fetchAllCounts();
+      } else {
+        Notification.show("Lỗi: " + res.message, "error");
+      }
+    },
+  });
 }
 
 function confirmBooking(bookingId) {
-  if (confirm("Xác nhận đơn đặt tour này?")) {
-    fetch(`/api/admin/bookings/confirm-booking`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId }),
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) {
-          showActionToast(
-            "Xác nhận đơn thành công! Email đã được gửi.",
-            "success"
-          );
-          fetchBookings(currentPage, currentStatus);
-          fetchAllCounts();
-        } else {
-          showActionToast("Lỗi: " + res.message, "error");
-        }
-      })
-      .catch((err) => {
-        showActionToast("Lỗi kết nối: " + err.message, "error");
+  Modal.confirm({
+    title: "Xác nhận đơn đặt tour",
+    message: "Xác nhận đơn đặt tour này?",
+    icon: "fa-check-double",
+    iconColor: "green",
+    confirmText: "Xác nhận",
+    confirmColor: "green",
+    onConfirm: async () => {
+      const response = await fetch(`/api/admin/bookings/confirm-booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
       });
-  }
+      const res = await response.json();
+
+      if (res.success) {
+        Notification.show(
+          "Xác nhận đơn thành công! Email đã được gửi.",
+          "success"
+        );
+        fetchBookings(currentPage, currentStatus);
+        fetchAllCounts();
+      } else {
+        Notification.show("Lỗi: " + res.message, "error");
+      }
+    },
+  });
 }
 
 function completeBooking(bookingId) {
-  if (confirm("Hoàn thành tour này?")) {
-    fetch(`/api/admin/bookings/complete`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId }),
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) {
-          showActionToast(
-            "Hoàn thành tour! Email cảm ơn đã được gửi.",
-            "success"
-          );
-          fetchBookings(currentPage, currentStatus);
-          fetchAllCounts();
-        } else {
-          showActionToast("Lỗi: " + res.message, "error");
-        }
-      })
-      .catch((err) => {
-        showActionToast("Lỗi kết nối: " + err.message, "error");
+  Modal.confirm({
+    title: "Hoàn thành tour",
+    message: "Hoàn thành tour này?",
+    icon: "fa-check",
+    iconColor: "green",
+    confirmText: "Hoàn thành",
+    confirmColor: "green",
+    onConfirm: async () => {
+      const response = await fetch(`/api/admin/bookings/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
       });
-  }
+      const res = await response.json();
+
+      if (res.success) {
+        Notification.show(
+          "Hoàn thành tour! Email cảm ơn đã được gửi.",
+          "success"
+        );
+        fetchBookings(currentPage, currentStatus);
+        fetchAllCounts();
+      } else {
+        Notification.show("Lỗi: " + res.message, "error");
+      }
+    },
+  });
 }
 
 function requestRefund(bookingId) {
-  const reason = prompt("Nhập lý do yêu cầu hoàn tiền:");
-  if (reason !== null && reason.trim() !== "") {
-    fetch(`/api/admin/bookings/request-refund`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId, reason }),
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) {
-          showActionToast("Yêu cầu hoàn tiền đã được ghi nhận!", "success");
-          fetchBookings(currentPage, currentStatus);
-          fetchAllCounts();
-        } else {
-          showActionToast("Lỗi: " + res.message, "error");
-        }
-      })
-      .catch((err) => {
-        showActionToast("Lỗi kết nối: " + err.message, "error");
+  Modal.confirm({
+    title: "Yêu cầu hoàn tiền",
+    message: "Yêu cầu hoàn tiền cho đơn này?",
+    icon: "fa-undo",
+    iconColor: "yellow",
+    confirmText: "Yêu cầu",
+    confirmColor: "yellow",
+    onConfirm: async () => {
+      const response = await fetch(`/api/admin/bookings/request-refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, reason: "Admin requested" }),
       });
-  }
+      const res = await response.json();
+
+      if (res.success) {
+        Notification.show("Yêu cầu hoàn tiền đã được ghi nhận!", "success");
+        fetchBookings(currentPage, currentStatus);
+        fetchAllCounts();
+      } else {
+        Notification.show("Lỗi: " + res.message, "error");
+      }
+    },
+  });
 }
 
 function approveRefund(bookingId, totalAmount, departureDate) {
@@ -631,7 +638,7 @@ function approveRefund(bookingId, totalAmount, departureDate) {
   const refundInfo = calculateRefundInfo(departureDate, totalAmount);
 
   if (isNaN(refundInfo.refundAmount) || isNaN(refundInfo.cancellationFee)) {
-    showActionToast(
+    Notification.show(
       "Lỗi: Không thể tính toán số tiền hoàn lại. Vui lòng kiểm tra lại thông tin.",
       "error"
     );
@@ -639,68 +646,73 @@ function approveRefund(bookingId, totalAmount, departureDate) {
   }
 
   const message = `
-Thông tin hoàn tiền:
-- Số ngày còn lại: ${refundInfo.daysUntilDeparture} ngày
-- Phí hủy: ${refundInfo.cancellationFeePercent}% (${formatPrice(
-    refundInfo.cancellationFee
-  )})
-- Số tiền hoàn lại: ${formatPrice(refundInfo.refundAmount)}
-
-Xác nhận hoàn tiền?
+<div class="text-left">
+  <p class="font-semibold mb-2">Động ýquay ýcuốp</p>
+  <p>Số ngày còn lại: <strong>${refundInfo.daysUntilDeparture}</strong> ngày</p>
+  <p>Phí hủy: <strong>${
+    refundInfo.cancellationFeePercent
+  }%</strong> (${formatPrice(refundInfo.cancellationFee)})</p>
+  <p>Số tiền hoàn lại: <strong>${formatPrice(
+    refundInfo.refundAmount
+  )}</strong></p>
+</div>
   `.trim();
 
-  if (confirm(message)) {
-    fetch(`/api/admin/bookings/approve-refund`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        bookingId,
-        refundAmount: Number(refundInfo.refundAmount),
-        cancellationFeePercent: Number(refundInfo.cancellationFeePercent),
-      }),
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) {
-          showActionToast("Xác nhận hoàn tiền thành công!", "success");
-          fetchBookings(currentPage, currentStatus);
-          fetchAllCounts();
-        } else {
-          showActionToast("Lỗi: " + res.message, "error");
-        }
-      })
-      .catch((err) => {
-        showActionToast("Lỗi kết nối: " + err.message, "error");
+  Modal.confirm({
+    title: "Xác nhận hoàn tiền",
+    message: message,
+    icon: "fa-money-bill",
+    iconColor: "green",
+    confirmText: "Xác nhận",
+    confirmColor: "green",
+    onConfirm: async () => {
+      const response = await fetch(`/api/admin/bookings/approve-refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId,
+          refundAmount: Number(refundInfo.refundAmount),
+          cancellationFeePercent: Number(refundInfo.cancellationFeePercent),
+        }),
       });
-  }
+      const res = await response.json();
+
+      if (res.success) {
+        Notification.show("Xác nhận hoàn tiền thành công!", "success");
+        fetchBookings(currentPage, currentStatus);
+        fetchAllCounts();
+      } else {
+        Notification.show("Lỗi: " + res.message, "error");
+      }
+    },
+  });
 }
 
 function cancelBooking(bookingId) {
-  const reason = prompt("Nhập lý do hủy:");
-  if (reason !== null && reason.trim() !== "") {
-    fetch(`/api/admin/bookings/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId, reason }),
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) {
-          showActionToast("Hủy đơn thành công!", "success");
-          fetchBookings(currentPage, currentStatus);
-          fetchAllCounts();
-        } else {
-          showActionToast("Lỗi: " + res.message, "error");
-        }
-      })
-      .catch((err) => {
-        showActionToast("Lỗi kết nối: " + err.message, "error");
+  Modal.confirm({
+    title: "Hủy đơn đặt tour",
+    message: "Hủy đơn này? Không thể hoàn tác hành động này.",
+    icon: "fa-trash",
+    iconColor: "red",
+    confirmText: "Hủy",
+    confirmColor: "red",
+    onConfirm: async () => {
+      const response = await fetch(`/api/admin/bookings/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, reason: "Admin cancelled" }),
       });
-  }
-}
+      const res = await response.json();
 
-function viewBooking(bookingId) {
-  alert("Chức năng xem chi tiết đang được phát triển...");
+      if (res.success) {
+        Notification.show("Hủy đơn thành công!", "success");
+        fetchBookings(currentPage, currentStatus);
+        fetchAllCounts();
+      } else {
+        Notification.show("Lỗi: " + res.message, "error");
+      }
+    },
+  });
 }
 
 // ============================================
@@ -804,3 +816,14 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchBookings(1, currentStatus);
   fetchAllCounts();
 });
+
+// ============================================
+// EXPOSE FUNCTIONS TO GLOBAL SCOPE
+// ============================================
+// ES6 module functions need to be exposed to window for HTML onclick handlers
+window.confirmPayment = confirmPayment;
+window.confirmBooking = confirmBooking;
+window.completeBooking = completeBooking;
+window.requestRefund = requestRefund;
+window.approveRefund = approveRefund;
+window.cancelBooking = cancelBooking;

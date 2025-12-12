@@ -9,13 +9,6 @@ class NotificationService {
    */
   static async createNotification(notificationData, recipientType = "client") {
     try {
-      console.log("\n🔔 [NotificationService] Creating notification...");
-      console.log("   Type:", notificationData.type);
-      console.log("   Title:", notificationData.title);
-      console.log("   RecipientType:", recipientType);
-      console.log("   UserId:", notificationData.userId);
-      console.log("   UserId type:", typeof notificationData.userId);
-
       const notification = new Notification({
         userId: notificationData.userId,
         recipientType: recipientType,
@@ -30,12 +23,6 @@ class NotificationService {
       });
 
       await notification.save();
-      console.log(
-        "✅ [NotificationService] Notification saved to DB:",
-        notification._id
-      );
-      console.log("   Saved userId:", notification.userId);
-      console.log("   Saved userId type:", typeof notification.userId);
 
       // Broadcast to appropriate room
       const notificationObj = {
@@ -44,18 +31,11 @@ class NotificationService {
         read: false,
       };
 
-      console.log("📡 [NotificationService] Broadcasting notification...");
-      console.log("   global.io exists?", !!global.io);
-      console.log("   notificationData.userId:", notificationData.userId);
-      console.log("   userId type:", typeof notificationData.userId);
-
       if (recipientType === "admin") {
         // Broadcast to all admins
-        console.log("📢 Broadcasting to admin-notifications room");
         global.io
           .to("admin-notifications")
           .emit("notification:new", notificationObj);
-        console.log("✅ Emitted to admin-notifications");
       } else {
         // Broadcast to specific user ONLY (not to all clients)
         if (notificationData.userId) {
@@ -65,27 +45,12 @@ class NotificationService {
             : notificationData.userId;
           const roomName = `user:${userIdStr}`;
 
-          console.log(`📢 Broadcasting to ${roomName} room`);
-          console.log(`   Room name:`, roomName);
-          console.log(
-            `   Total sockets connected:`,
-            global.io?.engine?.clientsCount
-          );
-
           global.io.to(roomName).emit("notification:new", notificationObj);
-          console.log(`✅ Emitted to ${roomName}`);
-        } else {
-          console.error("❌ No userId in notificationData for broadcast!");
         }
       }
-
-      console.log("✅ [NotificationService] Notification sent successfully!\n");
       return notification;
     } catch (error) {
-      console.error(
-        "❌ [NotificationService] Error creating notification:",
-        error
-      );
+      console.error("Error creating notification:", error);
       throw error;
     }
   }
@@ -95,38 +60,28 @@ class NotificationService {
    */
   static async getNotifications(userId, limit = 50) {
     try {
-      console.log("📊 [NotificationService.getNotifications] Query params:");
-      console.log("   userId:", userId);
-      console.log("   userId type:", typeof userId);
-      console.log("   userId toString:", userId.toString?.());
-
       // Convert string userId to ObjectId if needed
       let queryUserId = userId;
       if (typeof userId === "string") {
         queryUserId = new mongoose.Types.ObjectId(userId);
-        console.log("   Converted to ObjectId:", queryUserId);
       }
 
       const query = { userId: queryUserId };
-      console.log("   Final query object:", query);
-
       const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
         .limit(limit);
 
-      console.log("📊 [NotificationService.getNotifications] Result:");
-      console.log("   Found:", notifications.length, "notifications");
-      if (notifications.length > 0) {
-        console.log("   First notification userId:", notifications[0].userId);
-        console.log(
-          "   First notification userId type:",
-          typeof notifications[0].userId
-        );
-      }
+      // if (notifications.length > 0) {
+      //   console.log("   First notification userId:", notifications[0].userId);
+      //   console.log(
+      //     "   First notification userId type:",
+      //     typeof notifications[0].userId
+      //   );
+      // }
 
       return notifications;
     } catch (error) {
-      console.error("❌ Error fetching notifications:", error);
+      console.error("Error fetching notifications:", error);
       throw error;
     }
   }

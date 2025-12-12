@@ -9,8 +9,6 @@ const NotificationService = require("../services/NotificationService");
  */
 const notifyNewBooking = async (bookingData) => {
   try {
-    console.log("🔔 [notifyNewBooking] Sending notifications...");
-
     // 1. Notify ADMIN about new booking
     await NotificationService.createNotification(
       {
@@ -30,8 +28,6 @@ const notifyNewBooking = async (bookingData) => {
       },
       "admin"
     );
-    console.log("✅ [notifyNewBooking] Admin notification sent");
-
     // 2. Notify CLIENT about successful booking
     if (bookingData.userId) {
       await NotificationService.createNotification(
@@ -48,10 +44,9 @@ const notifyNewBooking = async (bookingData) => {
         },
         "client"
       );
-      console.log("✅ [notifyNewBooking] Client notification sent");
     }
   } catch (error) {
-    console.error("❌ [notifyNewBooking] Error:", error.message);
+    console.error("Error in notifyNewBooking:", error);
   }
 };
 
@@ -61,8 +56,6 @@ const notifyNewBooking = async (bookingData) => {
  */
 const notifyPayment = async (paymentData) => {
   try {
-    console.log("🔔 [notifyPayment] Called with data:", paymentData);
-
     // Notify admin about payment
     await NotificationService.createNotification(
       {
@@ -82,14 +75,8 @@ const notifyPayment = async (paymentData) => {
       },
       "admin"
     );
-    console.log("✅ [notifyPayment] Admin notification sent");
-
     // Notify client about payment confirmation
     if (paymentData.userId) {
-      console.log(
-        "📤 [notifyPayment] Sending notification to userId:",
-        paymentData.userId
-      );
       await NotificationService.createNotification(
         {
           userId: paymentData.userId,
@@ -104,15 +91,9 @@ const notifyPayment = async (paymentData) => {
         },
         "client"
       );
-      console.log("✅ [notifyPayment] Client notification sent");
-    } else {
-      console.warn(
-        "⚠️ [notifyPayment] No userId provided, skipping client notification",
-        paymentData
-      );
     }
   } catch (error) {
-    console.error("❌ [notifyPayment] Error:", error.message);
+    console.error("Error in notifyPayment:", error);
   }
 };
 
@@ -204,7 +185,7 @@ const notifyTourAlmostFull = async (tourData) => {
     await NotificationService.createNotification(
       {
         type: "alert",
-        title: `⚠️ Tour sắp hết chỗ: ${tourData.tourName}`,
+        title: `Tour sắp hết chỗ: ${tourData.tourName}`,
         message: `Chỉ còn ${tourData.remainingSpots} chỗ. Hãy liên hệ khách hàng chờ đợi`,
         icon: "fa-exclamation-triangle",
         link: `/admin/tour/${tourData.tourId}`,
@@ -242,12 +223,7 @@ const notifyTourCancelled = async (tourData) => {
  */
 const notifyBookingPaid = async (bookingData) => {
   try {
-    console.log("🔔 [notifyBookingPaid] Called with data:", bookingData);
     if (bookingData.userId) {
-      console.log(
-        "📤 [notifyBookingPaid] Sending notification to userId:",
-        bookingData.userId
-      );
       // Gửi notification đặt tour thành công cho client
       await NotificationService.createNotification(
         {
@@ -263,18 +239,9 @@ const notifyBookingPaid = async (bookingData) => {
         },
         "client"
       );
-      console.log("✅ [notifyBookingPaid] Notification sent successfully");
-    } else {
-      console.warn(
-        "⚠️ [notifyBookingPaid] No userId provided, skipping notification",
-        bookingData
-      );
     }
   } catch (error) {
-    console.error(
-      "❌ [notifyBookingPaid] Error sending booking paid notification:",
-      error.message
-    );
+    console.error("Error in notifyBookingPaid:", error);
   }
 };
 
@@ -284,7 +251,7 @@ const notifyBookingPaid = async (bookingData) => {
 const notifyBookingConfirmed = async (bookingData) => {
   // Chỉ gửi email, không gửi notification
   // Email được gửi từ EmailService trong controller
-  console.log("📧 [notifyBookingConfirmed] Email sẽ được gửi từ EmailService");
+  console.log("[notifyBookingConfirmed] Email sẽ được gửi từ EmailService");
 };
 
 /**
@@ -293,8 +260,6 @@ const notifyBookingConfirmed = async (bookingData) => {
  */
 const notifyRefundRequested = async (refundData) => {
   try {
-    console.log("🔔 [notifyRefundRequested] Called with data:", refundData);
-
     // 1. Notify ADMIN about refund request
     await NotificationService.createNotification(
       {
@@ -311,14 +276,8 @@ const notifyRefundRequested = async (refundData) => {
       },
       "admin"
     );
-    console.log("✅ [notifyRefundRequested] Admin notification sent");
-
     // 2. Notify CLIENT
     if (refundData.userId) {
-      console.log(
-        "📤 [notifyRefundRequested] Sending notification to userId:",
-        refundData.userId
-      );
       await NotificationService.createNotification(
         {
           userId: refundData.userId,
@@ -334,15 +293,9 @@ const notifyRefundRequested = async (refundData) => {
         },
         "client"
       );
-      console.log("✅ [notifyRefundRequested] Client notification sent");
-    } else {
-      console.warn(
-        "⚠️ [notifyRefundRequested] No userId provided, skipping client notification",
-        refundData
-      );
     }
   } catch (error) {
-    console.error("❌ [notifyRefundRequested] Error:", error.message);
+    console.error("Error in notifyRefundRequested:", error);
   }
 };
 
@@ -352,32 +305,26 @@ const notifyRefundRequested = async (refundData) => {
  */
 const notifyRefundConfirmed = async (refundData) => {
   try {
-    console.log("🔔 [notifyRefundConfirmed] Called with data:", refundData);
-
-    // 1. Notify ADMIN about refund approval
-    await NotificationService.createNotification(
-      {
-        type: "refund",
-        title: "Hoàn tiền đã xác nhận",
-        message: `Đã xác nhận hoàn tiền cho tour ${
-          refundData.tourName
-        } - Mã đơn: ${refundData.bookingCode || "N/A"}`,
-        icon: "fa-check-circle",
-        iconBg: "bg-blue-100",
-        link: `/admin/booking/${refundData.bookingId}`,
-        data: { bookingId: refundData.bookingId },
-        priority: "high",
-      },
-      "admin"
-    );
-    console.log("✅ [notifyRefundConfirmed] Admin notification sent");
+    // // 1. Notify ADMIN about refund approval
+    // await NotificationService.createNotification(
+    //   {
+    //     type: "refund",
+    //     title: "Hoàn tiền đã xác nhận",
+    //     message: `Đã xác nhận hoàn tiền cho tour ${
+    //       refundData.tourName
+    //     } - Mã đơn: ${refundData.bookingCode || "N/A"}`,
+    //     icon: "fa-check-circle",
+    //     iconBg: "bg-blue-100",
+    //     link: `/admin/booking/${refundData.bookingId}`,
+    //     data: { bookingId: refundData.bookingId },
+    //     priority: "high",
+    //   },
+    //   "admin"
+    // );
+    // console.log("[notifyRefundConfirmed] Admin notification sent");
 
     // 2. Notify CLIENT
     if (refundData.userId) {
-      console.log(
-        "📤 [notifyRefundConfirmed] Sending notification to userId:",
-        refundData.userId
-      );
       await NotificationService.createNotification(
         {
           userId: refundData.userId,
@@ -393,15 +340,9 @@ const notifyRefundConfirmed = async (refundData) => {
         },
         "client"
       );
-      console.log("✅ [notifyRefundConfirmed] Client notification sent");
-    } else {
-      console.warn(
-        "⚠️ [notifyRefundConfirmed] No userId provided, skipping client notification",
-        refundData
-      );
     }
   } catch (error) {
-    console.error("❌ [notifyRefundConfirmed] Error:", error.message);
+    console.error("Error in notifyRefundConfirmed:", error);
   }
 };
 
@@ -411,45 +352,32 @@ const notifyRefundConfirmed = async (refundData) => {
  */
 const notifyCancellation = async (cancellationData) => {
   try {
-    console.log("🔔 [notifyCancellation] Called with data:", cancellationData);
-
     // 1. Notify ADMIN about cancellation
-    await NotificationService.createNotification(
-      {
-        type: "booking",
-        title: "Đơn tour đã bị hủy",
-        message: `Đã hủy đơn tour ${cancellationData.tourName} - Mã đơn: ${
-          cancellationData.bookingCode || "N/A"
-        }. Lý do: ${
-          cancellationData.cancellationReason || "Không có lý do được cung cấp"
-        }`,
-        icon: "fa-times-circle",
-        iconBg: "bg-blue-100",
-        link: `/admin/booking/${cancellationData.bookingId}`,
-        data: { bookingId: cancellationData.bookingId },
-        priority: "high",
-      },
-      "admin"
-    );
-    console.log("✅ [notifyCancellation] Admin notification sent");
+    // await NotificationService.createNotification(
+    //   {
+    //     type: "booking",
+    //     title: "Đơn tour đã bị hủy",
+    //     message: `Đã hủy đơn tour ${cancellationData.tourName} - Mã đơn: ${
+    //       cancellationData.bookingCode || "N/A"
+    //     }`,
+    //     icon: "fa-times-circle",
+    //     iconBg: "bg-blue-100",
+    //     link: `/admin/booking/${cancellationData.bookingId}`,
+    //     data: { bookingId: cancellationData.bookingId },
+    //     priority: "high",
+    //   },
+    //   "admin"
+    // );
+    // console.log("�u2705 [notifyCancellation] Admin notification sent");
 
     // 2. Notify CLIENT
     if (cancellationData.userId) {
-      console.log(
-        "📤 [notifyCancellation] Sending notification to userId:",
-        cancellationData.userId
-      );
       await NotificationService.createNotification(
         {
           userId: cancellationData.userId,
           type: "booking",
-          title: "Đơn tour đã bị hủy",
-          message: `Đơn đặt tour ${
-            cancellationData.tourName
-          } đã bị hủy. Lý do: ${
-            cancellationData.cancellationReason ||
-            "Không có lý do được cung cấp"
-          }`,
+          title: "Đơn đặt tour đã bị hủy",
+          message: `Đơn đặt tour ${cancellationData.tourName} đã bị hủy.`,
           icon: "fa-times-circle",
           iconBg: "bg-blue-100",
           link: `/booking/${cancellationData.bookingId}`,
@@ -458,15 +386,9 @@ const notifyCancellation = async (cancellationData) => {
         },
         "client"
       );
-      console.log("✅ [notifyCancellation] Client notification sent");
-    } else {
-      console.warn(
-        "⚠️ [notifyCancellation] No userId provided, skipping client notification",
-        cancellationData
-      );
     }
   } catch (error) {
-    console.error("❌ [notifyCancellation] Error:", error.message);
+    console.error("Error in notifyCancellation:", error);
   }
 };
 

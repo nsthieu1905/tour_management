@@ -1,8 +1,3 @@
-/**
- * Admin Notification System
- * Dành cho admin - thông báo về đơn booking, tours mới, etc
- */
-
 class AdminNotificationManager {
   constructor() {
     this.notifications = [];
@@ -19,7 +14,6 @@ class AdminNotificationManager {
     this.updateBadge();
 
     // Fetch notifications from server immediately on page load
-    console.log("📥 [Admin] Fetching notifications from server on init");
     this.fetchNotificationsFromServer();
 
     this.initializeSocket();
@@ -41,34 +35,20 @@ class AdminNotificationManager {
    * Initialize Socket.io connection
    */
   initializeSocket() {
-    console.log("🔔 [Admin] Initializing Socket.io connection");
-
     if (typeof io === "undefined") {
-      console.warn("🔔 [Admin] Socket.io not loaded");
       // Fallback to fake notifications if socket.io not available
       this.startFakeNotifications();
       return;
     }
 
-    console.log("🔔 [Admin] Socket.io found, creating connection");
     this.socket = io();
 
     this.socket.on("connect", () => {
-      console.log(
-        "🔔 [Admin] Connected to notification server. Socket ID:",
-        this.socket.id
-      );
-      console.log("🔔 [Admin] Emitting admin:join with adminId:", this.adminId);
       this.socket.emit("admin:join", this.adminId);
     });
 
     // Listen for new notifications
     this.socket.on("notification:new", (notification) => {
-      console.log(
-        "🔔 [Admin] Received notification:new event with data:",
-        notification
-      );
-
       // Deduplication: Check if notification already exists
       const isDuplicate = this.notifications.some((n) => {
         // Check by ID
@@ -87,10 +67,6 @@ class AdminNotificationManager {
       });
 
       if (isDuplicate) {
-        console.log(
-          "⚠️ [Admin] Duplicate notification detected, skipping:",
-          notification.id
-        );
         return;
       }
 
@@ -99,10 +75,6 @@ class AdminNotificationManager {
 
     // Listen for read status updates
     this.socket.on("notification:read", (notificationId) => {
-      console.log(
-        "🔔 [Admin] Received notification:read for ID:",
-        notificationId
-      );
       const notif = this.notifications.find((n) => n.id === notificationId);
       if (notif) {
         notif.read = true;
@@ -111,21 +83,15 @@ class AdminNotificationManager {
 
     // Listen for delete notifications
     this.socket.on("notification:delete", (notificationId) => {
-      console.log(
-        "🔔 [Admin] Received notification:delete for ID:",
-        notificationId
-      );
       this.deleteNotification(notificationId);
     });
 
-    this.socket.on("disconnect", () => {
-      console.log("🔔 [Admin] Disconnected from notification server");
-    });
+    this.socket.on("disconnect", () => {});
 
     // Catch-all listener for debugging
-    this.socket.onAny((eventName, ...args) => {
-      console.log("🔔 [Admin] Socket event received:", eventName, args);
-    });
+    // this.socket.onAny((eventName, ...args) => {
+    //   console.log("Socket event received:", eventName, args);
+    // });
   }
 
   createNotificationUI() {
@@ -220,24 +186,14 @@ class AdminNotificationManager {
    */
   async fetchNotificationsFromServer() {
     try {
-      console.log("📥 [Admin] Fetching notifications from server");
       const response = await fetch("/api/notifications/admin/all");
 
       if (!response.ok) {
-        console.warn(
-          "⚠️ Failed to fetch admin notifications:",
-          response.status
-        );
         return;
       }
 
       const data = await response.json();
       const serverNotifications = data.data || data || [];
-
-      console.log(
-        "📥 [Admin] Received notifications from server:",
-        serverNotifications.length
-      );
 
       // Replace notifications with fresh data from server
       this.notifications = [];
@@ -249,10 +205,7 @@ class AdminNotificationManager {
 
       this.updateBadge();
     } catch (error) {
-      console.error(
-        "❌ Error fetching admin notifications from server:",
-        error
-      );
+      console.error("Error fetching notifications:", error);
     }
   }
 
@@ -281,8 +234,6 @@ class AdminNotificationManager {
   }
 
   addNotification(notification) {
-    console.log("🔔 [Admin] addNotification called with:", notification);
-
     // Cấu trúc: { id, type, icon, title, message, time, read }
     const newNotif = {
       id: notification.id || `notif-${Date.now()}`,
@@ -296,24 +247,15 @@ class AdminNotificationManager {
       link: notification.link,
     };
 
-    console.log("🔔 [Admin] Created notification object:", newNotif);
-
     this.notifications.unshift(newNotif);
-    console.log(
-      "🔔 [Admin] Added to notifications array. Total count:",
-      this.notifications.length
-    );
 
     if (!newNotif.read) {
       this.unreadCount++;
     }
-    console.log("🔔 [Admin] Updated unreadCount:", this.unreadCount);
 
     this.updateBadge();
-    console.log("🔔 [Admin] Updated badge");
 
     this.showToast(newNotif);
-    console.log("🔔 [Admin] Called showToast()");
   }
 
   renderNotifications() {
@@ -523,11 +465,11 @@ class AdminNotificationManager {
 
     document.body.appendChild(toast);
 
-    // Auto remove after 10 seconds
+    // Auto remove after 5 seconds
     const timeout = setTimeout(() => {
       toast.classList.add("removing");
       setTimeout(() => toast.remove(), 300);
-    }, 10000);
+    }, 5000);
 
     // Close button
     toast
@@ -559,10 +501,10 @@ class AdminNotificationManager {
     return new Date(date).toLocaleDateString("vi-VN");
   }
 
-  saveNotificationsToStorage() {
-    // No longer saving to localStorage - all data from server
-    console.log("ℹ️ Notifications stored in database, not localStorage");
-  }
+  // saveNotificationsToStorage() {
+  //   // No longer saving to localStorage - all data from server
+  //   console.log("Notifications stored in database, not localStorage");
+  // }
 
   loadNotificationsFromStorage() {
     // No longer loading from localStorage - all data from server
@@ -571,11 +513,11 @@ class AdminNotificationManager {
   }
 
   // Fake notifications for demo (DISABLED - Use real notifications from server)
-  startFakeNotifications() {
-    // Fake notifications disabled - all notifications come from server via Socket.io
-    console.log("✅ Admin waiting for real notifications from server...");
-    // This method is no longer needed but kept for fallback purposes
-  }
+  // startFakeNotifications() {
+  //   // Fake notifications disabled - all notifications come from server via Socket.io
+  //   console.log("Admin waiting for real notifications from server...");
+  //   // This method is no longer needed but kept for fallback purposes
+  // }
 }
 
 // Initialize notification manager when DOM is ready

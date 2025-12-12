@@ -184,10 +184,6 @@ class MoMoService {
         momoConfig.secretKey
       );
 
-      console.log("Raw signature:", rawSignature);
-      console.log("Computed signature:", computedSignature);
-      console.log("Received signature:", receivedSignature);
-
       return computedSignature === receivedSignature;
     } catch (error) {
       console.error("Error verifying signature:", error);
