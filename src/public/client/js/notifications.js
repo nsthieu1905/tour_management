@@ -429,7 +429,12 @@ class ClientNotificationManager {
 
   renderNotifications() {
     const content = document.getElementById("notificationContent");
-    const displayNotifications = this.notifications;
+    // Sort notifications by time (newest first)
+    const displayNotifications = [...this.notifications].sort((a, b) => {
+      const timeA = new Date(a.time).getTime();
+      const timeB = new Date(b.time).getTime();
+      return timeB - timeA; // Newest first
+    });
 
     if (displayNotifications.length === 0) {
       content.innerHTML = `
@@ -442,14 +447,17 @@ class ClientNotificationManager {
     }
 
     let html = "";
-    displayNotifications.forEach((notif) => {
+    displayNotifications.forEach((notif, index) => {
       const timeStr = this.formatTime(notif.time);
       const unreadClass = notif.read ? "" : "unread";
+      const newestClass = index === 0 ? "newest" : ""; // Highlight the newest
       // Use iconBg if available, otherwise default to type-based styling
       const avatarClass = notif.iconBg ? notif.iconBg : notif.type;
 
       html += `
-        <div class="notification-item ${unreadClass}" data-id="${notif.id}">
+        <div class="notification-item ${unreadClass} ${newestClass}" data-id="${
+        notif.id
+      }">
           ${notif.read ? "" : '<div class="notification-unread-dot"></div>'}
           <div class="notification-avatar ${avatarClass}">
             <i class="fas ${notif.icon}"></i>

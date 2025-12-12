@@ -35,8 +35,10 @@ function updateBookingUI(booking) {
       formatPrice(parseInt(booking.totalPrice)) + "₫";
   }
 
-  // Determine payment method from payment status
-  const paymentMethod = booking.paymentStatus === "paid" ? "momo" : "cash";
+  // Use payment method from booking object (or fallback to checking paymentStatus)
+  const paymentMethod =
+    booking.paymentMethod ||
+    (booking.paymentStatus === "paid" ? "momo" : "cash");
   updateStatusBadge(paymentMethod);
 
   setupViewDetailsButton(booking._id);
@@ -74,6 +76,11 @@ if (!bookingCode || !bookingTotal) {
   document.getElementById("booking-code").textContent = bookingCode;
   document.getElementById("booking-total").textContent =
     formatPrice(parseInt(bookingTotal)) + "₫";
+
+  // Update payment status badge based on payment method from sessionStorage
+  if (paymentMethod) {
+    updateStatusBadge(paymentMethod);
+  }
 }
 
 // Function to update status badge
