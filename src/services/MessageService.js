@@ -447,21 +447,113 @@ class MessageService {
   }
 
   /**
-   * Thống kê cuộc hội thoại
+   * Lấy tất cả cuộc hội thoại cho admin
    */
-  static async getConversationStats() {
+  static async getAllConversations(filters = {}) {
     try {
-      const stats = {
-        total: await Conversation.countDocuments(),
-        active: await Conversation.countDocuments({ status: "active" }),
-        closed: await Conversation.countDocuments({ status: "closed" }),
-        archived: await Conversation.countDocuments({ status: "archived" }),
-        totalMessages: await Message.countDocuments({ isDeleted: false }),
-      };
+      const query = { status: { $ne: "archived" } };
 
-      return stats;
+      if (filters.status) {
+        query.status = filters.status;
+      }
+
+      if (filters.priority) {
+        query.priority = filters.priority;
+      }
+
+      // ✅ THÊM: Filter tin nhắn chưa đọc
+      if (filters.unreadOnly === "true") {
+        query["unreadCount.admin"] = { $gt: 0 };
+        console.log("[MessageService] Filtering unread conversations only");
+      }
+
+      if (filters.search) {
+        query.$or = [
+          { lastMessage: { $regex: filters.search, $options: "i" } },
+          { subject: { $regex: filters.search, $options: "i" } },
+        ];
+      }
+
+      console.log(
+        "[MessageService] getAllConversations query:",
+        JSON.stringify(query, null, 2)
+      );
+
+      // Lấy conversations có populate User info từ participantIds
+      const conversations = await Conversation.find(query)
+        .populate("closedBy", "name email")
+        .sort({ lastMessageAt: -1 })
+        .lean();
+
+      console.log(
+        "[MessageService] Found conversations before populate:",
+        conversations.length
+      );
+
+      // 🔴 FIX: Manually populate participantIds vì nó là Mixed type (string hoặc ObjectId)
+      const User = mongoose.model("User");
+      const populatedConversations = await Promise.all(
+        conversations.map(async (conv) => {
+          // Populate tất cả participantIds
+          const populatedParticipants = await Promise.all(
+            conv.participantIds.map(async (participantId) => {
+              // Nếu là ObjectId hợp lệ → populate từ User model
+              if (
+                participantId &&
+                mongoose.Types.ObjectId.isValid(participantId)
+              ) {
+                try {
+                  const user = await User.findById(participantId)
+                    .select("fullName email avatar")
+                    .lean();
+                  if (user) {
+                    // Rename fullName thành name để dùng chung
+                    return {
+                      _id: participantId,
+                      name: user.fullName,
+                      email: user.email,
+                    };
+                  }
+                  return { _id: participantId, name: "Khách hàng" };
+                } catch (err) {
+                  return { _id: participantId, name: "Khách hàng" };
+                }
+              }
+              // Nếu là string (guest user) → tạo object tạm
+              return { _id: participantId, name: "Khách hàng" };
+            })
+          );
+
+          conv.participantIds = populatedParticipants;
+          return conv;
+        })
+      );
+
+      // 🔴 FIX: Validate và log conversations
+      console.log(
+        "[MessageService] Found conversations after populate:",
+        populatedConversations.length
+      );
+
+      // ✅ THÊM: Log unreadCount để debug
+      populatedConversations.forEach((conv, index) => {
+        if (!conv._id) {
+          console.error(
+            `[MessageService] Conversation ${index} missing _id:`,
+            conv
+          );
+        } else {
+          console.log(
+            `[MessageService] Conv ${index}: _id = ${
+              conv._id
+            }, unreadCount.admin = ${conv.unreadCount?.admin || 0}`
+          );
+        }
+      });
+
+      return populatedConversations;
     } catch (error) {
-      console.error("Error getting conversation stats:", error);
+      console.error("Error getting all conversations:", error);
       throw error;
     }
   }

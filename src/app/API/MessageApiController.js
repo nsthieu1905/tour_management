@@ -148,11 +148,18 @@ class MessageApiController {
     try {
       const { search, status, priority, unreadOnly } = req.query;
 
+      console.log("[MessageApi] getConversations params:", {
+        search,
+        status,
+        priority,
+        unreadOnly, // ✅ Log để debug
+      });
+
       const conversations = await MessageService.getAllConversations({
         search,
         status,
         priority,
-        unreadOnly, // ✅ Thêm parameter mới
+        unreadOnly, // ✅ Thêm parameter này
       });
 
       res.json({
