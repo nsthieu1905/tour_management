@@ -28,8 +28,6 @@ class AdminRealtimeMessaging {
     this.searchInput = document.getElementById("searchConversation");
     this.filterStatus = document.getElementById("filterStatus");
     this.filterPriority = document.getElementById("filterPriority");
-    this.closeConversationBtn = document.getElementById("closeConversationBtn");
-    this.chatActions = document.getElementById("chatActions");
 
     console.log("[Admin Chat] DOM elements loaded:", {
       conversationsList: !!this.conversationsList,
@@ -195,12 +193,6 @@ class AdminRealtimeMessaging {
     if (this.filterPriority) {
       this.filterPriority.addEventListener("change", () => {
         this.loadConversations();
-      });
-    }
-
-    if (this.closeConversationBtn) {
-      this.closeConversationBtn.addEventListener("click", () => {
-        this.closeConversation();
       });
     }
 
@@ -413,23 +405,24 @@ class AdminRealtimeMessaging {
 
     return `
       <div
-        class="conversation-item p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition"
+        class="conversation-item"
         data-conversation-id="${conversationId}"
       >
-        <div class="flex justify-between items-start mb-2">
-          <div class="flex-1">
-            <h3 class="font-semibold text-gray-900 text-sm">${safeCustomerName}</h3>
-            <p class="text-xs text-gray-600 mt-1 line-clamp-2">${safeLastMessage}</p>
-          </div>
+        <!-- Hàng 1: Tên + Badge -->
+        <div class="conversation-header">
+          <h3 class="conversation-name">${safeCustomerName}</h3>
           ${
             unreadCount > 0
-              ? `<span class="unread-badge bg-red-500 text-white px-2 py-1 rounded-full text-xs">${unreadCount}</span>`
+              ? `<span class="unread-badge">${unreadCount}</span>`
               : ""
           }
         </div>
 
-        <div class="flex justify-end items-center text-xs">
-          <span class="text-gray-400">${lastMessageTime}</span>
+        <!-- Hàng 2: Nội dung - Thời gian -->
+        <div class="conversation-preview">
+          <p class="conversation-message">${safeLastMessage}</p>
+          <span class="conversation-separator">-</span>
+          <span class="conversation-time">${lastMessageTime}</span>
         </div>
       </div>
     `;
@@ -492,7 +485,6 @@ class AdminRealtimeMessaging {
     // Enable input
     if (this.messageInput) this.messageInput.disabled = false;
     if (this.sendBtn) this.sendBtn.disabled = false;
-    if (this.chatActions) this.chatActions.style.display = "flex";
 
     // Join room cho conversation này
     if (this.socket) {
@@ -607,12 +599,14 @@ class AdminRealtimeMessaging {
       <div class="message-container ${
         isAdmin ? "admin-message" : "client-message"
       }">
-        <div>
+        <div class="message-wrapper">
           <div class="message-content">
             ${this.escapeHtml(message.content)}
           </div>
-          <div class="message-time">
-            ${this.escapeHtml(senderName)} • ${time}
+          <div class="message-meta">
+            <span class="sender-name">${this.escapeHtml(senderName)}</span>
+            <span class="meta-separator">•</span>
+            <span class="message-time">${time}</span>
           </div>
         </div>
       </div>
@@ -715,12 +709,10 @@ class AdminRealtimeMessaging {
 
     const participant = conversation.participantIds?.[0];
     const customerName = participant?.name || "Khách hàng";
-    const customerEmail = participant?.email || "";
 
     this.chatHeaderInfo.innerHTML = `
       <div>
         <h2 class="text-lg font-semibold text-gray-900">${customerName}</h2>
-        <p class="text-sm text-gray-600">${customerEmail}</p>
       </div>
     `;
   }
@@ -824,7 +816,6 @@ class AdminRealtimeMessaging {
 
     if (this.messageInput) this.messageInput.disabled = true;
     if (this.sendBtn) this.sendBtn.disabled = true;
-    if (this.chatActions) this.chatActions.style.display = "none";
   }
 
   updateConversationInList(conversationId) {
@@ -850,14 +841,18 @@ class AdminRealtimeMessaging {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now - date;
+    const diffSecs = Math.floor(diffMs / 1000);
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "Vừa xong";
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) return `${diffDays}d`;
+    if (diffSecs < 60) return "Vừa xong";
+    if (diffMins < 60) return `${diffMins} phút`;
+    if (diffHours < 24) return `${diffHours} giờ`;
+    if (diffDays === 1) return "1 ngày";
+    if (diffDays < 7) return `${diffDays} ngày`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} tháng`;
 
     return date.toLocaleDateString("vi-VN");
   }

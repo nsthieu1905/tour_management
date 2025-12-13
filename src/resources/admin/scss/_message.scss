@@ -1,22 +1,34 @@
+/* ============================================
+   MESSAGE CONTAINERS - Chat bubbles
+   ============================================ */
 .message-container {
   display: flex !important;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   animation: slideIn 0.3s ease-out;
   width: 100%;
-  padding: 0.125rem 0 !important;
 }
 
 .message-container.admin-message {
   justify-content: flex-end !important;
-  margin-right: 0 !important;
-  padding-right: 0 !important;
-  padding-left: 0 !important;
 }
 
 .message-container.client-message {
   justify-content: flex-start !important;
-  padding-left: 0.75rem !important;
-  padding-right: 0 !important;
+}
+
+.message-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 70%;
+}
+
+.message-container.admin-message .message-wrapper {
+  align-items: flex-end;
+}
+
+.message-container.client-message .message-wrapper {
+  align-items: flex-start;
 }
 
 .message-content {
@@ -53,19 +65,28 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.message-time {
-  font-size: 0.7rem;
+.message-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
   color: #65676b;
-  margin-top: 0.25rem;
-  padding: 0 0.25rem;
+  padding: 0 0.5rem;
+  line-height: 1;
 }
 
-.admin-message .message-time {
-  text-align: right;
+.sender-name {
+  font-weight: 500;
+  color: #050505;
 }
 
-.client-message .message-time {
-  text-align: left;
+.meta-separator {
+  color: #ccc;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: #65676b;
 }
 
 @keyframes slideIn {
@@ -79,92 +100,104 @@
   }
 }
 
-/* Conversation item styles - Messenger style */
+/* ============================================
+   CONVERSATION LIST ITEMS - Layout: 2 hàng
+   Hàng 1: Tên + Badge
+   Hàng 2: Nội dung - Thời gian
+   ============================================ */
 .conversation-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 12px 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-radius: 0.75rem;
-  margin: 0.25rem 0.5rem;
-  position: relative;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .conversation-item:hover {
-  background-color: #f0f0f0;
+  background-color: #f5f5f5;
 }
 
-.conversation-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 0.75rem;
-  flex-shrink: 0;
-  position: relative;
+.conversation-item.bg-blue-50 {
+  background-color: #e7f3ff;
 }
 
-.conversation-info {
-  flex: 1;
-  min-width: 0;
+/* ===== HÀNG 1: TÊN + BADGE ===== */
+.conversation-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
 .conversation-name {
-  font-weight: 500;
-  color: #000;
-  font-size: 0.95rem;
+  font-weight: 600;
+  color: #050505;
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.conversation-preview {
-  font-size: 0.8rem;
-  color: #65676b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 0.125rem;
-}
-
-.conversation-time {
-  font-size: 0.7rem;
-  color: #8a8d91;
-  margin-left: auto;
-  flex-shrink: 0;
-  padding-left: 0.5rem;
-}
-
-.online-status {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: #31a24c;
-  border: 2px solid white;
-  position: absolute;
-  bottom: 0;
-  right: 0;
+  line-height: 1.3;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .unread-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
+  min-width: 20px;
+  height: 20px;
   padding: 0 6px;
-  background-color: #0084ff;
+  background-color: #ef4444;
   color: white;
-  border-radius: 11px;
-  font-size: 0.7rem;
+  border-radius: 10px;
+  font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
-  margin-left: auto;
+  margin: 0;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(239, 68, 68, 0.3);
 }
 
+/* ===== HÀNG 2: NỘI DUNG - THỜI GIAN ===== */
+.conversation-preview {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  font-size: 13px;
+  color: #65676b;
+  line-height: 1.4;
+}
+
+.conversation-message {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #65676b;
+  font-size: 13px;
+  flex-shrink: 1;
+}
+
+.conversation-separator {
+  color: #ccc;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.conversation-time {
+  font-size: 12px;
+  color: #a0aec0;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
 #conversationsList::-webkit-scrollbar,
 #messagesContainer::-webkit-scrollbar {
   width: 6px;
@@ -191,7 +224,9 @@
   scroll-behavior: smooth;
 }
 
-/* Input form improvements */
+/* ============================================
+   INPUT FORM
+   ============================================ */
 #messageForm {
   display: flex;
   align-items: flex-end;
@@ -223,44 +258,16 @@
   box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.1);
 }
 
-/* Chat area general */
+/* ============================================
+   CHAT AREA
+   ============================================ */
 #messagesContainer {
   background-color: #fff;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .message-content {
-    max-width: 85%;
-    font-size: 0.9rem;
-    padding: 0.625rem 0.875rem;
-  }
-
-  .conversation-item {
-    padding: 0.75rem;
-    margin: 0.25rem 0.25rem;
-  }
-
-  .conversation-avatar {
-    width: 44px;
-    height: 44px;
-    margin-right: 0.625rem;
-  }
-
-  #messageForm {
-    gap: 0.5rem;
-  }
-
-  #messageForm button {
-    padding: 0.625rem !important;
-  }
-
-  #messageInput {
-    font-size: 16px; /* Prevent zoom on mobile */
-  }
-}
-
-/* Typing indicator */
+/* ============================================
+   TYPING INDICATOR
+   ============================================ */
 .typing-indicator {
   padding: 0.5rem 1rem;
   margin-left: 0.5rem;
@@ -301,4 +308,61 @@
   30% {
     opacity: 0.3;
   }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 768px) {
+  .message-content {
+    max-width: 85%;
+    font-size: 0.9rem;
+    padding: 0.625rem 0.875rem;
+  }
+
+  .conversation-item {
+    padding: 10px 12px !important;
+  }
+
+  .conversation-item h3 {
+    font-size: 14px !important;
+  }
+
+  .conversation-item p {
+    font-size: 12px !important;
+  }
+
+  .unread-badge {
+    min-width: 18px !important;
+    height: 18px !important;
+    font-size: 11px !important;
+  }
+
+  .conversation-item > .flex.justify-between.items-center.gap-2 > span {
+    font-size: 11px !important;
+  }
+
+  #messageForm {
+    gap: 0.5rem;
+  }
+
+  #messageForm button {
+    padding: 0.625rem !important;
+  }
+
+  #messageInput {
+    font-size: 16px; /* Prevent zoom on mobile */
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.line-clamp-2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
