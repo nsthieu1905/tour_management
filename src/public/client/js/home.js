@@ -41,6 +41,8 @@ function toggleCompare(button, tourId) {
  */
 function updateCompareButton() {
   const compareBtn = document.getElementById("compareBtn");
+  if (!compareBtn) return;
+
   compareBtn.innerHTML = `<i class="fas fa-balance-scale mr-2"></i>So sánh (${selectedTours.length})`;
 
   if (selectedTours.length > 0) {
@@ -58,6 +60,8 @@ function updateCompareButton() {
 function showComparison() {
   const modal = document.getElementById("comparisonModal");
   const content = document.getElementById("comparisonContent");
+
+  if (!modal || !content) return;
 
   // Dữ liệu mẫu cho các tour
   const tourData = {
@@ -118,36 +122,11 @@ function showComparison() {
  * Đóng modal so sánh tour
  */
 function closeComparison() {
-  document.getElementById("comparisonModal").classList.remove("active");
-}
-
-// Lắng nghe sự kiện click nút so sánh
-document.getElementById("compareBtn").addEventListener("click", function () {
-  if (selectedTours.length < 2) {
-    alert("Vui lòng chọn ít nhất 2 tours để so sánh");
-    return;
+  const modal = document.getElementById("comparisonModal");
+  if (modal) {
+    modal.classList.remove("active");
   }
-  showComparison();
-});
-
-// ============================================
-// CÁC NÚT HÀNH ĐỘNG NHANH (FLOATING BUTTONS)
-// ============================================
-
-// Nút AI Assistant - cuộn đến phần chat
-// document.getElementById("aiAssistant").addEventListener("click", function () {
-//   showNotification("Chào mừng đến với AI Assistant!", "info");
-// });
-
-// Nút đặt nhanh
-// document.getElementById("quickBooking").addEventListener("click", function () {
-//   showNotification("Tính năng đặt nhanh sẽ sớm ra mắt!", "info");
-// });
-
-// Nút trợ giúp khẩn cấp
-// document.getElementById("emergencyHelp").addEventListener("click", function () {
-//   showNotification("Hotline khẩn cấp: 1900-1234", "warning");
-// });
+}
 
 // ============================================
 // ĐỊNH GIÁ ĐỘNG THEO NHU CẦU
@@ -171,8 +150,9 @@ function initDynamicPricing() {
 
 // Đóng modal khi click bên ngoài
 document.addEventListener("click", function (e) {
-  if (e.target.classList.contains("modal")) {
-    e.target.classList.remove("active");
+  // Chỉ đóng modal so sánh, không ảnh hưởng đến các modal khác
+  if (e.target.id === "comparisonModal") {
+    closeComparison();
   }
 });
 
@@ -193,7 +173,21 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Khởi tạo các tính năng nâng cao
+  // Lắng nghe sự kiện click nút so sánh
+  const compareBtn = document.getElementById("compareBtn");
+  if (compareBtn) {
+    compareBtn.addEventListener("click", function () {
+      if (selectedTours.length < 2) {
+        alert("Vui lòng chọn ít nhất 2 tours để so sánh");
+        return;
+      }
+      showComparison();
+    });
+  }
 
+  // Khởi tạo các tính năng nâng cao
   initDynamicPricing();
+
+  // KHÔNG XỬ LÝ FLOATING BUTTONS Ở ĐÂY
+  // Đã được xử lý trong floating-buttons.js
 });

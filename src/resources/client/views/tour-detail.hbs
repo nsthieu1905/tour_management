@@ -1186,6 +1186,7 @@
     </div>
   </div>
 </div>
+{{> chatbot-modal}}
 <script>
   const images = [
     {{#each tour.images as |image idx|}}
@@ -1200,4 +1201,6 @@
 </script>
 
 <script type="module" src="/client/js/tour-detail.js"></script>
+<script src="/client/js/chatbot.js"></script>
+<script src="/client/js/floating-buttons.js"></script>
 <script src="/utils/favorite-helper.js"></script>

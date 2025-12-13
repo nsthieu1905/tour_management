@@ -1,11 +1,11 @@
 /**
- * MERGED CHAT & CONTACT FUNCTIONALITY
+ * MERGED CHAT & CONTACT FUNCTIONALITY - OPTIMIZED VERSION
  * - Chat realtime với Socket.IO
  * - Contact modal
+ * - Persistent chat state (giữ tin nhắn khi đóng/mở)
  */
 
 // ==================== CONTACT MODAL FUNCTIONALITY ====================
-// Giữ nguyên logic contact modal (không conflict)
 const contactModal = document.getElementById("contactModal");
 const contactBtn = document.getElementById("contact");
 const closeContactBtn = document.getElementById("closeContactBtn");
@@ -47,6 +47,8 @@ class RealtimeMessagingClient {
     this.currentConversationId = null;
     this.isTyping = false;
     this.typingTimeout = null;
+    this.isConversationLoaded = false; // ✅ Track xem đã load conversation chưa
+    this.hasShownGreeting = false; // ✅ Track xem đã hiện greeting chưa
 
     // DOM elements
     this.chatWindow = document.getElementById("chatWindow");
@@ -57,12 +59,7 @@ class RealtimeMessagingClient {
     this.chatMessages = document.getElementById("chatMessages");
     this.typingIndicator = document.getElementById("typingIndicator");
 
-    // Debug
     console.log("[Chat] Initializing RealtimeMessagingClient");
-    console.log("[Chat] chatWindow:", this.chatWindow);
-    console.log("[Chat] openChatBtn:", this.openChatBtn);
-    console.log("[Chat] closeChatBtn:", this.closeChatBtn);
-
     this.init();
   }
 
@@ -72,8 +69,6 @@ class RealtimeMessagingClient {
   init() {
     if (!this.openChatBtn || !this.chatWindow) {
       console.error("[Chat] Missing DOM elements - Chat not initialized");
-      console.error("[Chat] openChatBtn:", this.openChatBtn);
-      console.error("[Chat] chatWindow:", this.chatWindow);
       return;
     }
 
@@ -88,7 +83,6 @@ class RealtimeMessagingClient {
    * Lấy user ID từ DOM (login)
    */
   getCurrentUserFromDom() {
-    // Có thể lấy từ localStorage hoặc data-attribute
     this.currentUserId =
       localStorage.getItem("userId") ||
       document.body.dataset.userId ||
@@ -108,23 +102,23 @@ class RealtimeMessagingClient {
 
     this.socket = io();
 
-    // Khi kết nối thành công
     this.socket.on("connect", () => {
       console.log("[Chat] Socket connected:", this.socket.id);
-
-      // Join room cho user cá nhân (nhận thông báo)
       this.socket.emit("client:join", {
         userId: this.currentUserId,
       });
+
+      // ✅ Nếu đang có conversation, rejoin room
+      if (this.currentConversationId) {
+        this.rejoinConversation();
+      }
     });
 
-    // Lắng nghe tin nhắn mới từ admin/client trong cùng room
     this.socket.on("message:new", (data) => {
       console.log("[Chat] New message received:", data);
       this.displayMessage(data);
     });
 
-    // Lắng nghe người khác đang gõ
     this.socket.on("typing:active", (data) => {
       console.log("[Chat] Typing active:", data);
       this.showTypingIndicator(data);
@@ -135,12 +129,10 @@ class RealtimeMessagingClient {
       this.hideTypingIndicator(data);
     });
 
-    // Lắng nghe tin nhắn được đánh dấu đã đọc
     this.socket.on("message:marked-read", (data) => {
       this.markMessageAsRead(data.messageId);
     });
 
-    // Lắng nghe sự kiện cuộc hội thoại
     this.socket.on("conversation:closed", () => {
       this.handleConversationClosed();
     });
@@ -158,11 +150,10 @@ class RealtimeMessagingClient {
    * Gắn các event listeners
    */
   attachEventListeners() {
-    // Mở/Đóng chat window
     if (this.openChatBtn) {
       console.log("[Chat] Attaching click listener to open button");
 
-      // XOÁ tất cả listeners cũ trước bằng cách clone node
+      // Xóa tất cả listeners cũ
       const newBtn = this.openChatBtn.cloneNode(true);
       this.openChatBtn.parentNode.replaceChild(newBtn, this.openChatBtn);
       this.openChatBtn = newBtn;
@@ -175,8 +166,6 @@ class RealtimeMessagingClient {
       });
 
       console.log("[Chat] Open chat listener attached successfully");
-    } else {
-      console.error("[Chat] Open chat button (#open-mesage) not found in DOM");
     }
 
     if (this.closeChatBtn) {
@@ -188,7 +177,6 @@ class RealtimeMessagingClient {
       });
     }
 
-    // Gửi tin nhắn
     if (this.sendChatBtn) {
       this.sendChatBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -196,7 +184,6 @@ class RealtimeMessagingClient {
       });
     }
 
-    // Gửi khi nhấn Enter
     if (this.chatInput) {
       this.chatInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -205,7 +192,6 @@ class RealtimeMessagingClient {
         }
       });
 
-      // Typing indicator
       this.chatInput.addEventListener("input", () => {
         this.handleTyping();
       });
@@ -213,7 +199,7 @@ class RealtimeMessagingClient {
   }
 
   /**
-   * Mở chat window + khởi tạo conversation
+   * ✅ Mở/đóng chat window (KHÔNG reset conversation)
    */
   toggleChatWindow() {
     if (!this.chatWindow) {
@@ -222,58 +208,42 @@ class RealtimeMessagingClient {
     }
 
     console.log("[Chat] Toggling chat window");
-    console.log(
-      "[Chat] Current classList:",
-      this.chatWindow.classList.toString()
-    );
-    console.log(
-      "[Chat] Current display:",
-      window.getComputedStyle(this.chatWindow).display
-    );
-
-    // Toggle class 'active'
     const wasActive = this.chatWindow.classList.contains("active");
 
     if (wasActive) {
+      // Đóng chat - CHỈ ẩn đi, KHÔNG xóa conversation
       this.chatWindow.classList.remove("active");
-      console.log("[Chat] Chat closed");
-      this.leaveConversation();
+      console.log("[Chat] Chat closed (conversation preserved)");
     } else {
+      // Mở chat
       this.chatWindow.classList.add("active");
       console.log("[Chat] Chat opened");
 
-      // Kiểm tra xem có hiển thị không
-      setTimeout(() => {
-        const display = window.getComputedStyle(this.chatWindow).display;
-        const visibility = window.getComputedStyle(this.chatWindow).visibility;
-        const opacity = window.getComputedStyle(this.chatWindow).opacity;
-
-        console.log("[Chat] After opening - display:", display);
-        console.log("[Chat] After opening - visibility:", visibility);
-        console.log("[Chat] After opening - opacity:", opacity);
-        console.log(
-          "[Chat] After opening - classList:",
-          this.chatWindow.classList.toString()
-        );
-      }, 100);
-
       this.chatInput?.focus();
-      this.startChat();
+
+      // ✅ CHỈ startChat nếu chưa load conversation
+      if (!this.isConversationLoaded) {
+        this.startChat();
+      } else {
+        // Đã có conversation, chỉ cần scroll và mark as read
+        console.log("[Chat] Conversation already loaded, just scrolling");
+        this.scrollToBottom();
+        this.markConversationAsRead();
+      }
     }
   }
 
   /**
-   * Đóng chat window
+   * ✅ Đóng chat window (KHÔNG reset conversation)
    */
   closeChatWindow() {
     if (!this.chatWindow) return;
-    console.log("[Chat] Closing chat window");
+    console.log("[Chat] Closing chat window (conversation preserved)");
     this.chatWindow.classList.remove("active");
-    this.leaveConversation();
   }
 
   /**
-   * Bắt đầu chat - tạo/lấy conversation
+   * ✅ Bắt đầu chat - tạo/lấy conversation
    */
   async startChat() {
     console.log("[Chat] Starting chat...");
@@ -293,6 +263,7 @@ class RealtimeMessagingClient {
 
       if (data.success) {
         this.currentConversationId = data.data._id;
+        this.isConversationLoaded = true; // ✅ Đánh dấu đã load
         console.log("[Chat] Conversation ID:", this.currentConversationId);
 
         // Join room conversation
@@ -312,7 +283,21 @@ class RealtimeMessagingClient {
   }
 
   /**
-   * Tải lịch sử tin nhắn
+   * ✅ Rejoin conversation khi reconnect socket
+   */
+  rejoinConversation() {
+    if (!this.currentConversationId) return;
+
+    console.log("[Chat] Rejoining conversation:", this.currentConversationId);
+    this.socket.emit("conversation:join", {
+      conversationId: this.currentConversationId,
+      userId: this.currentUserId,
+      userType: "client",
+    });
+  }
+
+  /**
+   * ✅ Tải lịch sử tin nhắn (LUÔN hiện greeting)
    */
   async loadMessages() {
     console.log("[Chat] Loading messages...");
@@ -325,11 +310,18 @@ class RealtimeMessagingClient {
       console.log("[Chat] Messages loaded:", data);
 
       if (data.success && this.chatMessages) {
+        // Clear messages
         this.chatMessages.innerHTML = "";
 
-        data.data.forEach((msg) => {
-          this.displayMessage(msg);
-        });
+        // ✅ LUÔN HIỂN THỊ GREETING TRƯỚC
+        this.showInitialGreeting();
+
+        // Hiển thị lịch sử tin nhắn nếu có
+        if (data.data.length > 0) {
+          data.data.forEach((msg) => {
+            this.displayMessage(msg);
+          });
+        }
 
         // Scroll to bottom
         this.scrollToBottom();
@@ -339,11 +331,83 @@ class RealtimeMessagingClient {
       }
     } catch (error) {
       console.error("[Chat] Error loading messages:", error);
+      this.showInitialGreeting();
     }
   }
 
   /**
-   * Gửi tin nhắn
+   * ✅ Hiển thị tin nhắn chào mừng ban đầu
+   */
+  showInitialGreeting() {
+    if (!this.chatMessages) return;
+
+    // ✅ CHỈ hiện 1 lần, tránh duplicate
+    if (this.hasShownGreeting) return;
+    this.hasShownGreeting = true;
+
+    const greetingDiv = document.createElement("div");
+    greetingDiv.className = "message bot greeting-message"; // ✅ Thêm class để dễ identify
+    greetingDiv.innerHTML = `
+      <div style="display: flex; flex-direction: column;">
+        <span>Xin chào!<br>Bạn đang gặp vấn đề gì cần tư vấn? Hãy cho tôi biết để chúng tôi có thể hỗ trợ bạn tốt nhất!</span>
+        <small style="margin-top: 4px; opacity: 0.7; font-size: 11px;">
+          ${new Date().toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </small>
+      </div>
+    `;
+
+    this.chatMessages.appendChild(greetingDiv);
+    this.scrollToBottom();
+  }
+
+  /**
+   * ✅ Hiển thị tin nhắn "Đang chờ admin"
+   */
+  showWaitingMessage() {
+    if (!this.chatMessages) return;
+
+    // Hiển thị typing indicator trước
+    if (this.typingIndicator) {
+      this.typingIndicator.classList.add("active");
+      this.typingIndicator.innerHTML = `
+        <span></span>
+        <span></span>
+        <span></span>
+      `;
+    }
+
+    // Sau 1s hiển thị tin nhắn
+    setTimeout(() => {
+      // Ẩn typing indicator
+      if (this.typingIndicator) {
+        this.typingIndicator.classList.remove("active");
+        this.typingIndicator.innerHTML = "";
+      }
+
+      const waitingDiv = document.createElement("div");
+      waitingDiv.className = "message bot waiting-message"; // ✅ Thêm class
+      waitingDiv.innerHTML = `
+        <div style="display: flex; flex-direction: column;">
+          <span>Cảm ơn bạn đã liên hệ!<br>Nhân viên hỗ trợ sẽ phản hồi bạn trong giây lát. Vui lòng đợi một chút nhé!</span>
+          <small style="margin-top: 4px; opacity: 0.7; font-size: 11px;">
+            ${new Date().toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </small>
+        </div>
+      `;
+
+      this.chatMessages.appendChild(waitingDiv);
+      this.scrollToBottom();
+    }, 1000);
+  }
+
+  /**
+   * ✅ Gửi tin nhắn
    */
   async sendMessage() {
     const content = this.chatInput?.value.trim();
@@ -356,6 +420,11 @@ class RealtimeMessagingClient {
     }
 
     console.log("[Chat] Sending message:", content);
+
+    // ✅ Kiểm tra xem đây có phải tin nhắn đầu tiên không
+    // (chỉ tính tin nhắn user, không tính greeting & waiting)
+    const userMessages = this.chatMessages?.querySelectorAll(".message.user");
+    const isFirstMessage = !userMessages || userMessages.length === 0;
 
     try {
       const response = await fetch("/api/messages/send", {
@@ -384,6 +453,13 @@ class RealtimeMessagingClient {
         this.stopTyping();
 
         // Tin nhắn sẽ được nhận qua socket.on("message:new")
+
+        // ✅ Nếu là tin nhắn đầu tiên, hiển thị tin nhắn chờ admin
+        if (isFirstMessage) {
+          setTimeout(() => {
+            this.showWaitingMessage();
+          }, 500);
+        }
       }
     } catch (error) {
       console.error("[Chat] Error sending message:", error);
@@ -452,11 +528,10 @@ class RealtimeMessagingClient {
       });
     }
 
-    // Reset timeout
     clearTimeout(this.typingTimeout);
     this.typingTimeout = setTimeout(() => {
       this.stopTyping();
-    }, 3000); // Stop typing sau 3 giây không nhập
+    }, 3000);
   }
 
   /**
@@ -473,17 +548,18 @@ class RealtimeMessagingClient {
   }
 
   /**
-   * Hiển thị "đang gõ..."
+   * ✅ Hiển thị typing indicator - CHỈ CÓ 3 CHẤM
    */
   showTypingIndicator(data) {
     if (!this.typingIndicator) return;
 
     this.typingIndicator.classList.add("active");
     this.typingIndicator.innerHTML = `
-      <div style="font-size: 12px; color: #999; padding: 8px;">
-        <em>${data.userName || "Admin"} đang gõ</em>
-        <span style="margin-left: 4px;">
-          <span>.</span><span>.</span><span>.</span>
+      <div class="typing-wrapper">
+        <span class="typing-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
         </span>
       </div>
     `;
@@ -495,7 +571,6 @@ class RealtimeMessagingClient {
   hideTypingIndicator(data) {
     if (!this.typingIndicator) return;
 
-    // setTimeout để tránh flicker
     setTimeout(() => {
       this.typingIndicator.classList.remove("active");
       this.typingIndicator.innerHTML = "";
@@ -521,26 +596,12 @@ class RealtimeMessagingClient {
   }
 
   /**
-   * Rời khỏi conversation
-   */
-  leaveConversation() {
-    if (this.currentConversationId && this.socket) {
-      console.log("[Chat] Leaving conversation:", this.currentConversationId);
-      this.socket.emit("conversation:leave", {
-        conversationId: this.currentConversationId,
-        userId: this.currentUserId,
-      });
-    }
-
-    this.currentConversationId = null;
-  }
-
-  /**
-   * Xử lý cuộc hội thoại bị đóng
+   * ✅ Xử lý cuộc hội thoại bị đóng
    */
   handleConversationClosed() {
     if (this.chatMessages) {
       const closedMsg = document.createElement("div");
+      closedMsg.className = "message system-message";
       closedMsg.style.cssText =
         "text-align: center; color: #999; padding: 10px; font-style: italic;";
       closedMsg.textContent = "Cuộc hội thoại đã được đóng";
@@ -555,6 +616,46 @@ class RealtimeMessagingClient {
     if (this.sendChatBtn) {
       this.sendChatBtn.disabled = true;
     }
+
+    // ✅ Reset state
+    this.isConversationLoaded = false;
+  }
+
+  /**
+   * ✅ Reset conversation (để bắt đầu chat mới)
+   */
+  resetConversation() {
+    console.log("[Chat] Resetting conversation");
+
+    // Leave room nếu đang trong conversation
+    if (this.currentConversationId && this.socket) {
+      this.socket.emit("conversation:leave", {
+        conversationId: this.currentConversationId,
+        userId: this.currentUserId,
+      });
+    }
+
+    // Reset states
+    this.currentConversationId = null;
+    this.isConversationLoaded = false;
+    this.hasShownGreeting = false;
+
+    // Clear UI
+    if (this.chatMessages) {
+      this.chatMessages.innerHTML = "";
+    }
+
+    if (this.chatInput) {
+      this.chatInput.value = "";
+      this.chatInput.disabled = false;
+      this.chatInput.placeholder = "Nhập tin nhắn...";
+    }
+
+    if (this.sendChatBtn) {
+      this.sendChatBtn.disabled = false;
+    }
+
+    console.log("[Chat] Conversation reset complete");
   }
 
   /**
@@ -570,17 +671,14 @@ class RealtimeMessagingClient {
 }
 
 // ==================== INITIALIZATION ====================
-// Khởi tạo khi DOM đã sẵn sàng
 function initializeRealtimeChat() {
   console.log("[Chat] DOM ready, initializing chat...");
 
-  // Kiểm tra xem đã khởi tạo chưa
   if (window.realtimeChat) {
     console.log("[Chat] Already initialized, skipping...");
     return;
   }
 
-  // Kiểm tra các elements cần thiết
   const chatWindow = document.getElementById("chatWindow");
   const openBtn = document.getElementById("open-mesage");
 
@@ -598,7 +696,6 @@ function initializeRealtimeChat() {
     return;
   }
 
-  // Khởi tạo chat client
   try {
     window.realtimeChat = new RealtimeMessagingClient();
     console.log("[Chat] Chat client initialized successfully");
@@ -611,6 +708,5 @@ function initializeRealtimeChat() {
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initializeRealtimeChat);
 } else {
-  // DOM đã sẵn sàng
   initializeRealtimeChat();
 }
