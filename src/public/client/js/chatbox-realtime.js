@@ -1,567 +1,616 @@
 /**
- * CLIENT-SIDE REALTIME MESSAGING
- * Xử lý chat realtime giữa client và admin
+ * MERGED CHAT & CONTACT FUNCTIONALITY
+ * - Chat realtime với Socket.IO
+ * - Contact modal
  */
 
-// Only define the class once
-if (typeof RealtimeMessagingClient === "undefined") {
-  class RealtimeMessagingClient {
-    constructor() {
-      this.socket = null;
-      this.currentUserId = null;
-      this.currentConversationId = null;
-      this.isTyping = false;
-      this.typingTimeout = null;
+// ==================== CONTACT MODAL FUNCTIONALITY ====================
+// Giữ nguyên logic contact modal (không conflict)
+const contactModal = document.getElementById("contactModal");
+const contactBtn = document.getElementById("contact");
+const closeContactBtn = document.getElementById("closeContactBtn");
+const closeContactBtnBottom = document.getElementById("closeContactBtnBottom");
 
-      // DOM elements
-      this.chatWindow = document.getElementById("chatWindow");
-      this.openChatBtn = document.getElementById("open-mesage");
-      this.closeChatBtn = document.getElementById("closeChatBtn");
-      this.chatInput = document.getElementById("chatInput");
-      this.sendChatBtn = document.getElementById("sendChatBtn");
-      this.chatMessages = document.getElementById("chatMessages");
-      this.typingIndicator = document.getElementById("typingIndicator");
+// Open/Close Contact Modal
+if (contactBtn) {
+  contactBtn.addEventListener("click", () => {
+    contactModal.classList.add("active");
+  });
+}
 
-      // Debug
-      console.log("[Chat] Initializing RealtimeMessagingClient");
-      console.log("[Chat] chatWindow:", this.chatWindow);
-      console.log("[Chat] openChatBtn:", this.openChatBtn);
+if (closeContactBtn) {
+  closeContactBtn.addEventListener("click", () => {
+    contactModal.classList.remove("active");
+  });
+}
 
-      this.init();
+if (closeContactBtnBottom) {
+  closeContactBtnBottom.addEventListener("click", () => {
+    contactModal.classList.remove("active");
+  });
+}
+
+// Close modal when clicking outside
+if (contactModal) {
+  contactModal.addEventListener("click", (e) => {
+    if (e.target === contactModal) {
+      contactModal.classList.remove("active");
+    }
+  });
+}
+
+// ==================== REALTIME CHAT CLASS ====================
+class RealtimeMessagingClient {
+  constructor() {
+    this.socket = null;
+    this.currentUserId = null;
+    this.currentConversationId = null;
+    this.isTyping = false;
+    this.typingTimeout = null;
+
+    // DOM elements
+    this.chatWindow = document.getElementById("chatWindow");
+    this.openChatBtn = document.getElementById("open-mesage");
+    this.closeChatBtn = document.getElementById("closeChatBtn");
+    this.chatInput = document.getElementById("chatInput");
+    this.sendChatBtn = document.getElementById("sendChatBtn");
+    this.chatMessages = document.getElementById("chatMessages");
+    this.typingIndicator = document.getElementById("typingIndicator");
+
+    // Debug
+    console.log("[Chat] Initializing RealtimeMessagingClient");
+    console.log("[Chat] chatWindow:", this.chatWindow);
+    console.log("[Chat] openChatBtn:", this.openChatBtn);
+    console.log("[Chat] closeChatBtn:", this.closeChatBtn);
+
+    this.init();
+  }
+
+  /**
+   * Khởi tạo
+   */
+  init() {
+    if (!this.openChatBtn || !this.chatWindow) {
+      console.error("[Chat] Missing DOM elements - Chat not initialized");
+      console.error("[Chat] openChatBtn:", this.openChatBtn);
+      console.error("[Chat] chatWindow:", this.chatWindow);
+      return;
     }
 
-    /**
-     * Khởi tạo
-     */
-    init() {
-      if (!this.openChatBtn || !this.chatWindow) {
-        console.error("[Chat] Missing DOM elements - Chat not initialized");
-        return;
-      }
+    this.attachEventListeners();
+    this.initSocket();
+    this.getCurrentUserFromDom();
 
-      this.attachEventListeners();
-      this.initSocket();
-      this.getCurrentUserFromDom();
+    console.log("[Chat] Initialization complete");
+  }
 
-      console.log("[Chat] Initialization complete");
+  /**
+   * Lấy user ID từ DOM (login)
+   */
+  getCurrentUserFromDom() {
+    // Có thể lấy từ localStorage hoặc data-attribute
+    this.currentUserId =
+      localStorage.getItem("userId") ||
+      document.body.dataset.userId ||
+      "guest_" + Math.random().toString(36).substr(2, 9);
+
+    console.log("[Chat] Current user:", this.currentUserId);
+  }
+
+  /**
+   * Khởi tạo Socket.io
+   */
+  initSocket() {
+    if (typeof io === "undefined") {
+      console.warn("[Chat] Socket.io not available");
+      return;
     }
 
-    /**
-     * Lấy user ID từ DOM (login)
-     */
-    getCurrentUserFromDom() {
-      // Có thể lấy từ localStorage hoặc data-attribute
-      this.currentUserId =
-        localStorage.getItem("userId") ||
-        document.body.dataset.userId ||
-        document.body.dataset.userId ||
-        "guest_" + Math.random().toString(36).substr(2, 9);
+    this.socket = io();
 
-      console.log("[Chat] Current user:", this.currentUserId);
+    // Khi kết nối thành công
+    this.socket.on("connect", () => {
+      console.log("[Chat] Socket connected:", this.socket.id);
+
+      // Join room cho user cá nhân (nhận thông báo)
+      this.socket.emit("client:join", {
+        userId: this.currentUserId,
+      });
+    });
+
+    // Lắng nghe tin nhắn mới từ admin/client trong cùng room
+    this.socket.on("message:new", (data) => {
+      console.log("[Chat] New message received:", data);
+      this.displayMessage(data);
+    });
+
+    // Lắng nghe người khác đang gõ
+    this.socket.on("typing:active", (data) => {
+      console.log("[Chat] Typing active:", data);
+      this.showTypingIndicator(data);
+    });
+
+    this.socket.on("typing:inactive", (data) => {
+      console.log("[Chat] Typing inactive:", data);
+      this.hideTypingIndicator(data);
+    });
+
+    // Lắng nghe tin nhắn được đánh dấu đã đọc
+    this.socket.on("message:marked-read", (data) => {
+      this.markMessageAsRead(data.messageId);
+    });
+
+    // Lắng nghe sự kiện cuộc hội thoại
+    this.socket.on("conversation:closed", () => {
+      this.handleConversationClosed();
+    });
+
+    this.socket.on("user:joined", (data) => {
+      console.log(`[Chat] ${data.userType} joined conversation`);
+    });
+
+    this.socket.on("disconnect", () => {
+      console.log("[Chat] Socket disconnected");
+    });
+  }
+
+  /**
+   * Gắn các event listeners
+   */
+  attachEventListeners() {
+    // Mở/Đóng chat window
+    if (this.openChatBtn) {
+      console.log("[Chat] Attaching click listener to open button");
+
+      // XOÁ tất cả listeners cũ trước bằng cách clone node
+      const newBtn = this.openChatBtn.cloneNode(true);
+      this.openChatBtn.parentNode.replaceChild(newBtn, this.openChatBtn);
+      this.openChatBtn = newBtn;
+
+      this.openChatBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("[Chat] Open chat button clicked!");
+        this.toggleChatWindow();
+      });
+
+      console.log("[Chat] Open chat listener attached successfully");
+    } else {
+      console.error("[Chat] Open chat button (#open-mesage) not found in DOM");
     }
 
-    /**
-     * Khởi tạo Socket.io
-     */
-    initSocket() {
-      if (typeof io === "undefined") {
-        console.warn("Socket.io not available");
-        return;
-      }
-
-      this.socket = io();
-
-      // Khi kết nối thành công
-      this.socket.on("connect", () => {
-        console.log("[Chat] Socket connected:", this.socket.id);
-
-        // Join room cho user cá nhân (nhận thông báo)
-        this.socket.emit("client:join", {
-          userId: this.currentUserId,
-        });
-      });
-
-      // Lắng nghe tin nhắn mới từ admin/client trong cùng room
-      this.socket.on("message:new", (data) => {
-        this.displayMessage(data);
-      });
-
-      // Lắng nghe người khác đang gõ
-      this.socket.on("typing:active", (data) => {
-        this.showTypingIndicator(data);
-      });
-
-      this.socket.on("typing:inactive", (data) => {
-        this.hideTypingIndicator(data);
-      });
-
-      // Lắng nghe tin nhắn được đánh dấu đã đọc
-      this.socket.on("message:marked-read", (data) => {
-        this.markMessageAsRead(data.messageId);
-      });
-
-      // Lắng nghe sự kiện cuộc hội thoại
-      this.socket.on("conversation:closed", () => {
-        this.handleConversationClosed();
-      });
-
-      this.socket.on("user:joined", (data) => {
-        console.log(`[Chat] ${data.userType} joined conversation`);
-      });
-
-      this.socket.on("disconnect", () => {
-        console.log("[Chat] Socket disconnected");
+    if (this.closeChatBtn) {
+      this.closeChatBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("[Chat] Close chat button clicked");
+        this.closeChatWindow();
       });
     }
 
-    /**
-     * Gắn các event listeners
-     */
-    attachEventListeners() {
-      // Mở/Đóng chat window
-      if (this.openChatBtn) {
-        this.openChatBtn.addEventListener("click", (e) => {
+    // Gửi tin nhắn
+    if (this.sendChatBtn) {
+      this.sendChatBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.sendMessage();
+      });
+    }
+
+    // Gửi khi nhấn Enter
+    if (this.chatInput) {
+      this.chatInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
-          e.stopPropagation();
-          console.log("[Chat] Open chat button clicked");
-          this.toggleChatWindow();
-        });
-        console.log("[Chat] Open chat listener attached");
-      } else {
-        console.error("[Chat] Open chat button not found");
-      }
-
-      if (this.closeChatBtn) {
-        this.closeChatBtn.addEventListener("click", () => {
-          console.log("[Chat] Close chat button clicked");
-          this.closeChatWindow();
-        });
-      }
-
-      // Gửi tin nhắn
-      if (this.sendChatBtn) {
-        this.sendChatBtn.addEventListener("click", () => {
           this.sendMessage();
-        });
-      }
+        }
+      });
 
-      // Gửi khi nhấn Enter
-      if (this.chatInput) {
-        this.chatInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            this.sendMessage();
-          }
-        });
+      // Typing indicator
+      this.chatInput.addEventListener("input", () => {
+        this.handleTyping();
+      });
+    }
+  }
 
-        // Typing indicator
-        this.chatInput.addEventListener("input", () => {
-          this.handleTyping();
-        });
-      }
+  /**
+   * Mở chat window + khởi tạo conversation
+   */
+  toggleChatWindow() {
+    if (!this.chatWindow) {
+      console.error("[Chat] Chat window element not found");
+      return;
     }
 
-    /**
-     * Mở chat window + khởi tạo conversation
-     */
-    toggleChatWindow() {
-      if (!this.chatWindow) {
-        console.error("[Chat] Chat window element not found");
-        return;
-      }
+    console.log("[Chat] Toggling chat window");
+    console.log(
+      "[Chat] Current classList:",
+      this.chatWindow.classList.toString()
+    );
+    console.log(
+      "[Chat] Current display:",
+      window.getComputedStyle(this.chatWindow).display
+    );
 
-      console.log(
-        "[Chat] Toggle chat window, current class:",
-        this.chatWindow.className
-      );
-      console.log(
-        "[Chat] Current display style:",
-        window.getComputedStyle(this.chatWindow).display
-      );
+    // Toggle class 'active'
+    const wasActive = this.chatWindow.classList.contains("active");
 
-      this.chatWindow.classList.toggle("active");
-      console.log("[Chat] After toggle, class:", this.chatWindow.className);
-      console.log(
-        "[Chat] After toggle, display style:",
-        window.getComputedStyle(this.chatWindow).display
-      );
-
-      if (this.chatWindow.classList.contains("active")) {
-        this.chatInput?.focus();
-        this.startChat();
-      } else {
-        this.leaveConversation();
-      }
-    }
-
-    /**
-     * Đóng chat window
-     */
-    closeChatWindow() {
-      if (!this.chatWindow) return;
+    if (wasActive) {
       this.chatWindow.classList.remove("active");
+      console.log("[Chat] Chat closed");
       this.leaveConversation();
-    }
+    } else {
+      this.chatWindow.classList.add("active");
+      console.log("[Chat] Chat opened");
 
-    /**
-     * Bắt đầu chat - tạo/lấy conversation
-     */
-    async startChat() {
-      try {
-        const response = await fetch("/api/messages/start-chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: this.currentUserId,
-          }),
-        });
+      // Kiểm tra xem có hiển thị không
+      setTimeout(() => {
+        const display = window.getComputedStyle(this.chatWindow).display;
+        const visibility = window.getComputedStyle(this.chatWindow).visibility;
+        const opacity = window.getComputedStyle(this.chatWindow).opacity;
 
-        const data = await response.json();
-
-        if (data.success) {
-          this.currentConversationId = data.data._id;
-
-          // Join room conversation
-          this.socket.emit("conversation:join", {
-            conversationId: this.currentConversationId,
-            userId: this.currentUserId,
-            userType: "client",
-          });
-
-          // Load lịch sử tin nhắn
-          this.loadMessages();
-        }
-      } catch (error) {
-        console.error("Error starting chat:", error);
-      }
-    }
-
-    /**
-     * Tải lịch sử tin nhắn
-     */
-    async loadMessages() {
-      try {
-        const response = await fetch(
-          `/api/messages/conversations/${this.currentConversationId}/messages`
+        console.log("[Chat] After opening - display:", display);
+        console.log("[Chat] After opening - visibility:", visibility);
+        console.log("[Chat] After opening - opacity:", opacity);
+        console.log(
+          "[Chat] After opening - classList:",
+          this.chatWindow.classList.toString()
         );
+      }, 100);
 
-        const data = await response.json();
-
-        if (data.success && this.chatMessages) {
-          this.chatMessages.innerHTML = "";
-
-          data.data.forEach((msg) => {
-            this.displayMessage(msg);
-          });
-
-          // Lưu messages vào localStorage
-          this.saveMessagesToLocalStorage(data.data);
-
-          // Scroll to bottom
-          this.scrollToBottom();
-
-          // Đánh dấu cuộc hội thoại đã đọc
-          this.markConversationAsRead();
-        }
-      } catch (error) {
-        console.error("Error loading messages:", error);
-        // Load từ localStorage nếu API fail
-        this.loadMessagesFromLocalStorage();
-      }
+      this.chatInput?.focus();
+      this.startChat();
     }
+  }
 
-    /**
-     * Lưu tin nhắn vào localStorage
-     */
-    saveMessagesToLocalStorage(messages) {
-      if (!this.currentConversationId) return;
-      const key = `messages_${this.currentConversationId}`;
-      try {
-        localStorage.setItem(key, JSON.stringify(messages));
-      } catch (error) {
-        console.warn("Failed to save messages to localStorage:", error);
-      }
-    }
+  /**
+   * Đóng chat window
+   */
+  closeChatWindow() {
+    if (!this.chatWindow) return;
+    console.log("[Chat] Closing chat window");
+    this.chatWindow.classList.remove("active");
+    this.leaveConversation();
+  }
 
-    /**
-     * Tải tin nhắn từ localStorage
-     */
-    loadMessagesFromLocalStorage() {
-      if (!this.currentConversationId || !this.chatMessages) return;
-      const key = `messages_${this.currentConversationId}`;
-      try {
-        const messages = localStorage.getItem(key);
-        if (messages) {
-          this.chatMessages.innerHTML = "";
-          JSON.parse(messages).forEach((msg) => {
-            this.displayMessage(msg);
-          });
-          this.scrollToBottom();
-        }
-      } catch (error) {
-        console.warn("Failed to load messages from localStorage:", error);
-      }
-    }
+  /**
+   * Bắt đầu chat - tạo/lấy conversation
+   */
+  async startChat() {
+    console.log("[Chat] Starting chat...");
+    try {
+      const response = await fetch("/api/messages/start-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: this.currentUserId,
+        }),
+      });
 
-    /**
-     * Gửi tin nhắn
-     */
-    async sendMessage() {
-      const content = this.chatInput?.value.trim();
+      const data = await response.json();
+      console.log("[Chat] Start chat response:", data);
 
-      if (!content || !this.currentConversationId) return;
+      if (data.success) {
+        this.currentConversationId = data.data._id;
+        console.log("[Chat] Conversation ID:", this.currentConversationId);
 
-      try {
-        const response = await fetch("/api/messages/send", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            conversationId: this.currentConversationId,
-            content,
-            senderType: "client",
-            senderId: this.currentUserId,
-          }),
+        // Join room conversation
+        this.socket.emit("conversation:join", {
+          conversationId: this.currentConversationId,
+          userId: this.currentUserId,
+          userType: "client",
         });
 
-        const data = await response.json();
-
-        if (data.success) {
-          // Clear input
-          if (this.chatInput) {
-            this.chatInput.value = "";
-          }
-
-          // Stop typing indicator
-          this.stopTyping();
-
-          // Tin nhắn sẽ được nhận qua socket.on("message:new")
-        }
-      } catch (error) {
-        console.error("Error sending message:", error);
-        alert("Lỗi khi gửi tin nhắn");
+        // Load lịch sử tin nhắn
+        this.loadMessages();
       }
+    } catch (error) {
+      console.error("[Chat] Error starting chat:", error);
+      alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+    }
+  }
+
+  /**
+   * Tải lịch sử tin nhắn
+   */
+  async loadMessages() {
+    console.log("[Chat] Loading messages...");
+    try {
+      const response = await fetch(
+        `/api/messages/conversations/${this.currentConversationId}/messages`
+      );
+
+      const data = await response.json();
+      console.log("[Chat] Messages loaded:", data);
+
+      if (data.success && this.chatMessages) {
+        this.chatMessages.innerHTML = "";
+
+        data.data.forEach((msg) => {
+          this.displayMessage(msg);
+        });
+
+        // Scroll to bottom
+        this.scrollToBottom();
+
+        // Đánh dấu cuộc hội thoại đã đọc
+        this.markConversationAsRead();
+      }
+    } catch (error) {
+      console.error("[Chat] Error loading messages:", error);
+    }
+  }
+
+  /**
+   * Gửi tin nhắn
+   */
+  async sendMessage() {
+    const content = this.chatInput?.value.trim();
+
+    if (!content || !this.currentConversationId) {
+      console.warn(
+        "[Chat] Cannot send message - empty content or no conversation"
+      );
+      return;
     }
 
-    /**
-     * Hiển thị tin nhắn (client hoặc admin)
-     */
-    displayMessage(message) {
-      if (!this.chatMessages) return;
+    console.log("[Chat] Sending message:", content);
 
-      const isUserMessage = message.senderType === "client";
-      const messageDiv = document.createElement("div");
-      messageDiv.className = `message ${isUserMessage ? "user" : "bot"}`;
-      messageDiv.id = `msg-${message._id}`;
+    try {
+      const response = await fetch("/api/messages/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          conversationId: this.currentConversationId,
+          content,
+          senderType: "client",
+          senderId: this.currentUserId,
+        }),
+      });
 
-      const time = new Date(message.createdAt).toLocaleTimeString("vi-VN");
-      messageDiv.innerHTML = `
+      const data = await response.json();
+      console.log("[Chat] Send message response:", data);
+
+      if (data.success) {
+        // Clear input
+        if (this.chatInput) {
+          this.chatInput.value = "";
+        }
+
+        // Stop typing indicator
+        this.stopTyping();
+
+        // Tin nhắn sẽ được nhận qua socket.on("message:new")
+      }
+    } catch (error) {
+      console.error("[Chat] Error sending message:", error);
+      alert("Lỗi khi gửi tin nhắn. Vui lòng thử lại.");
+    }
+  }
+
+  /**
+   * Hiển thị tin nhắn (client hoặc admin)
+   */
+  displayMessage(message) {
+    if (!this.chatMessages) return;
+
+    const isUserMessage = message.senderType === "client";
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${isUserMessage ? "user" : "bot"}`;
+    messageDiv.id = `msg-${message._id}`;
+
+    const time = new Date(message.createdAt).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    messageDiv.innerHTML = `
       <div style="display: flex; flex-direction: column;">
-        <span>${message.content}</span>
-        <small style="margin-top: 4px; opacity: 0.7;">${time}</small>
+        <span>${this.escapeHtml(message.content)}</span>
+        <small style="margin-top: 4px; opacity: 0.7; font-size: 11px;">${time}</small>
       </div>
     `;
 
-      this.chatMessages.appendChild(messageDiv);
+    this.chatMessages.appendChild(messageDiv);
+    this.scrollToBottom();
+  }
 
-      // Lưu tin nhắn mới vào localStorage
-      if (this.currentConversationId) {
-        this.addMessageToLocalStorage(message);
-      }
+  /**
+   * Escape HTML để tránh XSS
+   */
+  escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
-      this.scrollToBottom();
+  /**
+   * Đánh dấu tin nhắn đã đọc
+   */
+  markMessageAsRead(messageId) {
+    const msgEl = document.getElementById(`msg-${messageId}`);
+    if (msgEl) {
+      msgEl.classList.add("read");
+    }
+  }
+
+  /**
+   * Xử lý typing indicator
+   */
+  handleTyping() {
+    if (!this.currentConversationId || !this.socket) return;
+
+    if (!this.isTyping) {
+      this.isTyping = true;
+      this.socket.emit("typing:start", {
+        conversationId: this.currentConversationId,
+        userId: this.currentUserId,
+        userName: "Khách hàng",
+      });
     }
 
-    /**
-     * Thêm tin nhắn vào localStorage
-     */
-    addMessageToLocalStorage(message) {
-      if (!this.currentConversationId) return;
-      const key = `messages_${this.currentConversationId}`;
-      try {
-        const existing = localStorage.getItem(key);
-        let messages = [];
-        if (existing) {
-          messages = JSON.parse(existing);
+    // Reset timeout
+    clearTimeout(this.typingTimeout);
+    this.typingTimeout = setTimeout(() => {
+      this.stopTyping();
+    }, 3000); // Stop typing sau 3 giây không nhập
+  }
+
+  /**
+   * Dừng typing indicator
+   */
+  stopTyping() {
+    if (!this.currentConversationId || !this.socket) return;
+
+    this.isTyping = false;
+    this.socket.emit("typing:stop", {
+      conversationId: this.currentConversationId,
+      userId: this.currentUserId,
+    });
+  }
+
+  /**
+   * Hiển thị "đang gõ..."
+   */
+  showTypingIndicator(data) {
+    if (!this.typingIndicator) return;
+
+    this.typingIndicator.classList.add("active");
+    this.typingIndicator.innerHTML = `
+      <div style="font-size: 12px; color: #999; padding: 8px;">
+        <em>${data.userName || "Admin"} đang gõ</em>
+        <span style="margin-left: 4px;">
+          <span>.</span><span>.</span><span>.</span>
+        </span>
+      </div>
+    `;
+  }
+
+  /**
+   * Ẩn typing indicator
+   */
+  hideTypingIndicator(data) {
+    if (!this.typingIndicator) return;
+
+    // setTimeout để tránh flicker
+    setTimeout(() => {
+      this.typingIndicator.classList.remove("active");
+      this.typingIndicator.innerHTML = "";
+    }, 500);
+  }
+
+  /**
+   * Đánh dấu cuộc hội thoại đã đọc
+   */
+  async markConversationAsRead() {
+    if (!this.currentConversationId) return;
+
+    try {
+      await fetch(
+        `/api/messages/conversations/${this.currentConversationId}/mark-read`,
+        {
+          method: "POST",
         }
-
-        // Kiểm tra nếu tin nhắn đã tồn tại
-        if (!messages.find((m) => m._id === message._id)) {
-          messages.push(message);
-          localStorage.setItem(key, JSON.stringify(messages));
-        }
-      } catch (error) {
-        console.warn("Failed to add message to localStorage:", error);
-      }
+      );
+    } catch (error) {
+      console.error("[Chat] Error marking conversation as read:", error);
     }
+  }
 
-    /**
-     * Đánh dấu tin nhắn đã đọc
-     */
-    markMessageAsRead(messageId) {
-      const msgEl = document.getElementById(`msg-${messageId}`);
-      if (msgEl) {
-        msgEl.classList.add("read");
-      }
-    }
-
-    /**
-     * Xử lý typing indicator
-     */
-    handleTyping() {
-      if (!this.currentConversationId || !this.socket) return;
-
-      if (!this.isTyping) {
-        this.isTyping = true;
-        this.socket.emit("typing:start", {
-          conversationId: this.currentConversationId,
-          userId: this.currentUserId,
-          userName: "Khách hàng",
-        });
-      }
-
-      // Reset timeout
-      clearTimeout(this.typingTimeout);
-      this.typingTimeout = setTimeout(() => {
-        this.stopTyping();
-      }, 3000); // Stop typing sau 3 giây không nhập
-    }
-
-    /**
-     * Dừng typing indicator
-     */
-    stopTyping() {
-      if (!this.currentConversationId || !this.socket) return;
-
-      this.isTyping = false;
-      this.socket.emit("typing:stop", {
+  /**
+   * Rời khỏi conversation
+   */
+  leaveConversation() {
+    if (this.currentConversationId && this.socket) {
+      console.log("[Chat] Leaving conversation:", this.currentConversationId);
+      this.socket.emit("conversation:leave", {
         conversationId: this.currentConversationId,
         userId: this.currentUserId,
       });
     }
 
-    /**
-     * Hiển thị "đang gõ..."
-     */
-    showTypingIndicator(data) {
-      if (!this.typingIndicator) return;
+    this.currentConversationId = null;
+  }
 
-      this.typingIndicator.classList.add("active");
-      this.typingIndicator.innerHTML = `
-      <div style="font-size: 12px; color: #999;">
-        <em>${data.userName || "Admin"} đang gõ...</em>
-        <span style="margin-left: 4px;">
-          <span></span><span></span><span></span>
-        </span>
-      </div>
-    `;
+  /**
+   * Xử lý cuộc hội thoại bị đóng
+   */
+  handleConversationClosed() {
+    if (this.chatMessages) {
+      const closedMsg = document.createElement("div");
+      closedMsg.style.cssText =
+        "text-align: center; color: #999; padding: 10px; font-style: italic;";
+      closedMsg.textContent = "Cuộc hội thoại đã được đóng";
+      this.chatMessages.appendChild(closedMsg);
     }
 
-    /**
-     * Ẩn typing indicator
-     */
-    hideTypingIndicator(data) {
-      if (!this.typingIndicator) return;
+    if (this.chatInput) {
+      this.chatInput.disabled = true;
+      this.chatInput.placeholder = "Cuộc hội thoại đã đóng";
+    }
 
-      // Có thể kiểm tra userId nếu có nhiều người gõ
-      // setTimeout để tránh flicker
+    if (this.sendChatBtn) {
+      this.sendChatBtn.disabled = true;
+    }
+  }
+
+  /**
+   * Scroll to bottom
+   */
+  scrollToBottom() {
+    if (this.chatMessages) {
       setTimeout(() => {
-        this.typingIndicator.classList.remove("active");
-      }, 500);
-    }
-
-    /**
-     * Đánh dấu cuộc hội thoại đã đọc
-     */
-    async markConversationAsRead() {
-      if (!this.currentConversationId) return;
-
-      try {
-        await fetch(
-          `/api/messages/conversations/${this.currentConversationId}/mark-read`,
-          {
-            method: "POST",
-          }
-        );
-      } catch (error) {
-        console.error("Error marking conversation as read:", error);
-      }
-    }
-
-    /**
-     * Rời khỏi conversation
-     */
-    leaveConversation() {
-      if (this.currentConversationId && this.socket) {
-        this.socket.emit("conversation:leave", {
-          conversationId: this.currentConversationId,
-          userId: this.currentUserId,
-        });
-      }
-
-      this.currentConversationId = null;
-    }
-
-    /**
-     * Xử lý cuộc hội thoại bị đóng
-     */
-    handleConversationClosed() {
-      if (this.chatMessages) {
-        this.chatMessages.innerHTML += `
-        <div style="text-align: center; color: #999; padding: 10px;">
-          <em>Cuộc hội thoại đã được đóng</em>
-        </div>
-      `;
-      }
-
-      if (this.chatInput) {
-        this.chatInput.disabled = true;
-      }
-
-      if (this.sendChatBtn) {
-        this.sendChatBtn.disabled = true;
-      }
-    }
-
-    /**
-     * Scroll to bottom
-     */
-    scrollToBottom() {
-      if (this.chatMessages) {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-      }
+      }, 100);
     }
-  } // End of: class RealtimeMessagingClient
-} // End of: if (typeof RealtimeMessagingClient === "undefined")
-
-// Khởi tạo khi DOM ready - NGOÀI if block để đảm bảo chỉ chạy 1 lần
-if (typeof window.initializeRealtimeChat === "undefined") {
-  window.initializeRealtimeChat = function () {
-    console.log("[Chat] Attempting to initialize...");
-
-    // Chỉ khởi tạo 1 lần
-    if (window.realtimeChat) {
-      console.log("[Chat] Already initialized");
-      return;
-    }
-
-    const init = () => {
-      console.log("[Chat] Initializing RealtimeMessagingClient");
-      window.realtimeChat = new RealtimeMessagingClient();
-    };
-
-    if (document.readyState === "loading") {
-      // DOM still loading
-      document.addEventListener("DOMContentLoaded", init);
-    } else {
-      // DOM already loaded
-      init();
-    }
-  };
+  }
 }
 
-// Try to initialize immediately
-window.initializeRealtimeChat();
+// ==================== INITIALIZATION ====================
+// Khởi tạo khi DOM đã sẵn sàng
+function initializeRealtimeChat() {
+  console.log("[Chat] DOM ready, initializing chat...");
+
+  // Kiểm tra xem đã khởi tạo chưa
+  if (window.realtimeChat) {
+    console.log("[Chat] Already initialized, skipping...");
+    return;
+  }
+
+  // Kiểm tra các elements cần thiết
+  const chatWindow = document.getElementById("chatWindow");
+  const openBtn = document.getElementById("open-mesage");
+
+  console.log("[Chat] Checking required elements:");
+  console.log("[Chat] - chatWindow:", chatWindow);
+  console.log("[Chat] - openBtn:", openBtn);
+
+  if (!chatWindow) {
+    console.error("[Chat] Cannot find #chatWindow element");
+    return;
+  }
+
+  if (!openBtn) {
+    console.error("[Chat] Cannot find #open-mesage button");
+    return;
+  }
+
+  // Khởi tạo chat client
+  try {
+    window.realtimeChat = new RealtimeMessagingClient();
+    console.log("[Chat] Chat client initialized successfully");
+  } catch (error) {
+    console.error("[Chat] Error initializing chat client:", error);
+  }
+}
+
+// Đảm bảo chỉ khởi tạo 1 lần
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeRealtimeChat);
+} else {
+  // DOM đã sẵn sàng
+  initializeRealtimeChat();
+}
