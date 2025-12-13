@@ -146,12 +146,13 @@ class MessageApiController {
    */
   static async getConversations(req, res) {
     try {
-      const { search, status, priority } = req.query;
+      const { search, status, priority, unreadOnly } = req.query;
 
       const conversations = await MessageService.getAllConversations({
         search,
         status,
         priority,
+        unreadOnly, // ✅ Thêm parameter mới
       });
 
       res.json({
@@ -248,24 +249,18 @@ class MessageApiController {
 
   /**
    * POST /api/messages/conversations/:conversationId/mark-read
-   * Đánh dấu cuộc hội thoại đã đọc
+   * ✅ BỎ tự động mark as read khi click vào conversation
    */
   static async markConversationAsRead(req, res) {
     try {
       const { conversationId } = req.params;
 
-      await MessageService.markConversationAsRead(conversationId);
-
-      // Broadcast qua socket.io
-      if (global.io) {
-        global.io
-          .to(`conversation:${conversationId}`)
-          .emit("conversation:read", { conversationId });
-      }
+      // ✅ KHÔNG GỌI markConversationAsRead nữa
+      console.log("[MessageApi] Mark as read called but doing nothing");
 
       res.json({
         success: true,
-        message: "Conversation marked as read",
+        message: "No action taken",
       });
     } catch (error) {
       console.error("Error in markConversationAsRead:", error);

@@ -15,6 +15,10 @@ const getCurrentUser = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
+        userId: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        avatar: user.avatar,
         user: user.toJSON(),
       },
     });

@@ -117,6 +117,14 @@ class MessageService {
         { new: true }
       );
 
+      // ✅ QUAN TRỌNG: Nếu là admin reply → tự động mark as read
+      if (senderType === "admin") {
+        console.log(
+          "[MessageService] Admin replied, marking conversation as read"
+        );
+        await this.markConversationAsReadByAdmin(conversationId);
+      }
+
       return message;
     } catch (error) {
       console.error("Error sending message:", error);
@@ -454,6 +462,52 @@ class MessageService {
       return stats;
     } catch (error) {
       console.error("Error getting conversation stats:", error);
+      throw error;
+    }
+  }
+  /**
+   * Đánh dấu cuộc hội thoại đã đọc CHỈ KHI ADMIN REPLY
+   */
+  static async markConversationAsReadByAdmin(conversationId) {
+    try {
+      await Message.updateMany(
+        {
+          conversationId,
+          senderType: "client", // ✅ CHỈ đánh dấu tin nhắn từ client
+          read: false,
+        },
+        {
+          read: true,
+          readAt: new Date(),
+        }
+      );
+
+      // Reset unread count CHỈ cho admin
+      await Conversation.findByIdAndUpdate(conversationId, {
+        $set: {
+          "unreadCount.admin": 0,
+        },
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error marking conversation as read by admin:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * ✅ CẬP NHẬT: Đừng tự động mark as read, chỉ reset unread count
+   */
+  static async markConversationAsRead(conversationId) {
+    try {
+      // Không làm gì cả, hoặc chỉ log
+      console.log(
+        "[MessageService] markConversationAsRead called - doing nothing"
+      );
+      return true;
+    } catch (error) {
+      console.error("Error marking conversation as read:", error);
       throw error;
     }
   }
