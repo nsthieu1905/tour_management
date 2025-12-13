@@ -562,35 +562,30 @@ class AdminRealtimeMessaging {
       minute: "2-digit",
     });
 
-    // 🔴 FIX: Handle senderId có thể là object (User) hoặc string (guest)
+    // Handle senderId có thể là object (User) hoặc string (guest)
     let senderName;
     if (isAdmin) {
       senderName = "Admin";
     } else {
-      // senderId có thể là object {name, email} hoặc string "guest_xxx"
       if (typeof message.senderId === "object" && message.senderId?.name) {
         senderName = message.senderId.name;
       } else if (typeof message.senderId === "string") {
-        // Guest user
         senderName = "Khách hàng";
       } else {
         senderName = "Khách hàng";
       }
     }
 
+    // 🔴 FIX: Render tin nhắn không bị dọc
     return `
       <div class="message-container ${
         isAdmin ? "admin-message" : "client-message"
-      } mb-4">
-        <div style="${
-          isAdmin ? "margin-left: auto; max-width: 70%;" : "max-width: 70%;"
-        }">
-          <div class="message-content bg-${
-            isAdmin ? "blue-500 text-white" : "gray-200"
-          } rounded-lg p-3 inline-block">
+      }">
+        <div style="max-width: 70%; ${isAdmin ? "margin-left: auto;" : ""}">
+          <div class="message-content">
             ${this.escapeHtml(message.content)}
           </div>
-          <div class="message-time text-xs text-gray-400 mt-1">
+          <div class="message-time">
             ${this.escapeHtml(senderName)} • ${time}
           </div>
         </div>
