@@ -17,6 +17,7 @@ class MessageService {
       const isGuestUser = !mongoose.Types.ObjectId.isValid(userId);
 
       let conversation;
+      let isNewConversation = false;
 
       if (isGuestUser) {
         // Guest user - query theo string userId
@@ -38,6 +39,9 @@ class MessageService {
       }
 
       if (!conversation) {
+        // 🔴 FIX: Đánh dấu là conversation mới
+        isNewConversation = true;
+
         // Tạo cuộc hội thoại mới
         let participantList = [];
 
@@ -55,6 +59,9 @@ class MessageService {
           status: "active",
         });
         await conversation.save();
+
+        // 🔴 FIX: Thêm flag để biết đây là conversation mới
+        conversation.__isNew = true;
       }
 
       return conversation;
@@ -77,6 +84,11 @@ class MessageService {
         recipientId,
         attachments = [],
       } = data;
+
+      // Validate conversationId
+      if (!conversationId || conversationId === "undefined") {
+        throw new Error("Invalid conversationId");
+      }
 
       // Tạo tin nhắn mới
       const message = new Message({
@@ -117,19 +129,61 @@ class MessageService {
    */
   static async getMessages(conversationId, limit = 50, skip = 0) {
     try {
+      // 🔴 FIX: Validate conversationId
+      if (
+        !conversationId ||
+        conversationId === "undefined" ||
+        conversationId === "null"
+      ) {
+        throw new Error("Invalid conversationId");
+      }
+
+      console.log("[MessageService] Getting messages for:", conversationId);
+
+      // 🔴 FIX: KHÔNG populate senderId vì nó có thể là string (guest) hoặc ObjectId
+      // Thay vào đó, lấy messages trước, sau đó manually populate nếu cần
       const messages = await Message.find({
         conversationId,
         isDeleted: false,
       })
-        .populate("senderId", "name email avatar")
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip(skip)
         .lean();
 
-      return messages.reverse(); // Sắp xếp lại từ cũ đến mới
+      console.log("[MessageService] Found messages:", messages.length);
+
+      // 🔴 FIX: Manually populate cho ObjectId users, skip guest users
+      const populatedMessages = await Promise.all(
+        messages.map(async (msg) => {
+          // Nếu senderId là ObjectId hợp lệ → populate
+          if (msg.senderId && mongoose.Types.ObjectId.isValid(msg.senderId)) {
+            try {
+              const User = mongoose.model("User");
+              const user = await User.findById(msg.senderId)
+                .select("name email avatar")
+                .lean();
+
+              if (user) {
+                msg.senderId = user;
+              }
+            } catch (err) {
+              console.warn(
+                "[MessageService] Could not populate senderId:",
+                msg.senderId
+              );
+              // Keep original senderId if populate fails
+            }
+          }
+          // Nếu senderId là string (guest) → giữ nguyên
+
+          return msg;
+        })
+      );
+
+      return populatedMessages.reverse(); // Sắp xếp lại từ cũ đến mới
     } catch (error) {
-      console.error("Error getting messages:", error);
+      console.error("[MessageService] Error getting messages:", error);
       throw error;
     }
   }
@@ -176,12 +230,30 @@ class MessageService {
         ];
       }
 
+      console.log("[MessageService] getAllConversations query:", query);
+
       // Don't populate participantIds since it can contain mixed types (ObjectId + string)
-      // The admin doesn't need full participant details for the conversation list
       const conversations = await Conversation.find(query)
         .populate("closedBy", "name email")
         .sort({ lastMessageAt: -1 })
         .lean();
+
+      // 🔴 FIX: Validate và log conversations
+      console.log(
+        "[MessageService] Found conversations:",
+        conversations.length
+      );
+
+      conversations.forEach((conv, index) => {
+        if (!conv._id) {
+          console.error(
+            `[MessageService] Conversation ${index} missing _id:`,
+            conv
+          );
+        } else {
+          console.log(`[MessageService] Conv ${index}: _id = ${conv._id}`);
+        }
+      });
 
       return conversations;
     } catch (error) {

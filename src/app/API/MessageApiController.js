@@ -22,6 +22,17 @@ class MessageApiController {
         false
       );
 
+      // 🔴 FIX: Nếu là conversation mới → notify admin
+      if (conversation.__isNew || conversation.isNew) {
+        console.log("[MessageApi] New conversation created, notifying admins");
+        if (global.io) {
+          global.io.to("admin-messages").emit("conversation:new", {
+            conversationId: conversation._id,
+            userId: userId,
+          });
+        }
+      }
+
       res.json({
         success: true,
         data: conversation,
@@ -69,11 +80,11 @@ class MessageApiController {
 
       // 🔴 BROADCAST REALTIME qua Socket.io
       if (global.io) {
-        // Use the conversationId from the saved message to ensure consistency
         const messageData = message.toObject ? message.toObject() : message;
         const roomName = `conversation:${messageData.conversationId}`;
+
         console.log(
-          `[MessageApi] Broadcasting to room: ${roomName}, senderType: ${senderType}, content: ${content}`
+          `[MessageApi] Broadcasting to room: ${roomName}, senderType: ${senderType}`
         );
 
         // Broadcast tin nhắn mới tới room (admin + client trong room)
@@ -87,8 +98,9 @@ class MessageApiController {
           read: false,
         });
 
-        // Nếu là tin từ client → Notify admin trên danh sách cuộc
+        // Nếu là tin từ client → Notify admin
         if (senderType === "client") {
+          console.log("[MessageApi] Notifying admins about client message");
           global.io.to("admin-messages").emit("conversation:update", {
             conversationId,
             lastMessage: content.substring(0, 100),
@@ -98,17 +110,18 @@ class MessageApiController {
         }
 
         // Nếu là tin từ admin → Notify client
-        if (senderType === "admin") {
+        if (senderType === "admin" && recipientId) {
           const clientIdStr = recipientId?.toString
             ? recipientId.toString()
             : recipientId;
+          console.log("[MessageApi] Notifying client:", clientIdStr);
           global.io.to(`client:${clientIdStr}`).emit("message:new", {
-            _id: message._id,
-            conversationId: message.conversationId,
-            senderId: message.senderId,
-            senderType: message.senderType,
-            content: message.content,
-            createdAt: message.createdAt,
+            _id: messageData._id,
+            conversationId: messageData.conversationId,
+            senderId: messageData.senderId,
+            senderType: messageData.senderType,
+            content: messageData.content,
+            createdAt: messageData.createdAt,
             read: false,
           });
         }
@@ -194,21 +207,41 @@ class MessageApiController {
       const { conversationId } = req.params;
       const { limit = 50, skip = 0 } = req.query;
 
+      console.log(
+        "[MessageApi] Getting messages for conversation:",
+        conversationId
+      );
+
+      // 🔴 FIX: Validate conversationId
+      if (
+        !conversationId ||
+        conversationId === "undefined" ||
+        conversationId === "null"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid conversationId",
+        });
+      }
+
       const messages = await MessageService.getMessages(
         conversationId,
         parseInt(limit),
         parseInt(skip)
       );
 
+      console.log("[MessageApi] Found messages:", messages.length);
+
       res.json({
         success: true,
         data: messages,
       });
     } catch (error) {
-      console.error("Error in getMessages:", error);
+      console.error("[MessageApi] Error in getMessages:", error);
       res.status(500).json({
         success: false,
         message: error.message,
+        error: error.toString(),
       });
     }
   }
