@@ -4,7 +4,7 @@ const conversationSchema = new mongoose.Schema(
   {
     participantIds: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.Mixed, // String hoặc ObjectId
         ref: "User",
         required: true,
       },

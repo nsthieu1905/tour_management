@@ -15,8 +15,9 @@
   <body class="{{bodyClass}}" {{#if user}}data-client-id="{{user._id}}" data-user-id="{{user._id}}"{{/if}}>
     {{> header_client}} {{{body}}} {{> footer_client}}
 
-    <!-- Socket.io for real-time notifications -->
+    <!-- Socket.io for real-time notifications & messaging -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="/client/js/notifications.js"></script>
+    <script src="/client/js/chatbox-realtime.js"></script>
   </body>
 </html>

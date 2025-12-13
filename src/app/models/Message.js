@@ -9,7 +9,7 @@ const messageSchema = new mongoose.Schema(
       index: true,
     },
     senderId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed, // String hoặc ObjectId
       ref: "User",
       required: true,
     },
@@ -19,7 +19,7 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
     recipientId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed, // String hoặc ObjectId
       ref: "User",
       required: false,
     },

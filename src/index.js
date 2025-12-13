@@ -146,40 +146,78 @@ io.on("connection", (socket) => {
   // ===== MESSAGING EVENTS =====
 
   /**
-   * Message:send - Gửi tin nhắn
+   * Conversation:join - Join vào ROOM của cuộc hội thoại
+   * Client join khi mở chat, Admin join để quản lý tin nhắn
    */
-  socket.on("message:send", (data) => {
-    const { conversationId, message } = data;
+  socket.on("conversation:join", (data) => {
+    const { conversationId, userId, userType = "client" } = data;
+    const roomName = `conversation:${conversationId}`;
 
-    // Broadcast đến tất cả user trong cuộc hội thoại
-    io.to(`conversation:${conversationId}`).emit("message:new", message);
+    socket.join(roomName);
+    console.log(`[Socket] ${userType}:${userId} joined ${roomName}`);
 
-    // Notify admin nếu tin nhắn từ client
-    if (message.senderType === "client") {
-      io.to("admin-messages").emit("message:new", message);
-    }
-
-    // Notify client nếu tin nhắn từ admin
-    if (message.senderType === "admin") {
-      const clientIdStr = message.recipientId?.toString
-        ? message.recipientId.toString()
-        : message.recipientId;
-      io.to(`client:${clientIdStr}`).emit("message:new", message);
-    }
+    // Notify các user khác trong room
+    socket.to(roomName).emit("user:joined", {
+      userId,
+      userType,
+      timestamp: new Date(),
+    });
   });
 
   /**
-   * Conversation:join - Join vào phòng cuộc hội thoại
+   * Conversation:leave - Rời khỏi ROOM
    */
-  socket.on("conversation:join", (conversationId) => {
-    socket.join(`conversation:${conversationId}`);
+  socket.on("conversation:leave", (data) => {
+    const { conversationId, userId } = data;
+    const roomName = `conversation:${conversationId}`;
+
+    socket.leave(roomName);
+    console.log(`[Socket] ${userId} left ${roomName}`);
+
+    socket.to(roomName).emit("user:left", {
+      userId,
+      timestamp: new Date(),
+    });
   });
 
   /**
-   * Conversation:leave - Rời khỏi phòng cuộc hội thoại
+   * Typing:start - Người dùng bắt đầu gõ
    */
-  socket.on("conversation:leave", (conversationId) => {
-    socket.leave(`conversation:${conversationId}`);
+  socket.on("typing:start", (data) => {
+    const { conversationId, userId, userName } = data;
+    const roomName = `conversation:${conversationId}`;
+
+    // Broadcast tới những người khác trong room (không gửi lại cho người gửi)
+    socket.to(roomName).emit("typing:active", {
+      userId,
+      userName,
+    });
+  });
+
+  /**
+   * Typing:stop - Người dùng dừng gõ
+   */
+  socket.on("typing:stop", (data) => {
+    const { conversationId, userId } = data;
+    const roomName = `conversation:${conversationId}`;
+
+    socket.to(roomName).emit("typing:inactive", {
+      userId,
+    });
+  });
+
+  /**
+   * Message:read - Đánh dấu tin nhắn đã đọc
+   */
+  socket.on("message:read", (data) => {
+    const { conversationId, messageId, userId } = data;
+    const roomName = `conversation:${conversationId}`;
+
+    io.to(roomName).emit("message:marked-read", {
+      messageId,
+      userId,
+      timestamp: new Date(),
+    });
   });
 
   /**

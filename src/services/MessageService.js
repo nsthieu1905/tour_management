@@ -8,16 +8,49 @@ class MessageService {
    */
   static async findOrCreateConversation(userId, isAdmin = false) {
     try {
-      // Tìm cuộc hội thoại hiện tại
-      let conversation = await Conversation.findOne({
-        participantIds: { $all: [userId] },
-        status: { $ne: "closed" },
-      }).sort({ updatedAt: -1 });
+      // Validate userId
+      if (!userId) {
+        throw new Error("userId is required");
+      }
+
+      // Nếu là guest user (string không phải ObjectId), chỉ cần tạo mới không query
+      const isGuestUser = !mongoose.Types.ObjectId.isValid(userId);
+
+      let conversation;
+
+      if (isGuestUser) {
+        // Guest user - query theo string userId
+        conversation = await Conversation.findOne({
+          participantIds: userId,
+          status: { $ne: "closed" },
+        }).sort({ updatedAt: -1 });
+      } else {
+        // User đã login - query theo ObjectId
+        let queryUserId = userId;
+        if (typeof userId === "string") {
+          queryUserId = new mongoose.Types.ObjectId(userId);
+        }
+
+        conversation = await Conversation.findOne({
+          participantIds: queryUserId,
+          status: { $ne: "closed" },
+        }).sort({ updatedAt: -1 });
+      }
 
       if (!conversation) {
         // Tạo cuộc hội thoại mới
+        let participantList = [];
+
+        if (!isGuestUser && mongoose.Types.ObjectId.isValid(userId)) {
+          // User đã login
+          participantList = [new mongoose.Types.ObjectId(userId)];
+        } else {
+          // Guest user - lưu userId string
+          participantList = [userId];
+        }
+
         conversation = new Conversation({
-          participantIds: [userId],
+          participantIds: participantList,
           subject: isAdmin ? `Support from admin` : `Chat with customer`,
           status: "active",
         });
@@ -143,8 +176,9 @@ class MessageService {
         ];
       }
 
+      // Don't populate participantIds since it can contain mixed types (ObjectId + string)
+      // The admin doesn't need full participant details for the conversation list
       const conversations = await Conversation.find(query)
-        .populate("participantIds", "name email avatar phone")
         .populate("closedBy", "name email")
         .sort({ lastMessageAt: -1 })
         .lean();

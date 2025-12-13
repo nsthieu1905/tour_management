@@ -1,0 +1,350 @@
+const MessageService = require("../../services/MessageService");
+const Conversation = require("../models/Conversation");
+
+class MessageApiController {
+  /**
+   * POST /api/messages/start-chat
+   * Client tạo hoặc lấy cuộc hội thoại
+   */
+  static async startChat(req, res) {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "userId is required",
+        });
+      }
+
+      const conversation = await MessageService.findOrCreateConversation(
+        userId,
+        false
+      );
+
+      res.json({
+        success: true,
+        data: conversation,
+      });
+    } catch (error) {
+      console.error("Error in startChat:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /api/messages/send
+   * Gửi tin nhắn + broadcast realtime
+   */
+  static async sendMessage(req, res) {
+    try {
+      const { conversationId, content, senderType, senderId, recipientId } =
+        req.body;
+
+      if (!conversationId || !content || !senderType) {
+        return res.status(400).json({
+          success: false,
+          message: "conversationId, content, and senderType are required",
+        });
+      }
+
+      // Validate senderId
+      if (!senderId) {
+        return res.status(400).json({
+          success: false,
+          message: "senderId is required",
+        });
+      }
+
+      const message = await MessageService.sendMessage({
+        conversationId,
+        senderId,
+        senderType,
+        content,
+        recipientId,
+      });
+
+      // 🔴 BROADCAST REALTIME qua Socket.io
+      if (global.io) {
+        // Use the conversationId from the saved message to ensure consistency
+        const messageData = message.toObject ? message.toObject() : message;
+        const roomName = `conversation:${messageData.conversationId}`;
+        console.log(
+          `[MessageApi] Broadcasting to room: ${roomName}, senderType: ${senderType}, content: ${content}`
+        );
+
+        // Broadcast tin nhắn mới tới room (admin + client trong room)
+        global.io.to(roomName).emit("message:new", {
+          _id: messageData._id,
+          conversationId: messageData.conversationId,
+          senderId: messageData.senderId,
+          senderType: messageData.senderType,
+          content: messageData.content,
+          createdAt: messageData.createdAt,
+          read: false,
+        });
+
+        // Nếu là tin từ client → Notify admin trên danh sách cuộc
+        if (senderType === "client") {
+          global.io.to("admin-messages").emit("conversation:update", {
+            conversationId,
+            lastMessage: content.substring(0, 100),
+            lastMessageAt: new Date(),
+            lastMessageFrom: "client",
+          });
+        }
+
+        // Nếu là tin từ admin → Notify client
+        if (senderType === "admin") {
+          const clientIdStr = recipientId?.toString
+            ? recipientId.toString()
+            : recipientId;
+          global.io.to(`client:${clientIdStr}`).emit("message:new", {
+            _id: message._id,
+            conversationId: message.conversationId,
+            senderId: message.senderId,
+            senderType: message.senderType,
+            content: message.content,
+            createdAt: message.createdAt,
+            read: false,
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        data: message,
+      });
+    } catch (error) {
+      console.error("Error in sendMessage:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * GET /api/messages/conversations
+   * Lấy danh sách cuộc hội thoại (admin)
+   */
+  static async getConversations(req, res) {
+    try {
+      const { search, status, priority } = req.query;
+
+      const conversations = await MessageService.getAllConversations({
+        search,
+        status,
+        priority,
+      });
+
+      res.json({
+        success: true,
+        data: conversations,
+      });
+    } catch (error) {
+      console.error("Error in getConversations:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * GET /api/messages/conversations/:conversationId
+   * Lấy chi tiết một cuộc hội thoại
+   */
+  static async getConversationDetail(req, res) {
+    try {
+      const { conversationId } = req.params;
+
+      // Don't populate participantIds since it contains mixed types
+      const conversation = await Conversation.findById(conversationId);
+
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          message: "Conversation not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        data: conversation,
+      });
+    } catch (error) {
+      console.error("Error in getConversationDetail:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * GET /api/messages/conversations/:conversationId/messages
+   * Lấy danh sách tin nhắn của một cuộc hội thoại
+   */
+  static async getMessages(req, res) {
+    try {
+      const { conversationId } = req.params;
+      const { limit = 50, skip = 0 } = req.query;
+
+      const messages = await MessageService.getMessages(
+        conversationId,
+        parseInt(limit),
+        parseInt(skip)
+      );
+
+      res.json({
+        success: true,
+        data: messages,
+      });
+    } catch (error) {
+      console.error("Error in getMessages:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /api/messages/conversations/:conversationId/mark-read
+   * Đánh dấu cuộc hội thoại đã đọc
+   */
+  static async markConversationAsRead(req, res) {
+    try {
+      const { conversationId } = req.params;
+
+      await MessageService.markConversationAsRead(conversationId);
+
+      // Broadcast qua socket.io
+      if (global.io) {
+        global.io
+          .to(`conversation:${conversationId}`)
+          .emit("conversation:read", { conversationId });
+      }
+
+      res.json({
+        success: true,
+        message: "Conversation marked as read",
+      });
+    } catch (error) {
+      console.error("Error in markConversationAsRead:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /api/messages/conversations/:conversationId/close
+   * Đóng cuộc hội thoại
+   */
+  static async closeConversation(req, res) {
+    try {
+      const { conversationId } = req.params;
+      const { adminId } = req.body;
+
+      const conversation = await MessageService.closeConversation(
+        conversationId,
+        adminId
+      );
+
+      // Broadcast qua socket.io
+      if (global.io) {
+        global.io
+          .to(`conversation:${conversationId}`)
+          .emit("conversation:closed", { conversationId });
+      }
+
+      res.json({
+        success: true,
+        data: conversation,
+      });
+    } catch (error) {
+      console.error("Error in closeConversation:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * POST /api/messages/conversations/:conversationId/reopen
+   * Mở lại cuộc hội thoại
+   */
+  static async reopenConversation(req, res) {
+    try {
+      const { conversationId } = req.params;
+
+      const conversation = await MessageService.reopenConversation(
+        conversationId
+      );
+
+      res.json({
+        success: true,
+        data: conversation,
+      });
+    } catch (error) {
+      console.error("Error in reopenConversation:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/messages/:messageId
+   * Xóa tin nhắn
+   */
+  static async deleteMessage(req, res) {
+    try {
+      const { messageId } = req.params;
+
+      await MessageService.deleteMessage(messageId);
+
+      res.json({
+        success: true,
+        message: "Message deleted",
+      });
+    } catch (error) {
+      console.error("Error in deleteMessage:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /**
+   * GET /api/messages/stats
+   * Lấy thống kê
+   */
+  static async getStats(req, res) {
+    try {
+      const stats = await MessageService.getConversationStats();
+
+      res.json({
+        success: true,
+        data: stats,
+      });
+    } catch (error) {
+      console.error("Error in getStats:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+}
+
+module.exports = MessageApiController;
