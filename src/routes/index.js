@@ -16,10 +16,8 @@ const clientAuthRoutes = require("./client/auth");
 const favoriteRoutes = require("./client/favorites");
 const bookingRoutes = require("./client/bookings");
 
-// Notifications
+// API
 const notificationRoutes = require("./api/notifications");
-
-// Messages
 const messageRoutes = require("./api/messages");
 
 function route(app) {

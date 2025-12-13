@@ -49,6 +49,7 @@ class RealtimeMessagingClient {
     this.typingTimeout = null;
     this.isConversationLoaded = false; // ✅ Track xem đã load conversation chưa
     this.hasShownGreeting = false; // ✅ Track xem đã hiện greeting chưa
+    this.isUserLoaded = false; // ✅ Track xem đã load user info chưa
 
     // DOM elements
     this.chatWindow = document.getElementById("chatWindow");
@@ -74,21 +75,80 @@ class RealtimeMessagingClient {
 
     this.attachEventListeners();
     this.initSocket();
-    this.getCurrentUserFromDom();
+    this.loadCurrentUser();
 
     console.log("[Chat] Initialization complete");
   }
 
   /**
-   * Lấy user ID từ DOM (login)
+   * ✅ Lấy user ID từ API (nếu login) hoặc localStorage
    */
-  getCurrentUserFromDom() {
-    this.currentUserId =
-      localStorage.getItem("userId") ||
-      document.body.dataset.userId ||
-      "guest_" + Math.random().toString(36).substr(2, 9);
+  async loadCurrentUser() {
+    try {
+      // Thử lấy user từ API (nếu đã login)
+      const response = await fetch("/api/users/current-user");
+      const data = await response.json();
 
-    console.log("[Chat] Current user:", this.currentUserId);
+      if (data.success && data.data?.userId) {
+        // User đã login
+        this.currentUserId = data.data.userId;
+        console.log("[Chat] Logged-in user ID:", this.currentUserId);
+
+        // ✅ Load conversation ID từ localStorage (dùng real userId)
+        this.currentConversationId = localStorage.getItem(
+          `conversation_${this.currentUserId}`
+        );
+
+        // ✅ Load greeting state
+        this.hasShownGreeting =
+          localStorage.getItem(`greeting_shown_${this.currentUserId}`) ===
+          "true";
+
+        console.log(
+          "[Chat] Restored conversation ID:",
+          this.currentConversationId
+        );
+      } else {
+        // User chưa login, dùng guest ID
+        this.currentUserId =
+          localStorage.getItem("guestId") ||
+          "guest_" + Math.random().toString(36).substr(2, 9);
+
+        localStorage.setItem("guestId", this.currentUserId);
+
+        this.currentConversationId = localStorage.getItem(
+          `conversation_${this.currentUserId}`
+        );
+
+        this.hasShownGreeting =
+          localStorage.getItem(`greeting_shown_${this.currentUserId}`) ===
+          "true";
+
+        console.log("[Chat] Guest user ID:", this.currentUserId);
+      }
+    } catch (error) {
+      console.error("[Chat] Error loading current user:", error);
+
+      // Fallback to guest ID
+      this.currentUserId =
+        localStorage.getItem("guestId") ||
+        "guest_" + Math.random().toString(36).substr(2, 9);
+
+      localStorage.setItem("guestId", this.currentUserId);
+
+      this.currentConversationId = localStorage.getItem(
+        `conversation_${this.currentUserId}`
+      );
+
+      this.hasShownGreeting =
+        localStorage.getItem(`greeting_shown_${this.currentUserId}`) === "true";
+
+      console.log("[Chat] Fallback to guest user ID:", this.currentUserId);
+    } finally {
+      // ✅ Đánh dấu đã load user xong
+      this.isUserLoaded = true;
+      console.log("[Chat] User loading complete");
+    }
   }
 
   /**
@@ -221,15 +281,63 @@ class RealtimeMessagingClient {
 
       this.chatInput?.focus();
 
-      // ✅ CHỈ startChat nếu chưa load conversation
-      if (!this.isConversationLoaded) {
-        this.startChat();
+      // ✅ Chờ user loading xong
+      if (!this.isUserLoaded) {
+        console.log("[Chat] Waiting for user to load...");
+        const checkUserLoaded = setInterval(() => {
+          if (this.isUserLoaded) {
+            clearInterval(checkUserLoaded);
+            this.proceedChatOpen();
+          }
+        }, 50);
+        // Timeout sau 5s
+        setTimeout(() => clearInterval(checkUserLoaded), 5000);
       } else {
-        // Đã có conversation, chỉ cần scroll và mark as read
-        console.log("[Chat] Conversation already loaded, just scrolling");
+        this.proceedChatOpen();
+      }
+    }
+  }
+
+  /**
+   * ✅ Logic mở chat sau khi user đã load
+   */
+  proceedChatOpen() {
+    // ✅ Kiểm tra xem đã có conversation ID từ localStorage không
+    if (
+      this.currentConversationId &&
+      this.currentConversationId !== "undefined"
+    ) {
+      // Đã có conversation, chỉ cần load messages và mark as read
+      console.log(
+        "[Chat] Conversation already exists:",
+        this.currentConversationId
+      );
+
+      // ✅ QUAN TRỌNG: Join room conversation ngay (để nhận socket events)
+      if (this.socket) {
+        console.log(
+          "[Chat] Joining conversation room:",
+          this.currentConversationId
+        );
+        this.socket.emit("conversation:join", {
+          conversationId: this.currentConversationId,
+          userId: this.currentUserId,
+          userType: "client",
+        });
+      }
+
+      if (!this.isConversationLoaded) {
+        this.loadMessages();
+        this.isConversationLoaded = true;
+      } else {
+        // Đã load rồi, chỉ cần scroll
         this.scrollToBottom();
         this.markConversationAsRead();
       }
+    } else {
+      // Chưa có conversation, tạo mới
+      console.log("[Chat] No conversation found, starting new chat");
+      this.startChat();
     }
   }
 
@@ -264,7 +372,15 @@ class RealtimeMessagingClient {
       if (data.success) {
         this.currentConversationId = data.data._id;
         this.isConversationLoaded = true; // ✅ Đánh dấu đã load
+
+        // ✅ Lưu conversation ID vào localStorage (persistence)
+        localStorage.setItem(
+          `conversation_${this.currentUserId}`,
+          this.currentConversationId
+        );
+
         console.log("[Chat] Conversation ID:", this.currentConversationId);
+        console.log("[Chat] Saved conversation ID to localStorage");
 
         // Join room conversation
         this.socket.emit("conversation:join", {
@@ -344,6 +460,9 @@ class RealtimeMessagingClient {
     // ✅ CHỈ hiện 1 lần, tránh duplicate
     if (this.hasShownGreeting) return;
     this.hasShownGreeting = true;
+
+    // ✅ Lưu vào localStorage (persistence across reload)
+    localStorage.setItem(`greeting_shown_${this.currentUserId}`, "true");
 
     const greetingDiv = document.createElement("div");
     greetingDiv.className = "message bot greeting-message"; // ✅ Thêm class để dễ identify
@@ -635,6 +754,11 @@ class RealtimeMessagingClient {
       });
     }
 
+    // ✅ Xóa conversation ID từ localStorage
+    localStorage.removeItem(`conversation_${this.currentUserId}`);
+    // ✅ Xóa greeting state từ localStorage
+    localStorage.removeItem(`greeting_shown_${this.currentUserId}`);
+
     // Reset states
     this.currentConversationId = null;
     this.isConversationLoaded = false;
@@ -687,12 +811,18 @@ function initializeRealtimeChat() {
   console.log("[Chat] - openBtn:", openBtn);
 
   if (!chatWindow) {
-    console.error("[Chat] Cannot find #chatWindow element");
+    console.error(
+      "[Chat] Cannot find #chatWindow element, retrying in 100ms..."
+    );
+    setTimeout(initializeRealtimeChat, 100);
     return;
   }
 
   if (!openBtn) {
-    console.error("[Chat] Cannot find #open-mesage button");
+    console.error(
+      "[Chat] Cannot find #open-mesage button, retrying in 100ms..."
+    );
+    setTimeout(initializeRealtimeChat, 100);
     return;
   }
 
@@ -708,5 +838,6 @@ function initializeRealtimeChat() {
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initializeRealtimeChat);
 } else {
-  initializeRealtimeChat();
+  // DOM đã load, nhưng delay để đảm bảo body content đã render xong
+  setTimeout(initializeRealtimeChat, 100);
 }

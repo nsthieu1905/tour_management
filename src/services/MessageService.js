@@ -232,19 +232,58 @@ class MessageService {
 
       console.log("[MessageService] getAllConversations query:", query);
 
-      // Don't populate participantIds since it can contain mixed types (ObjectId + string)
+      // Lấy conversations có populate User info từ participantIds
       const conversations = await Conversation.find(query)
         .populate("closedBy", "name email")
         .sort({ lastMessageAt: -1 })
         .lean();
 
+      // 🔴 FIX: Manually populate participantIds vì nó là Mixed type (string hoặc ObjectId)
+      const User = mongoose.model("User");
+      const populatedConversations = await Promise.all(
+        conversations.map(async (conv) => {
+          // Populate tất cả participantIds
+          const populatedParticipants = await Promise.all(
+            conv.participantIds.map(async (participantId) => {
+              // Nếu là ObjectId hợp lệ → populate từ User model
+              if (
+                participantId &&
+                mongoose.Types.ObjectId.isValid(participantId)
+              ) {
+                try {
+                  const user = await User.findById(participantId)
+                    .select("fullName email avatar")
+                    .lean();
+                  if (user) {
+                    // Rename fullName thành name để dùng chung
+                    return {
+                      _id: participantId,
+                      name: user.fullName,
+                      email: user.email,
+                    };
+                  }
+                  return { _id: participantId, name: "Khách hàng" };
+                } catch (err) {
+                  return { _id: participantId, name: "Khách hàng" };
+                }
+              }
+              // Nếu là string (guest user) → tạo object tạm
+              return { _id: participantId, name: "Khách hàng" };
+            })
+          );
+
+          conv.participantIds = populatedParticipants;
+          return conv;
+        })
+      );
+
       // 🔴 FIX: Validate và log conversations
       console.log(
         "[MessageService] Found conversations:",
-        conversations.length
+        populatedConversations.length
       );
 
-      conversations.forEach((conv, index) => {
+      populatedConversations.forEach((conv, index) => {
         if (!conv._id) {
           console.error(
             `[MessageService] Conversation ${index} missing _id:`,
@@ -255,7 +294,7 @@ class MessageService {
         }
       });
 
-      return conversations;
+      return populatedConversations;
     } catch (error) {
       console.error("Error getting all conversations:", error);
       throw error;

@@ -365,8 +365,6 @@ class AdminRealtimeMessaging {
     const participant = conversation.participantIds?.[0];
     const customerName = participant?.name || "Khách hàng";
     const lastMessageTime = this.formatTime(conversation.lastMessageAt);
-    const isActive =
-      String(this.currentConversationId) === String(conversation._id);
 
     // 🔴 FIX: Escape HTML trong customerName để tránh XSS và lỗi render
     const safeCustomerName = this.escapeHtml(customerName);
@@ -384,9 +382,7 @@ class AdminRealtimeMessaging {
 
     return `
       <div
-        class="conversation-item p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition ${
-          isActive ? "active bg-blue-50" : ""
-        }"
+        class="conversation-item p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition"
         data-conversation-id="${conversationId}"
       >
         <div class="flex justify-between items-start mb-2">
@@ -401,10 +397,7 @@ class AdminRealtimeMessaging {
           }
         </div>
 
-        <div class="flex justify-between items-center text-xs">
-          <span class="px-2 py-1 bg-green-100 text-green-800 rounded">
-            ${conversation.status}
-          </span>
+        <div class="flex justify-end items-center text-xs">
           <span class="text-gray-400">${lastMessageTime}</span>
         </div>
       </div>
@@ -452,7 +445,7 @@ class AdminRealtimeMessaging {
     this.conversationsList
       ?.querySelectorAll(".conversation-item")
       .forEach((item) => {
-        item.classList.remove("active", "bg-blue-50");
+        item.classList.remove("bg-blue-50");
       });
 
     const selectedItem = document.querySelector(
@@ -462,7 +455,7 @@ class AdminRealtimeMessaging {
     console.log("[Admin Chat] Selected item found:", !!selectedItem);
 
     if (selectedItem) {
-      selectedItem.classList.add("active", "bg-blue-50");
+      selectedItem.classList.add("bg-blue-50");
     }
 
     // Enable input

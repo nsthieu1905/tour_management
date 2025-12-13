@@ -1059,10 +1059,6 @@ h1 {
   background-color: #f0f0f0;
 }
 
-.conversation-item.active {
-  background-color: #e7f3ff;
-}
-
 .conversation-avatar {
   width: 56px;
   height: 56px;
