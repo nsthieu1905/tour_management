@@ -1,3 +1,17 @@
 @use "dashboard";
 @use "auth";
 @use "notification";
+@use "message";
+
+/* Override Tailwind for custom message styles */
+.message-container {
+  display: flex !important;
+}
+
+.message-container.admin-message {
+  justify-content: flex-end !important;
+}
+
+.message-container.client-message {
+  justify-content: flex-start !important;
+}

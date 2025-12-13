@@ -581,7 +581,7 @@ class AdminRealtimeMessaging {
       <div class="message-container ${
         isAdmin ? "admin-message" : "client-message"
       }">
-        <div style="max-width: 70%; ${isAdmin ? "margin-left: auto;" : ""}">
+        <div>
           <div class="message-content">
             ${this.escapeHtml(message.content)}
           </div>
