@@ -17,7 +17,7 @@ const create = async (req, res) => {
     const errors = {};
 
     if (!fullName || fullName.trim().length === 0) {
-      errors.fullName = "Vui số nhập tên người dùng";
+      errors.fullName = "Vui lòng nhập tên nhân viên";
     }
 
     if (!email) {

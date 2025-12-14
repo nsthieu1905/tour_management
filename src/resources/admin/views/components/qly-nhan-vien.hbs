@@ -42,7 +42,6 @@
           </select>
 
           <!-- Search Bar -->
-
           <input
             type="text"
             id="staffSearchInput"
@@ -51,6 +50,7 @@
           />
         </div>
       </div>
+
       <!-- Staff Table -->
       <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
@@ -101,6 +101,63 @@
               <!-- Staff data will be rendered here by JavaScript -->
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="border-t border-gray-200 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <!-- Page Info -->
+            <div class="text-sm text-gray-600">
+              Hiển thị:
+              <select
+                id="itemsPerPage"
+                class="border border-gray-300 rounded px-2 py-1 ml-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+              hàng | Hiển thị
+              <span id="pageInfo" class="font-medium">0 đến 0 trong 0</span>
+              kết quả
+            </div>
+
+            <!-- Pagination Buttons -->
+            <div class="flex items-center gap-2">
+              <button
+                id="firstPageBtn"
+                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+              >
+                <i class="fas fa-angle-double-left"></i>
+              </button>
+              <button
+                id="prevPageBtn"
+                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+              >
+                <i class="fas fa-angle-left"></i>
+              </button>
+
+              <div id="pageNumbers" class="flex gap-1">
+                <!-- Page numbers will be rendered here -->
+              </div>
+
+              <button
+                id="nextPageBtn"
+                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <i class="fas fa-angle-right"></i>
+              </button>
+              <button
+                id="lastPageBtn"
+                class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <i class="fas fa-angle-double-right"></i>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

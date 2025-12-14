@@ -1,90 +1,72 @@
 import { Modal, Notification } from "../../utils/modal.js";
-import { apiGet, apiPost, apiDelete, apiPatch } from "../../utils/api.js";
 import { validateRegisterInput } from "../../utils/validators.js";
 
 // Biến toàn cục
 let staffData = [];
-let modalMode = "create"; // 'create' hoặc 'edit'
+let modalMode = "create";
 let currentStaffId = null;
-let currentStatusFilter = ""; // Biến lưu filter trạng thái
+let currentStatusFilter = "";
 
-// Khởi tạo trang quản lý nhân viên
+// ===========================
+// KHỞI TẠO
+// ===========================
+
 document.addEventListener("DOMContentLoaded", async function () {
-  // Lấy danh sách nhân viên từ API
   await loadStaffList();
+  renderStaffTable();
+  initializeEventListeners();
+});
 
-  // Render bảng nhân viên
-  const staffTableBody = document.getElementById("staffTableBody");
-  if (staffTableBody) {
-    renderStaffTable();
-  }
-
-  // Gán sự kiện tìm kiếm
+function initializeEventListeners() {
+  // Tìm kiếm
   const staffSearchInput = document.getElementById("staffSearchInput");
   if (staffSearchInput) {
-    staffSearchInput.addEventListener("input", function (e) {
-      searchStaff(e.target.value);
-    });
+    staffSearchInput.addEventListener("input", (e) =>
+      searchStaff(e.target.value)
+    );
   }
 
-  // Gán sự kiện filter trạng thái
+  // Filter trạng thái
   const statusFilter = document.getElementById("staffStatusFilter");
   if (statusFilter) {
-    statusFilter.addEventListener("change", function (e) {
+    statusFilter.addEventListener("change", (e) => {
       currentStatusFilter = e.target.value;
       renderStaffTable();
     });
   }
 
-  // Gán sự kiện form thêm nhân viên
+  // Form validation
   const addStaffForm = document.getElementById("addStaffForm");
   if (addStaffForm) {
     addStaffForm.addEventListener("submit", handleAddStaff);
-  }
 
-  // Gán sự kiện cho action buttons sử dụng event delegation
-  const actionTableBody = document.getElementById("staffTableBody");
-  if (actionTableBody) {
-    actionTableBody.addEventListener("click", function (e) {
-      const viewBtn = e.target.closest(".staff-view-btn");
-      const editBtn = e.target.closest(".staff-edit-btn");
-      const deleteBtn = e.target.closest(".staff-delete-btn");
-      const suspendBtn = e.target.closest(".staff-suspend-btn");
-      const activateBtn = e.target.closest(".staff-activate-btn");
-
-      if (viewBtn) {
-        const staffId = viewBtn.getAttribute("data-staff-id");
-        viewStaffDetail(staffId);
-      } else if (editBtn) {
-        const staffId = editBtn.getAttribute("data-staff-id");
-        editStaff(staffId);
-      } else if (deleteBtn) {
-        const staffId = deleteBtn.getAttribute("data-staff-id");
-        confirmDelete(staffId);
-      } else if (suspendBtn) {
-        const staffId = suspendBtn.getAttribute("data-staff-id");
-        toggleStaffStatus(staffId, "inactive");
-      } else if (activateBtn) {
-        const staffId = activateBtn.getAttribute("data-staff-id");
-        toggleStaffStatus(staffId, "active");
-      }
+    const inputs = addStaffForm.querySelectorAll("input, select");
+    inputs.forEach((input) => {
+      input.addEventListener("blur", () => validateFormField(input));
+      input.addEventListener("input", () => clearFieldError(input));
     });
   }
 
-  // Gán sự kiện nút Xuất Excel
+  // Action buttons (event delegation)
+  const staffTableBody = document.getElementById("staffTableBody");
+  if (staffTableBody) {
+    staffTableBody.addEventListener("click", handleTableActions);
+  }
+
+  // Xuất Excel
   const exportBtn = document.getElementById("exportBtn");
   if (exportBtn) {
     exportBtn.addEventListener("click", exportStaffData);
   }
 
-  // Gán sự kiện nút Thêm nhân viên
+  // Thêm nhân viên
   const addStaffBtn = document.getElementById("addStaffBtn");
   if (addStaffBtn) {
     addStaffBtn.addEventListener("click", showAddStaffModal);
   }
 
-  // Gán sự kiện ESC để đóng modal
-  document.addEventListener("keydown", function (e) {
+  // ESC để đóng modal
+  document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       const modal = document.getElementById("addStaffModal");
       if (modal && !modal.classList.contains("hidden")) {
@@ -92,20 +74,37 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
     }
   });
-});
+}
+
+function handleTableActions(e) {
+  const viewBtn = e.target.closest(".staff-view-btn");
+  const editBtn = e.target.closest(".staff-edit-btn");
+  const deleteBtn = e.target.closest(".staff-delete-btn");
+  const suspendBtn = e.target.closest(".staff-suspend-btn");
+  const activateBtn = e.target.closest(".staff-activate-btn");
+
+  if (viewBtn) {
+    viewStaffDetail(viewBtn.getAttribute("data-staff-id"));
+  } else if (editBtn) {
+    editStaff(editBtn.getAttribute("data-staff-id"));
+  } else if (deleteBtn) {
+    confirmDelete(deleteBtn.getAttribute("data-staff-id"));
+  } else if (suspendBtn) {
+    toggleStaffStatus(suspendBtn.getAttribute("data-staff-id"), "inactive");
+  } else if (activateBtn) {
+    toggleStaffStatus(activateBtn.getAttribute("data-staff-id"), "active");
+  }
+}
 
 // ===========================
-// QUẢN LÝ DỮ LIỆU - API
+// API CALLS
 // ===========================
 
-// Lấy danh sách nhân viên từ API
 async function loadStaffList() {
   try {
     const response = await fetch("/api/staffs", {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -114,30 +113,59 @@ async function loadStaffList() {
     }
 
     const result = await response.json();
-    if (result.success && Array.isArray(result.data)) {
-      staffData = result.data;
-    } else {
-      staffData = [];
-    }
+    staffData = result.success && Array.isArray(result.data) ? result.data : [];
   } catch (error) {
+    console.error("Error loading staff list:", error);
     staffData = [];
   }
 }
 
+async function addStaffViaAPI(staffData) {
+  try {
+    const response = await fetch("/api/staffs/add-staff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(staffData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error adding staff:", error);
+    return {
+      success: false,
+      message: "Có lỗi xảy ra khi thêm nhân viên",
+      errors: {},
+    };
+  }
+}
+
+async function updateStaffViaAPI(staffId, staffData) {
+  try {
+    const response = await fetch(`/api/staffs/${staffId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(staffData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating staff:", error);
+    return {
+      success: false,
+      message: "Có lỗi xảy ra khi cập nhật nhân viên",
+      errors: {},
+    };
+  }
+}
+
 // ===========================
-// RENDER & HIỂN THỊ DỮ LIỆU
+// RENDER UI
 // ===========================
 
-// Render bảng danh sách nhân viên
 function renderStaffTable() {
   const tbody = document.getElementById("staffTableBody");
-  if (!tbody) {
-    return;
-  }
+  if (!tbody) return;
 
   let filteredData = [...staffData];
 
-  // Apply status filter
   if (currentStatusFilter) {
     filteredData = filteredData.filter(
       (staff) => staff.status === currentStatusFilter
@@ -147,7 +175,7 @@ function renderStaffTable() {
   if (filteredData.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" class="px-6 py-8 text-center">
+        <td colspan="7" class="px-6 py-8 text-center">
           <div class="text-gray-500">
             <i class="fas fa-inbox text-3xl mb-3 block"></i>
             <p>Không có dữ liệu nhân viên</p>
@@ -161,17 +189,17 @@ function renderStaffTable() {
   tbody.innerHTML = filteredData.map((staff) => renderStaffRow(staff)).join("");
 }
 
-// Render một dòng nhân viên trong bảng
 function renderStaffRow(staff) {
   const status = staff.status || "active";
   const statusText = getStatusText(status);
   const statusClass = getStatusClass(status);
   const isActive = status === "active";
 
-  // Format date of birth
   const dateOfBirth = staff.dateOfBirth
     ? new Date(staff.dateOfBirth).toLocaleDateString("vi-VN")
-    : "N/A";
+    : "";
+
+  const avatarLetter = staff.fullName.split(" ").pop()[0].toUpperCase();
 
   return `
     <tr class="hover:bg-gray-50 transition-colors">
@@ -180,7 +208,7 @@ function renderStaffRow(staff) {
           <img 
             class="h-10 w-10 rounded-full" 
             src="https://ui-avatars.com/api/?name=${encodeURIComponent(
-              staff.fullName.split(" ").pop()[0].toUpperCase()
+              avatarLetter
             )}&background=random" 
             alt="${staff.fullName}"
           >
@@ -192,7 +220,7 @@ function renderStaffRow(staff) {
         </div>
       </td>
       <td class="px-6 py-4 whitespace-nowrap" data-label="Giới tính">
-        <div class="text-sm text-gray-900">${staff.gender || "N/A"}</div>
+        <div class="text-sm text-gray-900">${staff.gender || ""}</div>
       </td>
       <td class="px-6 py-4 whitespace-nowrap" data-label="Ngày sinh">
         <div class="text-sm text-gray-900">${dateOfBirth}</div>
@@ -249,20 +277,17 @@ function renderStaffRow(staff) {
 // TÌM KIẾM
 // ===========================
 
-// Tìm kiếm nhân viên theo từ khóa (tên, email, phone)
 function searchStaff(query) {
   const tbody = document.getElementById("staffTableBody");
   if (!tbody) return;
 
   const searchQuery = query.toLowerCase();
-  let filteredData = staffData.filter((staff) => {
-    // Filter by search query
+  const filteredData = staffData.filter((staff) => {
     const matchesSearch =
       (staff.fullName || "").toLowerCase().includes(searchQuery) ||
       (staff.email || "").toLowerCase().includes(searchQuery) ||
       (staff.phone || "").includes(query);
 
-    // Filter by status
     const matchesStatus =
       !currentStatusFilter || staff.status === currentStatusFilter;
 
@@ -274,7 +299,7 @@ function searchStaff(query) {
       ? filteredData.map((staff) => renderStaffRow(staff)).join("")
       : `
     <tr>
-      <td colspan="5" class="px-6 py-8 text-center">
+      <td colspan="7" class="px-6 py-8 text-center">
         <div class="text-gray-500">
           <i class="fas fa-search text-3xl mb-3 block"></i>
           <p>Không tìm thấy nhân viên phù hợp</p>
@@ -285,77 +310,60 @@ function searchStaff(query) {
 }
 
 // ===========================
-// QUẢN LÝ HÀNH ĐỘNG
+// XỬ LÝ FORM
 // ===========================
 
-// Xử lý sự kiện thêm/chỉnh sửa nhân viên
 async function handleAddStaff(e) {
   e.preventDefault();
 
   const form = e.target;
-  const formData = new FormData(form);
-
-  // Lấy dữ liệu từ form
-  const fullName = formData.get("staffName");
-  const email = formData.get("staffEmail");
-  const phone = formData.get("staffPhone");
-  const gender = formData.get("gender");
-  const dateOfBirth = formData.get("dateOfBirth");
-  const password = formData.get("password");
-  const passwordConfirm = formData.get("passwordConfirm");
-
-  // Xóa tất cả error messages trước
   clearAllErrors(form);
 
-  const errors = {};
+  // Lấy dữ liệu từ form
+  const formData = getFormData(form);
 
-  // Validation dữ liệu form
-  if (!fullName || fullName.trim().length === 0) {
-    errors.staffName = "Vui lòng nhập tên nhân viên";
-  } else if (fullName.trim().length < 3) {
-    errors.staffName = "Tên nhân viên phải tối thiểu 3 ký tự";
-  }
+  // Validation
+  let errors = {};
 
-  if (!email) {
-    errors.staffEmail = "Vui lòng nhập email";
-  } else if (!validateEmail(email)) {
-    errors.staffEmail = "Email không hợp lệ";
-  }
-
-  if (!phone) {
-    errors.staffPhone = "Vui lòng nhập số điện thoại";
-  } else if (!validatePhoneNumber(phone)) {
-    errors.staffPhone = "Số điện thoại không hợp lệ";
-  }
-
-  // Mode-specific validation
   if (modalMode === "create") {
-    // Khi thêm mới, password bắt buộc
-    if (!password) {
-      errors.password = "Vui lòng nhập mật khẩu";
-    } else if (!validatePassword(password)) {
-      errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
-    }
+    // Dùng validateRegisterInput cho create mode
+    const validation = validateRegisterInput(
+      formData.fullName,
+      formData.email,
+      formData.phone,
+      formData.password,
+      formData.passwordConfirm
+    );
 
-    if (!passwordConfirm) {
-      errors.passwordConfirm = "Vui lòng xác nhận mật khẩu";
-    } else if (password !== passwordConfirm) {
-      errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
+    if (!validation.isValid) {
+      errors = validation.errors;
     }
   } else if (modalMode === "edit") {
-    // Khi sửa, password không bắt buộc nhưng nếu nhập thì phải match
-    if (password && !validatePassword(password)) {
-      errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
+    // Validation riêng cho edit mode
+    const validation = validateRegisterInput(
+      formData.fullName,
+      formData.email,
+      formData.phone,
+      formData.password || "123456", // Dummy password để pass validation
+      formData.passwordConfirm || "123456"
+    );
+
+    // Lọc lỗi - chỉ giữ lỗi của fullName, email, phone
+    if (!validation.isValid) {
+      const { fullName, email, phone } = validation.errors;
+      if (fullName) errors.fullName = fullName;
+      if (email) errors.email = email;
+      if (phone) errors.phone = phone;
     }
 
-    if (password && passwordConfirm && password !== passwordConfirm) {
-      errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
-    } else if (
-      (password && !passwordConfirm) ||
-      (!password && passwordConfirm)
-    ) {
-      errors.password =
-        "Mật khẩu và xác nhận mật khẩu phải cùng được điền hoặc bỏ trống";
+    // Validation password riêng cho edit mode
+    if (formData.password || formData.passwordConfirm) {
+      if (formData.password && formData.password.length < 6) {
+        errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
+      }
+      if (formData.password !== formData.passwordConfirm) {
+        errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
+      }
     }
   }
 
@@ -365,30 +373,28 @@ async function handleAddStaff(e) {
     return;
   }
 
-  // Chuẩn bị dữ liệu
+  // Chuẩn bị dữ liệu gửi API
   const staffDataToSend = {
-    fullName: fullName,
-    email: email,
-    phone: phone,
-    gender: gender || null,
-    dateOfBirth: dateOfBirth || null,
+    fullName: formData.fullName,
+    email: formData.email,
+    phone: formData.phone,
+    gender: formData.gender || null,
+    dateOfBirth: formData.dateOfBirth || null,
   };
 
-  // Thêm password nếu có
-  if (password) {
-    staffDataToSend.password = password;
-    staffDataToSend.passwordConfirm = passwordConfirm;
+  // Chỉ thêm password nếu có giá trị
+  if (formData.password) {
+    staffDataToSend.password = formData.password;
+    staffDataToSend.passwordConfirm = formData.passwordConfirm;
   }
 
-  // Gọi API thêm hoặc sửa nhân viên
-  let result;
-  if (modalMode === "create") {
-    result = await addStaffViaAPI(staffDataToSend);
-  } else if (modalMode === "edit") {
-    result = await updateStaffViaAPI(currentStaffId, staffDataToSend);
-  }
+  // Gọi API
+  const result =
+    modalMode === "create"
+      ? await addStaffViaAPI(staffDataToSend)
+      : await updateStaffViaAPI(currentStaffId, staffDataToSend);
 
-  // Chỉ dùng notification cho trạng thái thành công/thất bại cuối cùng
+  // Xử lý kết quả
   if (result.success) {
     const successMsg =
       modalMode === "create"
@@ -396,137 +402,77 @@ async function handleAddStaff(e) {
         : "Cập nhật nhân viên thành công";
     Notification.success(result.message || successMsg);
 
-    // Tải lại danh sách nhân viên
     await loadStaffList();
     renderStaffTable();
     hideAddStaffModal();
   } else {
-    // Nếu API trả lỗi validation, hiển thị lỗi từng trường
     if (result.errors && Object.keys(result.errors).length > 0) {
       displayFormErrors(form, result.errors);
     } else {
-      // Nếu là lỗi chung, dùng notification
       Notification.error(result.message || "Có lỗi xảy ra");
     }
   }
 }
 
-// Xuất danh sách nhân viên ra file Excel
-async function exportStaffData() {
-  try {
-    if (staffData.length === 0) {
-      Notification.warning("Không có dữ liệu nhân viên để xuất");
-      return;
-    }
+function getFormData(form) {
+  return {
+    fullName: form.querySelector('input[name="staffName"]')?.value.trim() || "",
+    email: form.querySelector('input[name="staffEmail"]')?.value.trim() || "",
+    phone: form.querySelector('input[name="staffPhone"]')?.value.trim() || "",
+    password: form.querySelector('input[name="password"]')?.value || "",
+    passwordConfirm:
+      form.querySelector('input[name="passwordConfirm"]')?.value || "",
+    gender: form.querySelector('select[name="gender"]')?.value || "",
+    dateOfBirth: form.querySelector('input[name="dateOfBirth"]')?.value || "",
+  };
+}
 
-    // Tạo dữ liệu CSV
-    const headers = [
-      "STT",
-      "Tên nhân viên",
-      "Email",
-      "Điện thoại",
-      "Chức vụ",
-      "Trạng thái",
-      "Ngày tạo",
-    ];
+// ===========================
+// MODAL
+// ===========================
 
-    const rows = staffData.map((staff, index) => [
-      index + 1,
-      staff.fullName,
-      staff.email,
-      staff.phone || "N/A",
-      staff.role || "admin",
-      getStatusText(staff.status || "active"),
-      formatDate(staff.createdAt || new Date().toISOString()),
-    ]);
+window.showAddStaffModal = function () {
+  modalMode = "create";
+  currentStaffId = null;
 
-    // Tạo CSV content
-    let csvContent = headers.join(",") + "\n";
-    rows.forEach((row) => {
-      csvContent += row.map((cell) => `"${cell}"`).join(",") + "\n";
-    });
+  const modal = document.getElementById("addStaffModal");
+  const form = document.getElementById("addStaffForm");
+  const modalTitle = document.getElementById("staffModalTitle");
+  const submitBtn = form?.querySelector("button[type='submit']");
 
-    // Tải file
-    const element = document.createElement("a");
-    element.setAttribute(
-      "href",
-      "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent)
+  if (modal && form && modalTitle) {
+    modalTitle.textContent = "Thêm nhân viên";
+    if (submitBtn) submitBtn.textContent = "Thêm nhân viên";
+
+    const passwordInput = form.querySelector('input[name="password"]');
+    const passwordConfirmInput = form.querySelector(
+      'input[name="passwordConfirm"]'
     );
-    element.setAttribute("download", `nhan-vien-${Date.now()}.csv`);
-    element.style.display = "none";
+    if (passwordInput) passwordInput.placeholder = "Nhập mật khẩu";
+    if (passwordConfirmInput)
+      passwordConfirmInput.placeholder = "Xác nhận mật khẩu";
 
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-
-    Notification.success("Xuất dữ liệu thành công!");
-  } catch (error) {
-    Notification.error("Có lỗi xảy ra khi xuất dữ liệu");
+    form.reset();
+    clearAllErrors(form);
+    modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
   }
-}
+};
 
-// Thay đổi trạng thái nhân viên (tạm dừng/kích hoạt)
-async function toggleStaffStatus(staffId, newStatus) {
-  try {
-    const staff = staffData.find((s) => s._id === staffId);
-    if (!staff) {
-      Notification.error("Không tìm thấy nhân viên");
-      return;
-    }
+window.hideAddStaffModal = function () {
+  const modal = document.getElementById("addStaffModal");
+  const form = document.getElementById("addStaffForm");
 
-    const statusText = newStatus === "active" ? "kích hoạt" : "tạm dừng";
-    const isActivating = newStatus === "active";
-
-    Modal.confirm({
-      title: isActivating ? "Kích hoạt nhân viên" : "Tạm dừng nhân viên",
-      message: `Bạn có chắc chắn muốn ${statusText} tài khoản của ${staff.fullName}?`,
-      icon: "fa-exclamation-circle",
-      iconColor: isActivating ? "green" : "orange",
-      confirmText: isActivating ? "Kích hoạt" : "Tạm dừng",
-      confirmColor: isActivating ? "green" : "orange",
-      onConfirm: async () => {
-        try {
-          const response = await fetch(`/api/staffs/${staffId}/status`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: newStatus }),
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            // Cập nhật trạng thái trong mảy dữ liệu
-            const staffIndex = staffData.findIndex((s) => s._id === staffId);
-            if (staffIndex !== -1) {
-              staffData[staffIndex].status = newStatus;
-            }
-
-            // Render lại bảng
-            renderStaffTable();
-            Notification.success(
-              result.message ||
-                `${
-                  statusText.charAt(0).toUpperCase() + statusText.slice(1)
-                } thành công`
-            );
-          } else {
-            Notification.error(result.message || "Có lỗi xảy ra");
-          }
-        } catch (error) {
-          console.error("Error toggling status:", error);
-          Notification.error("Có lỗi xảy ra khi cập nhật trạng thái");
-        }
-      },
-    });
-  } catch (error) {
-    console.error("Error toggling status:", error);
-    Notification.error("Có lỗi xảy ra khi cập nhật trạng thái");
+  if (modal && form) {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "auto";
+    form.reset();
+    clearAllErrors(form);
+    modalMode = "create";
+    currentStaffId = null;
   }
-}
+};
 
-// Chỉnh sửa thông tin nhân viên
 async function editStaff(staffId) {
   try {
     const staff = staffData.find((s) => s._id === staffId);
@@ -548,32 +494,35 @@ async function editStaff(staffId) {
       return;
     }
 
-    // Cập nhật UI
     modalTitle.textContent = "Chỉnh sửa nhân viên";
     if (submitBtn) submitBtn.textContent = "Cập nhật nhân viên";
 
-    // Điền dữ liệu vào form
-    form.elements["staffName"].value = staff.fullName || "";
-    form.elements["staffEmail"].value = staff.email || "";
-    form.elements["staffPhone"].value = staff.phone || "";
-    form.elements["gender"].value = staff.gender || "";
+    // Điền dữ liệu
+    form.querySelector('input[name="staffName"]').value = staff.fullName || "";
+    form.querySelector('input[name="staffEmail"]').value = staff.email || "";
+    form.querySelector('input[name="staffPhone"]').value = staff.phone || "";
+    form.querySelector('select[name="gender"]').value = staff.gender || "";
 
-    // Format date for input type="date"
-    if (staff.dateOfBirth) {
-      const date = new Date(staff.dateOfBirth);
-      const dateString = date.toISOString().split("T")[0];
-      form.elements["dateOfBirth"].value = dateString;
-    } else {
-      form.elements["dateOfBirth"].value = "";
+    const dateInput = form.querySelector('input[name="dateOfBirth"]');
+    if (dateInput && staff.dateOfBirth) {
+      dateInput.value = new Date(staff.dateOfBirth).toISOString().split("T")[0];
     }
 
-    // Clear password fields khi sửa
-    form.elements["password"].value = "";
-    form.elements["passwordConfirm"].value = "";
-    form.elements["password"].placeholder = "Để trống nếu không muốn thay đổi";
-    form.elements["passwordConfirm"].placeholder =
-      "Để trống nếu không muốn thay đổi";
+    // Clear password fields
+    const passwordInput = form.querySelector('input[name="password"]');
+    const passwordConfirmInput = form.querySelector(
+      'input[name="passwordConfirm"]'
+    );
+    if (passwordInput) {
+      passwordInput.value = "";
+      passwordInput.placeholder = "Để trống nếu không muốn thay đổi";
+    }
+    if (passwordConfirmInput) {
+      passwordConfirmInput.value = "";
+      passwordConfirmInput.placeholder = "Để trống nếu không muốn thay đổi";
+    }
 
+    clearAllErrors(form);
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
   } catch (error) {
@@ -582,90 +531,285 @@ async function editStaff(staffId) {
   }
 }
 
-// Xác nhận xóa nhân viên
+// ===========================
+// DELETE & STATUS
+// ===========================
+
 async function confirmDelete(staffId) {
-  try {
-    const staff = staffData.find((s) => s._id === staffId);
-    if (!staff) {
-      Notification.error("Không tìm thấy nhân viên");
-      return;
-    }
+  const staff = staffData.find((s) => s._id === staffId);
+  if (!staff) {
+    Notification.error("Không tìm thấy nhân viên");
+    return;
+  }
 
-    Modal.confirm({
-      title: "Xóa nhân viên",
-      message: `Bạn có chắc chắn muốn xóa nhân viên ${staff.fullName}?<br/><span class="text-red-600 text-sm">Hành động này không thể hoàn tác!</span>`,
-      icon: "fa-trash",
-      iconColor: "red",
-      confirmText: "Xóa",
-      confirmColor: "red",
-      onConfirm: async () => {
-        try {
-          const response = await fetch(`/api/staffs/${staffId}`, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
+  Modal.confirm({
+    title: "Xóa nhân viên",
+    message: `Bạn có chắc chắn muốn xóa nhân viên ${staff.fullName}?<br/><span class="text-red-600 text-sm">Hành động này không thể hoàn tác!</span>`,
+    icon: "fa-trash",
+    iconColor: "red",
+    confirmText: "Xóa",
+    confirmColor: "red",
+    onConfirm: async () => {
+      try {
+        const response = await fetch(`/api/staffs/${staffId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
 
-          const result = await response.json();
+        const result = await response.json();
 
-          if (result.success) {
-            // Cập nhật dữ liệu
-            staffData = staffData.filter((s) => s._id !== staffId);
-
-            // Render lại bảng
-            renderStaffTable();
-            Notification.success("Xóa nhân viên thành công");
-          } else {
-            Notification.error(
-              result.message || "Có lỗi xảy ra khi xóa nhân viên"
-            );
-          }
-        } catch (error) {
-          console.error("Error deleting staff:", error);
-          Notification.error("Có lỗi xảy ra khi xóa nhân viên");
+        if (result.success) {
+          staffData = staffData.filter((s) => s._id !== staffId);
+          renderStaffTable();
+          Notification.success("Xóa nhân viên thành công");
+        } else {
+          Notification.error(
+            result.message || "Có lỗi xảy ra khi xóa nhân viên"
+          );
         }
-      },
+      } catch (error) {
+        console.error("Error deleting staff:", error);
+        Notification.error("Có lỗi xảy ra khi xóa nhân viên");
+      }
+    },
+  });
+}
+
+async function toggleStaffStatus(staffId, newStatus) {
+  const staff = staffData.find((s) => s._id === staffId);
+  if (!staff) {
+    Notification.error("Không tìm thấy nhân viên");
+    return;
+  }
+
+  const statusText = newStatus === "active" ? "kích hoạt" : "tạm dừng";
+  const isActivating = newStatus === "active";
+
+  Modal.confirm({
+    title: isActivating ? "Kích hoạt nhân viên" : "Tạm dừng nhân viên",
+    message: `Bạn có chắc chắn muốn ${statusText} tài khoản của ${staff.fullName}?`,
+    icon: "fa-exclamation-circle",
+    iconColor: isActivating ? "green" : "orange",
+    confirmText: isActivating ? "Kích hoạt" : "Tạm dừng",
+    confirmColor: isActivating ? "green" : "orange",
+    onConfirm: async () => {
+      try {
+        const response = await fetch(`/api/staffs/${staffId}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const staffIndex = staffData.findIndex((s) => s._id === staffId);
+          if (staffIndex !== -1) {
+            staffData[staffIndex].status = newStatus;
+          }
+          renderStaffTable();
+          Notification.success(
+            result.message ||
+              `${
+                statusText.charAt(0).toUpperCase() + statusText.slice(1)
+              } thành công`
+          );
+        } else {
+          Notification.error(result.message || "Có lỗi xảy ra");
+        }
+      } catch (error) {
+        console.error("Error toggling status:", error);
+        Notification.error("Có lỗi xảy ra khi cập nhật trạng thái");
+      }
+    },
+  });
+}
+
+// ===========================
+// EXPORT
+// ===========================
+
+async function exportStaffData() {
+  if (staffData.length === 0) {
+    Notification.warning("Không có dữ liệu nhân viên để xuất");
+    return;
+  }
+
+  try {
+    const headers = [
+      "STT",
+      "Tên nhân viên",
+      "Email",
+      "Điện thoại",
+      "Giới tính",
+      "Trạng thái",
+      "Ngày tạo",
+    ];
+
+    const rows = staffData.map((staff, index) => [
+      index + 1,
+      staff.fullName,
+      staff.email,
+      staff.phone || "N/A",
+      staff.gender || "N/A",
+      getStatusText(staff.status || "active"),
+      formatDate(staff.createdAt || new Date().toISOString()),
+    ]);
+
+    let csvContent = headers.join(",") + "\n";
+    rows.forEach((row) => {
+      csvContent += row.map((cell) => `"${cell}"`).join(",") + "\n";
     });
+
+    const element = document.createElement("a");
+    element.setAttribute(
+      "href",
+      "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent)
+    );
+    element.setAttribute("download", `nhan-vien-${Date.now()}.csv`);
+    element.style.display = "none";
+
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    Notification.success("Xuất dữ liệu thành công!");
   } catch (error) {
-    console.error("Error deleting staff:", error);
-    Notification.error("Có lỗi xảy ra khi xóa nhân viên");
+    console.error("Error exporting data:", error);
+    Notification.error("Có lỗi xảy ra khi xuất dữ liệu");
   }
 }
 
 // ===========================
-// UTILITY FUNCTIONS
+// VALIDATION HELPERS
 // ===========================
 
-// Lấy class CSS tương ứng với trạng thái nhân viên
+function displayFormErrors(form, errors) {
+  clearAllErrors(form);
+
+  for (const [fieldName, errorMessage] of Object.entries(errors)) {
+    let inputName = fieldName;
+    if (fieldName === "fullName") inputName = "staffName";
+    if (fieldName === "email") inputName = "staffEmail";
+    if (fieldName === "phone") inputName = "staffPhone";
+
+    const input = form.querySelector(
+      `input[name="${inputName}"], select[name="${inputName}"]`
+    );
+    if (input) {
+      let errorContainer = input.parentElement.querySelector(".error-message");
+      if (!errorContainer) {
+        errorContainer = document.createElement("div");
+        errorContainer.className = "error-message text-red-500 text-sm mt-1";
+        input.parentElement.appendChild(errorContainer);
+      }
+      errorContainer.textContent = errorMessage;
+      input.classList.add("border-red-500", "focus:ring-red-500");
+    }
+  }
+}
+
+function clearAllErrors(form) {
+  form.querySelectorAll(".error-message").forEach((el) => el.remove());
+  form.querySelectorAll("input, select").forEach((input) => {
+    input.classList.remove("border-red-500", "focus:ring-red-500");
+  });
+}
+
+function clearFieldError(input) {
+  input.classList.remove("border-red-500", "focus:ring-red-500");
+  const errorContainer = input.parentElement.querySelector(".error-message");
+  if (errorContainer) errorContainer.remove();
+}
+
+function validateFormField(input) {
+  const form = input.closest("form");
+  if (!form) return;
+
+  const fieldValue = input.value.trim();
+  const formData = getFormData(form);
+
+  // Dùng validateRegisterInput để validate
+  const validation = validateRegisterInput(
+    formData.fullName || "abc", // Dummy nếu empty
+    formData.email || "test@test.com",
+    formData.phone || "0123456789",
+    formData.password || "123456",
+    formData.passwordConfirm || "123456"
+  );
+
+  let errorMessage = "";
+  const fieldName = input.name;
+
+  // Map lỗi từ validation
+  if (fieldName === "staffName" && validation.errors.fullName) {
+    if (!fieldValue) {
+      errorMessage = "Vui lòng nhập tên nhân viên";
+    } else {
+      errorMessage = validation.errors.fullName;
+    }
+  } else if (fieldName === "staffEmail" && validation.errors.email) {
+    if (!fieldValue) {
+      errorMessage = "Vui lòng nhập email";
+    } else {
+      errorMessage = validation.errors.email;
+    }
+  } else if (fieldName === "staffPhone" && validation.errors.phone) {
+    if (!fieldValue) {
+      errorMessage = "Vui lòng nhập số điện thoại";
+    } else {
+      errorMessage = validation.errors.phone;
+    }
+  } else if (fieldName === "password") {
+    if (modalMode === "create" && !fieldValue) {
+      errorMessage = "Vui lòng nhập mật khẩu";
+    } else if (fieldValue && fieldValue.length < 6) {
+      errorMessage = "Mật khẩu phải tối thiểu 6 ký tự";
+    }
+  } else if (fieldName === "passwordConfirm") {
+    const passwordInput = form.querySelector('input[name="password"]');
+    if (modalMode === "create" && !fieldValue) {
+      errorMessage = "Vui lòng xác nhận mật khẩu";
+    } else if (
+      fieldValue &&
+      passwordInput &&
+      passwordInput.value !== fieldValue
+    ) {
+      errorMessage = "Mật khẩu xác nhận không khớp";
+    }
+  }
+
+  if (errorMessage) {
+    input.classList.add("border-red-500", "focus:ring-red-500");
+    let errorContainer = input.parentElement.querySelector(".error-message");
+    if (!errorContainer) {
+      errorContainer = document.createElement("div");
+      errorContainer.className = "error-message text-red-500 text-sm mt-1";
+      input.parentElement.appendChild(errorContainer);
+    }
+    errorContainer.textContent = errorMessage;
+  } else {
+    clearFieldError(input);
+  }
+}
+
+// ===========================
+// UTILITY
+// ===========================
+
 function getStatusClass(status) {
-  switch (status) {
-    case "active":
-      return "bg-green-100 text-green-800";
-    case "inactive":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-green-100 text-green-800";
-  }
+  return status === "active"
+    ? "bg-green-100 text-green-800"
+    : "bg-red-100 text-red-800";
 }
 
-// Chuyển đổi mã trạng thái sang text hiển thị
 function getStatusText(status) {
-  switch (status) {
-    case "active":
-      return "Hoạt động";
-    case "inactive":
-      return "Tạm dừng";
-    default:
-      return "Hoạt động";
-  }
+  return status === "active" ? "Hoạt động" : "Tạm dừng";
 }
 
-// Định dạng ngày theo chuẩn Việt Nam (dd/mm/yyyy)
 function formatDate(dateString) {
   try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -674,160 +818,8 @@ function formatDate(dateString) {
     return "N/A";
   }
 }
-// ===========================
-// XỬ LÝ MODAL
-// ===========================
 
-// Mở modal thêm nhân viên
-window.showAddStaffModal = function () {
-  modalMode = "create";
-  currentStaffId = null;
-
-  const modal = document.getElementById("addStaffModal");
-  const form = document.getElementById("addStaffForm");
-  const modalTitle = document.getElementById("staffModalTitle");
-  const submitBtn = form?.querySelector("button[type='submit']");
-
-  if (modal && form && modalTitle) {
-    modalTitle.textContent = "Thêm nhân viên";
-    if (submitBtn) submitBtn.textContent = "Thêm nhân viên";
-
-    // Reset password field placeholders
-    form.elements["password"].placeholder = "Nhập mật khẩu";
-    form.elements["passwordConfirm"].placeholder = "Xác nhận mật khẩu";
-
-    form.reset();
-    modal.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-  } else {
-    console.error("Modal elements not found:", { modal, form, modalTitle });
-  }
-};
-
-// Đóng modal
-window.hideAddStaffModal = function () {
-  const modal = document.getElementById("addStaffModal");
-  const form = document.getElementById("addStaffForm");
-
-  if (modal && form) {
-    modal.classList.add("hidden");
-    document.body.style.overflow = "auto";
-    form.reset();
-
-    modalMode = "create";
-    currentStaffId = null;
-  }
-};
-
-// Thêm nhân viên qua API
-async function addStaffViaAPI(staffData) {
-  try {
-    const response = await fetch("/api/staffs/add-staff", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(staffData),
-    });
-
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error("Error adding staff:", error);
-    return {
-      success: false,
-      message: "Có lỗi xảy ra khi thêm nhân viên",
-      errors: {},
-    };
-  }
-}
-
-// Cập nhật thông tin nhân viên qua API
-async function updateStaffViaAPI(staffId, staffData) {
-  try {
-    const response = await fetch(`/api/staffs/${staffId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(staffData),
-    });
-
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error("Error updating staff:", error);
-    return {
-      success: false,
-      message: "Có lỗi xảy ra khi cập nhật nhân viên",
-      errors: {},
-    };
-  }
-}
-
-// ===========================
-// VALIDATION HELPER FUNCTIONS
-// ===========================
-
-// Validate email
-function validateEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-// Validate password
-function validatePassword(password) {
-  return password && password.length >= 6;
-}
-
-// Validate phone number
-function validatePhoneNumber(phone) {
-  const phoneRegex = /^(?:\+84|0|84)[1-9]\d{8}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ""));
-}
-
-// Hiển thị lỗi từng trường
-function displayFormErrors(form, errors) {
-  // Xóa tất cả error messages cũ
-  clearAllErrors(form);
-
-  // Hiển thị lỗi từng trường
-  for (const [fieldName, errorMessage] of Object.entries(errors)) {
-    // Map field names từ API sang HTML input names
-    let inputName = fieldName;
-    if (fieldName === "fullName") inputName = "staffName";
-    if (fieldName === "email") inputName = "staffEmail";
-    if (fieldName === "phone") inputName = "staffPhone";
-
-    const input = form.elements[inputName];
-    if (input) {
-      // Tìm hoặc tạo error container
-      let errorContainer = input.parentElement.querySelector(".error-message");
-      if (!errorContainer) {
-        errorContainer = document.createElement("div");
-        errorContainer.className = "error-message text-red-500 text-sm mt-1";
-        input.parentElement.appendChild(errorContainer);
-      }
-      errorContainer.textContent = errorMessage;
-      errorContainer.classList.remove("hidden");
-
-      // Thêm red border vào input
-      input.classList.add("border-red-500", "focus:ring-red-500");
-    }
-  }
-}
-
-// Xóa tất cả error messages
-function clearAllErrors(form) {
-  // Xóa tất cả error message divs
-  const errorMessages = form.querySelectorAll(".error-message");
-  errorMessages.forEach((el) => {
-    el.remove();
-  });
-
-  // Xóa red border khỏi inputs
-  const inputs = form.querySelectorAll("input");
-  inputs.forEach((input) => {
-    input.classList.remove("border-red-500", "focus:ring-red-500");
-  });
+function viewStaffDetail(staffId) {
+  // TODO: Implement view detail
+  console.log("View staff detail:", staffId);
 }
