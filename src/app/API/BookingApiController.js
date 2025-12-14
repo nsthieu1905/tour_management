@@ -12,9 +12,16 @@ const {
 } = require("../../utils/NotificationHelper");
 const { PAYMENT_LIMITS } = require("../../services/MoMoService");
 
-// ==================== HELPER FUNCTIONS ====================
 const sendBookingNotification = async (booking, tour, customerName) => {
   try {
+    const paymentDeadline = new Date(booking.createdAt);
+    paymentDeadline.setDate(paymentDeadline.getDate() + 30);
+    const formatDeadline = `${paymentDeadline
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${(paymentDeadline.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}`;
     await notifyNewBooking({
       userId: booking.userId,
       bookingId: booking._id,
@@ -23,16 +30,13 @@ const sendBookingNotification = async (booking, tour, customerName) => {
       userName: customerName,
       tourName: tour?.name || "Tour",
       passengers: booking.numberOfPeople,
-      paymentDeadline: "27/12",
+      paymentDeadline: formatDeadline,
     });
   } catch (error) {
     console.error("Error sending booking notification:", error);
   }
 };
 
-/**
- * Helper: Validate và parse booking data
- */
 const validateAndParseBookingData = (body) => {
   const {
     tourId,
@@ -56,7 +60,6 @@ const validateAndParseBookingData = (body) => {
     throw new Error("Vui lòng điền đầy đủ thông tin");
   }
 
-  // Parse and validate departureDate
   const departureDateObj = new Date(departureDate);
   if (isNaN(departureDateObj.getTime())) {
     throw new Error("Ngày khởi hành không hợp lệ");
@@ -73,9 +76,6 @@ const validateAndParseBookingData = (body) => {
   };
 };
 
-/**
- * Helper: Tạo booking data object
- */
 const createBookingDataObject = async (params) => {
   const {
     userId,
@@ -92,7 +92,6 @@ const createBookingDataObject = async (params) => {
     paymentStatus,
   } = params;
 
-  // Handle coupon code
   let couponId = null;
   if (couponCode) {
     const coupon = await Khuyen_mai.findOne({
@@ -103,7 +102,6 @@ const createBookingDataObject = async (params) => {
     }
   }
 
-  // Generate unique booking code
   const bookingCode = "BK" + new Date().getTime();
 
   const bookingData = {
@@ -139,7 +137,6 @@ const createMoMoPayment = async (req, res) => {
     const validatedData = validateAndParseBookingData(req.body);
     const { tourId, customerName, total, couponCode } = req.body;
 
-    // Find tour
     const tour = await Tour.findById(tourId);
     if (!tour) {
       return res.status(404).json({
@@ -167,7 +164,7 @@ const createMoMoPayment = async (req, res) => {
       });
     }
 
-    // Create pre-booking (auto expires after 5 minutes)
+    // Create pre-booking (auto expires after 3 minutes)
     const bookingData = await createBookingDataObject({
       userId,
       ...validatedData,
@@ -219,7 +216,7 @@ const createMoMoPayment = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      message: error.message || "Lỗi server, vui lòng thử lại sau",
+      message: "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
@@ -231,7 +228,6 @@ const createBankPayment = async (req, res) => {
     const validatedData = validateAndParseBookingData(req.body);
     const { tourId, customerName, couponCode, paymentMethod } = req.body;
 
-    // Find tour
     const tour = await Tour.findById(tourId);
     if (!tour) {
       return res.status(404).json({
@@ -240,7 +236,6 @@ const createBankPayment = async (req, res) => {
       });
     }
 
-    // Create booking data
     const bookingData = await createBookingDataObject({
       userId,
       ...validatedData,
@@ -274,7 +269,7 @@ const createBankPayment = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      message: error.message || "Lỗi server, vui lòng thử lại sau",
+      message: "Lỗi server, vui lòng thử lại sau",
     });
   }
 };
@@ -316,8 +311,7 @@ const momoCallback = async (req, res) => {
 
           await booking.save();
 
-          // Gửi thông báo booking mới (cho cả admin và client) - CHỈ LẦN ĐẦU
-          // Nếu đã thanh toán rồi (F5 hoặc retry từ MoMo), không gửi notification lại
+          // Gửi thông báo booking mới (cho cả admin và client)
           if (!wasAlreadyPaid) {
             const user = await User.findById(booking.userId);
             await sendBookingNotification(
@@ -365,7 +359,7 @@ const momoCallback = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      message: "Lỗi xử lý callback",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
     });
   }
 };
@@ -416,7 +410,7 @@ const getBooking = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
     });
   }
 };
@@ -443,7 +437,7 @@ const getUserBookings = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
     });
   }
 };
@@ -554,7 +548,7 @@ const getAllBookings = async (req, res) => {
     console.error("Get all bookings error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }
@@ -575,7 +569,7 @@ const confirmPayment = async (req, res) => {
 
     booking.bookingStatus = "confirmed";
     booking.paymentStatus = "paid";
-    booking.paymentMethod = "cash"; // Thanh toán tại quầy
+    booking.paymentMethod = "cash";
     booking.payments.push({
       amount: booking.totalAmount,
       method: "cash",
@@ -621,7 +615,7 @@ const confirmPayment = async (req, res) => {
     console.error("Confirm payment error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi xác nhận thanh toán",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }
@@ -687,13 +681,13 @@ const confirmBooking = async (req, res) => {
     console.error("Confirm booking error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi xác nhận đơn đặt tour",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }
 };
 
-// [POST] /api/admin/bookings/complete - Hoàn thành tour
+// [POST] /api/admin/bookings/complete
 const completeBooking = async (req, res) => {
   try {
     const { bookingId } = req.body;
@@ -751,13 +745,13 @@ const completeBooking = async (req, res) => {
     console.error("Complete booking error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi hoàn thành tour",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }
 };
 
-// [POST] /api/admin/bookings/request-refund - Yêu cầu hoàn tiền từ phía khách
+// [POST] /api/admin/bookings/request-refund
 const requestRefund = async (req, res) => {
   try {
     const { bookingId, reason } = req.body;
@@ -823,13 +817,13 @@ const requestRefund = async (req, res) => {
     console.error("Request refund error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi yêu cầu hoàn tiền",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }
 };
 
-// [POST] /api/admin/bookings/approve-refund - Xác nhận hoàn tiền
+// [POST] /api/admin/bookings/approve-refund
 const approveRefund = async (req, res) => {
   try {
     const { bookingId, refundAmount, cancellationFeePercent } = req.body;
@@ -927,13 +921,13 @@ const approveRefund = async (req, res) => {
     console.error("Approve refund error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi xác nhận hoàn tiền",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }
 };
 
-// [POST] /api/admin/bookings/reject-refund - Từ chối hoàn tiền
+// [POST] /api/admin/bookings/reject-refund
 const rejectRefund = async (req, res) => {
   try {
     const { bookingId, rejectionReason } = req.body;
@@ -969,13 +963,13 @@ const rejectRefund = async (req, res) => {
     console.error("Reject refund error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi từ chối hoàn tiền",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }
 };
 
-// [POST] /api/admin/bookings/cancel - Hủy đơn đặt tour
+// [POST] /api/admin/bookings/cancel
 const cancelBooking = async (req, res) => {
   try {
     const { bookingId, reason } = req.body;
@@ -1025,7 +1019,7 @@ const cancelBooking = async (req, res) => {
     console.error("Cancel booking error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi khi hủy đơn đặt tour",
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
       error: error.message,
     });
   }

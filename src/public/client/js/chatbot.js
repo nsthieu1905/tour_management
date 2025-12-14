@@ -1,8 +1,3 @@
-/**
- * Chatbot Client Handler
- * Quản lý giao diện và tương tác với API chatbot
- */
-
 class ChatbotHandler {
   constructor() {
     this.apiBaseUrl = "/api/chatbot";
@@ -12,12 +7,9 @@ class ChatbotHandler {
 
     this.initElements();
     this.attachEventListeners();
-    // this.loadInitialQuickReplies();
   }
 
-  /**
-   * Khởi tạo các phần tử DOM
-   */
+  // Khởi tạo các phần tử DOM
   initElements() {
     this.modal = document.getElementById("chatbotModal");
     this.messagesContainer = document.getElementById("chatbotMessages");
@@ -28,9 +20,7 @@ class ChatbotHandler {
     this.sendBtn = this.form.querySelector(".chatbot-send-btn");
   }
 
-  /**
-   * Gắn các sự kiện
-   */
+  // Gắn các sự kiện
   attachEventListeners() {
     // Submit form
     this.form.addEventListener("submit", (e) => {
@@ -38,12 +28,12 @@ class ChatbotHandler {
       this.sendMessage();
     });
 
-    // Close button
+    // Nút đóng
     this.closeBtn.addEventListener("click", () => {
       this.closeModal();
     });
 
-    // ESC key to close modal - gắn vào modal để hoạt động luôn
+    // Phím ESC để đóng modal - gắn vào modal
     this.modal.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -51,7 +41,7 @@ class ChatbotHandler {
       }
     });
 
-    // ESC key listener trên document để catch ESC từ bất kỳ đâu khi modal mở
+    // Phím ESC trên document để bắt từ bất kỳ đâu khi modal mở
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !this.modal.classList.contains("hidden")) {
         e.preventDefault();
@@ -59,7 +49,7 @@ class ChatbotHandler {
       }
     });
 
-    // Input focus
+    // Focus vào input
     this.inputField.addEventListener("focus", () => {
       this.hideQuickReplies();
     });
@@ -74,26 +64,7 @@ class ChatbotHandler {
     });
   }
 
-  /**
-   * Tải quick replies ban đầu
-   */
-  // async loadInitialQuickReplies() {
-  //   try {
-  //     const response = await fetch(`${this.apiBaseUrl}/quick-replies`);
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       if (data.success && data.data) {
-  //         this.updateQuickReplies(data.data);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error loading quick replies:", error);
-  //   }
-  // }
-
-  /**
-   * Gửi tin nhắn
-   */
+  // Gửi tin nhắn
   async sendMessage() {
     const message = this.inputField.value.trim();
 
@@ -153,7 +124,7 @@ class ChatbotHandler {
 
       const data = await response.json();
 
-      // Ẩn typing indicator sau ít nhất 300ms (cho phép animation chạy hoàn tất)
+      // Ẩn typing indicator sau ít nhất 300ms (cho animation chạy hoàn tất)
       setTimeout(() => {
         this.removeTypingIndicator();
 
@@ -185,7 +156,6 @@ class ChatbotHandler {
         }
       }, 300);
     } catch (error) {
-      console.error("Error sending message:", error);
       this.removeTypingIndicator();
       this.addMessageToUI(
         "Xin lỗi, tôi gặp sự cố kỹ thuật. Vui lòng thử lại! 🙏",
@@ -197,10 +167,7 @@ class ChatbotHandler {
     }
   }
 
-  /**
-   * Thêm tin nhắn vào UI
-   * Hỗ trợ markdown rendering cho links và bold text
-   */
+  // Thêm tin nhắn vào UI (hỗ trợ markdown: links, bold text)
   addMessageToUI(message, type, isMarkdown = false) {
     const messageEl = document.createElement("div");
     messageEl.className = `message ${type}-message`;
@@ -236,9 +203,7 @@ class ChatbotHandler {
     this.scrollToBottom();
   }
 
-  /**
-   * Hiển thị typing indicator (3 chấm)
-   */
+  // Hiển thị typing indicator (3 chấm)
   showTypingIndicator() {
     // Xóa typing indicator cũ nếu có
     this.removeTypingIndicator();
@@ -262,9 +227,7 @@ class ChatbotHandler {
     this.scrollToBottom();
   }
 
-  /**
-   * Ẩn typing indicator
-   */
+  // Ẩn typing indicator
   removeTypingIndicator() {
     const typingEl = document.getElementById("typingIndicator");
     if (typingEl) {
@@ -272,9 +235,7 @@ class ChatbotHandler {
     }
   }
 
-  /**
-   * Cập nhật quick replies
-   */
+  // Cập nhật quick replies
   updateQuickReplies(replies) {
     this.quickRepliesContainer.innerHTML = "";
 
@@ -295,36 +256,28 @@ class ChatbotHandler {
     this.showQuickReplies();
   }
 
-  /**
-   * Hiển thị quick replies
-   */
+  // Hiển thị quick replies
   showQuickReplies() {
     if (this.quickRepliesContainer) {
       this.quickRepliesContainer.style.display = "flex";
     }
   }
 
-  /**
-   * Ẩn quick replies
-   */
+  // Ẩn quick replies
   hideQuickReplies() {
     if (this.quickRepliesContainer) {
       this.quickRepliesContainer.style.display = "none";
     }
   }
 
-  /**
-   * Scroll xuống cuối
-   */
+  // Scroll xuống cuối
   scrollToBottom() {
     setTimeout(() => {
       this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
     }, 0);
   }
 
-  /**
-   * Lấy thời gian hiện tại
-   */
+  // Lấy thời gian hiện tại
   getCurrentTime() {
     const now = new Date();
     return now.toLocaleTimeString("vi-VN", {
@@ -334,24 +287,18 @@ class ChatbotHandler {
     });
   }
 
-  /**
-   * Đóng modal
-   */
+  // Đóng modal
   closeModal() {
     this.modal.classList.add("hidden");
   }
 
-  /**
-   * Mở modal
-   */
+  // Mở modal
   openModal() {
     this.modal.classList.remove("hidden");
     this.inputField.focus();
   }
 
-  /**
-   * Toggle modal
-   */
+  // Toggle modal
   toggleModal() {
     if (this.modal.classList.contains("hidden")) {
       this.openModal();
@@ -360,16 +307,12 @@ class ChatbotHandler {
     }
   }
 
-  /**
-   * Thiết lập tour ID để chat về tour cụ thể
-   */
+  // Thiết lập tour ID để chat về tour cụ thể
   setTourContext(tourId) {
     this.currentTourId = tourId;
   }
 
-  /**
-   * Clear lịch sử chat
-   */
+  // Xóa lịch sử chat
   clearHistory() {
     this.conversationHistory = [];
     this.messagesContainer.innerHTML = `
@@ -380,12 +323,9 @@ class ChatbotHandler {
       </div>
     `;
     this.currentTourId = null;
-    // this.loadInitialQuickReplies();
   }
 
-  /**
-   * Hiển thị greeting message tạm thời (popup nhỏ)
-   */
+  // Hiển thị greeting message (popup nhỏ)
   showGreetingMessage() {
     // Tạo popup nhỏ
     const popup = document.createElement("div");
@@ -408,7 +348,7 @@ class ChatbotHandler {
 
     document.body.appendChild(popup);
 
-    // Tự ẩn sau 5s
+    // Tự ẩn sau 5 giây
     setTimeout(() => {
       if (popup && popup.parentElement) {
         popup.style.opacity = "0";
@@ -430,13 +370,13 @@ class ChatbotHandler {
   }
 }
 
-// Khởi tạo khi DOM ready
+// Khởi tạo khi DOM đã sẵn sàng
 document.addEventListener("DOMContentLoaded", () => {
   // Kiểm tra nếu modal tồn tại
   if (document.getElementById("chatbotModal")) {
     window.chatbotHandler = new ChatbotHandler();
 
-    // Gắn chatbot button nếu tồn tại
+    // Gắn nút chatbot nếu tồn tại
     const chatbotBtn = document.getElementById("aiAssistant");
     if (chatbotBtn) {
       chatbotBtn.addEventListener("click", () => {
@@ -444,12 +384,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Hiển thị greeting popup khi tải trang (không mở modal)
+    // Hiển thị greeting popup khi tải trang
     window.chatbotHandler.showGreetingMessage();
   }
 });
 
-// Export cho use ở các file khác
+// Export để sử dụng ở các file khác
 if (typeof module !== "undefined" && module.exports) {
   module.exports = ChatbotHandler;
 }

@@ -6,7 +6,6 @@ import {
   formatDate,
   sub,
 } from "../../utils/helpers.js";
-import { modalHandlers } from "./utils.js";
 import { Modal, Notification } from "../../utils/modal.js";
 import {
   apiCall,
@@ -416,50 +415,44 @@ function updateFileInput() {
 // XỬ LÝ MODAL TOUR
 // ===========================
 
-// function modalHandlers() {
-//   const modal = document.getElementById("addTourModal");
-//   if (!modal) return;
+function modalHandlers(onCloseCallback = null) {
+  const modal = document.getElementById("addTourModal");
+  if (!modal) return;
 
-//   // Expose global functions cho modal
-//   window.showAddTourModal = function () {
-//     modal.classList.remove("hidden");
-//     document.body.style.overflow = "hidden";
-//   };
+  // Hiển thị modal
+  window.showAddTourModal = function () {
+    modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  };
 
-//   window.hideAddTourModal = function () {
-//     modal.classList.add("hidden");
-//     document.body.style.overflow = "auto";
+  window.hideAddTourModal = function () {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "auto";
 
-//     // Reset form
-//     const form = modal.querySelector("form");
-//     if (form) form.reset();
+    // Reset form
+    const form = modal.querySelector("form");
+    if (form) form.reset();
 
-//     // Clear previews
-//     const preview = document.getElementById("imagePreview");
-//     if (preview) preview.innerHTML = "";
+    // Clear previews
+    const preview = document.getElementById("imagePreview");
+    if (preview) preview.innerHTML = "";
 
-//     const departureList = document.getElementById("departureList");
-//     if (departureList) departureList.innerHTML = "";
+    const departureList = document.getElementById("departureList");
+    if (departureList) departureList.innerHTML = "";
 
-//     // Reset mảng
-//     departureDates = [];
-//     imagesArray = [];
-//   };
+    // Gọi callback để reset dữ liệu từ file gọi
+    if (onCloseCallback) {
+      onCloseCallback();
+    }
+  };
 
-//   // Đóng modal khi click bên ngoài
-//   // modal.addEventListener("click", function (e) {
-//   //   if (e.target === this) {
-//   //     window.hideAddTourModal();
-//   //   }
-//   // });
-
-//   // Đóng modal khi nhấn ESC
-//   document.addEventListener("keydown", function (e) {
-//     if (e.key === "Escape" && !modal.classList.contains("hidden")) {
-//       window.hideAddTourModal();
-//     }
-//   });
-// }
+  // Đóng modal khi nhấn ESC
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+      window.hideAddTourModal();
+    }
+  });
+}
 
 // ===========================
 // LOAD MORE TOURS (Optional)

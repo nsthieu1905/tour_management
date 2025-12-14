@@ -1,9 +1,9 @@
-// Simple price formatter (replicate of formatPrice)
+// Định dạng giá tiền
 function formatPrice(num) {
   return new Intl.NumberFormat("vi-VN").format(num);
 }
 
-// Get booking info from sessionStorage OR localStorage first, then fallback to server
+// Lấy thông tin booking từ sessionStorage HOẶC localStorage, sau đó fallback sang server
 let bookingCode =
   sessionStorage.getItem("bookingCode") || localStorage.getItem("bookingCode");
 let bookingId =
@@ -17,7 +17,7 @@ let paymentMethod =
   sessionStorage.getItem("paymentMethod") ||
   localStorage.getItem("paymentMethod");
 
-// Function to update UI with booking data
+// Cập nhật UI với dữ liệu booking
 function updateBookingUI(booking) {
   if (booking.bookingCode) {
     document.getElementById("booking-code").textContent = booking.bookingCode;
@@ -27,7 +27,7 @@ function updateBookingUI(booking) {
       formatPrice(parseInt(booking.totalPrice)) + "₫";
   }
 
-  // Use payment method from booking object (or fallback to checking paymentStatus)
+  // Sử dụng payment method từ booking object (hoặc fallback kiểm tra paymentStatus)
   const paymentMethod =
     booking.paymentMethod ||
     (booking.paymentStatus === "paid" ? "momo" : "cash");
@@ -36,7 +36,7 @@ function updateBookingUI(booking) {
   setupViewDetailsButton(booking._id);
 }
 
-// If sessionStorage is empty (after F5), fetch from server
+// Nếu sessionStorage trống (sau khi F5), lấy từ server
 if (!bookingCode || !bookingTotal) {
   if (bookingId) {
     fetch(`/api/bookings/${bookingId}`)
@@ -45,30 +45,29 @@ if (!bookingCode || !bookingTotal) {
         if (result.success && result.data) {
           updateBookingUI(result.data);
         } else {
-          // Show default/error state
+          // Hiển thị trạng thái mặc định/lỗi
           document.getElementById("booking-code").textContent = "BK000000";
           document.getElementById("booking-total").textContent = "--";
         }
       })
       .catch((err) => {
-        console.error("Error fetching booking:", err);
         document.getElementById("booking-code").textContent = "BK000000";
         document.getElementById("booking-total").textContent = "--";
       });
   }
 } else {
-  // SessionStorage has data, use it
+  // SessionStorage có dữ liệu, sử dụng nó
   document.getElementById("booking-code").textContent = bookingCode;
   document.getElementById("booking-total").textContent =
     formatPrice(parseInt(bookingTotal)) + "₫";
 
-  // Update payment status badge based on payment method from sessionStorage
+  // Cập nhật badge trạng thái thanh toán
   if (paymentMethod) {
     updateStatusBadge(paymentMethod);
   }
 }
 
-// Function to update status badge
+// Cập nhật badge trạng thái thanh toán
 function updateStatusBadge(method) {
   const statusBadge = document.getElementById("payment-status");
 
@@ -87,7 +86,7 @@ function updateStatusBadge(method) {
   }
 }
 
-// Function to set up view details button
+// Thiết lập nút xem chi tiết
 function setupViewDetailsButton(id) {
   const viewDetailsBtn = document.getElementById("view-details-btn");
   if (viewDetailsBtn) {
@@ -95,15 +94,14 @@ function setupViewDetailsButton(id) {
   }
 }
 
-// Clear sessionStorage but keep localStorage for F5 reload
-// Only clear when user leaves the page (by clicking home button or similar)
+// Xóa sessionStorage nhưng giữ localStorage để F5 reload
 sessionStorage.removeItem("bookingId");
 sessionStorage.removeItem("bookingCode");
 sessionStorage.removeItem("bookingTotal");
 sessionStorage.removeItem("paymentMethod");
 
-// Clear localStorage when user navigates away from booking-success
-// Option 1: Clear when user clicks "Về trang chủ" button
+// Xóa localStorage khi người dùng rời khỏi trang booking-success
+// Xóa khi người dùng click nút "Về trang chủ"
 document.querySelectorAll('a[href="/"]').forEach((btn) => {
   btn.addEventListener("click", () => {
     localStorage.removeItem("bookingId");
@@ -113,8 +111,7 @@ document.querySelectorAll('a[href="/"]').forEach((btn) => {
   });
 });
 
-// Option 2: Clear after 30 minutes or when creating a new booking
-// Clean up old booking data if more than 30 minutes have passed
+// Xóa dữ liệu booking cũ nếu đã quá 30 phút
 const lastBookingTime = localStorage.getItem("lastBookingTime");
 const currentTime = new Date().getTime();
 if (

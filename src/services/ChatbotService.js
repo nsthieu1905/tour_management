@@ -3,7 +3,6 @@ const { Tour } = require("../app/models/index");
 
 class ChatbotService {
   constructor() {
-    // Support multiple API keys - rotate khi fail
     const apiKeyStr = process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY;
 
     if (!apiKeyStr) {
@@ -24,7 +23,6 @@ class ChatbotService {
 
     this.model = "gemini-2.5-flash";
 
-    // System prompt nâng cấp - hiểu ngữ cảnh tốt hơn
     this.systemPrompt = `Bạn là trợ lý tư vấn du lịch thông minh và thân thiện.
 
 # QUY TẮC QUAN TRỌNG
@@ -80,24 +78,15 @@ Phân tích ý định người dùng qua nhiều góc độ:
 Mục tiêu: Tạo trải nghiệm tư vấn cá nhân hóa, giúp khách tìm tour phù hợp nhanh nhất.`;
   }
 
-  /**
-   * Rotate API key - chuyển sang key tiếp theo khi error
-   */
+  // Rotate API key
   rotateApiKey() {
     this.currentKeyIndex = (this.currentKeyIndex + 1) % this.apiKeys.length;
-    console.log(
-      `[ChatbotService] Rotating API key: ${this.currentKeyIndex + 1}/${
-        this.apiKeys.length
-      }`
-    );
     this.ai = new GoogleGenAI({
       apiKey: this.apiKeys[this.currentKeyIndex],
     });
   }
 
-  /**
-   * Call Gemini API với retry - rotate key nếu fail
-   */
+  // Gọi Gemini với retry và rotate key khi lỗi
   async callGeminiWithRetry(prompt, maxRetries = this.apiKeys.length) {
     let lastError = null;
 
@@ -115,33 +104,19 @@ Mục tiêu: Tạo trải nghiệm tư vấn cá nhân hóa, giúp khách tìm t
         return response;
       } catch (error) {
         lastError = error;
-        console.error(
-          `[ChatbotService] API call failed (attempt ${attempt + 1}):`,
-          error.status
-        );
 
         // Rotate key nếu còn key khác
         if (attempt < maxRetries - 1) {
           this.rotateApiKey();
-          console.log(`[ChatbotService] Trying with next API key...`);
         }
       }
     }
-
-    // Nếu tất cả keys fail, throw error
     throw lastError;
   }
 
-  /**
-   * Rotate API key - chuyển sang key tiếp theo khi error
-   */
+  // Rotate API key
   rotateApiKey() {
     this.currentKeyIndex = (this.currentKeyIndex + 1) % this.apiKeys.length;
-    console.log(
-      `[ChatbotService] Rotating API key: ${this.currentKeyIndex + 1}/${
-        this.apiKeys.length
-      }`
-    );
     this.ai = new GoogleGenAI({
       apiKey: this.apiKeys[this.currentKeyIndex],
     });
@@ -219,7 +194,7 @@ Trả về JSON:
           minPrice = parsed.minPrice || null;
         }
       } catch (e) {
-        console.error("Parse keywords error:", e);
+        console.error("[ChatbotService] Parse keywords error:", e);
       }
 
       // Fallback: nếu Gemini không parse được, extract keywords từ message
@@ -320,7 +295,7 @@ Trả về JSON:
 
       return tours.length > 0 ? { tours } : null;
     } catch (error) {
-      console.error("Lỗi search tours:", error);
+      console.error("[ChatbotService] Lỗi search tours:", error);
       return null;
     }
   }
@@ -357,7 +332,7 @@ JSON: {location:"..."}`;
           location = parsed.location;
         }
       } catch (e) {
-        console.error("Parse location error:", e);
+        console.error("[ChatbotService] Parse location error:", e);
       }
 
       // Nếu không detect location, return null
@@ -384,7 +359,7 @@ JSON: {location:"..."}`;
 
       return tours.length > 0 ? tours : null;
     } catch (error) {
-      console.error("Lỗi tìm tour:", error);
+      console.error("[ChatbotService] Lỗi tìm tour:", error);
       return null;
     }
   }
@@ -394,7 +369,7 @@ JSON: {location:"..."}`;
    */
   formatTourListHTML(tours, baseUrl = "http://localhost:8386") {
     if (!tours || tours.length === 0) {
-      return "Xin lỗi, tôi không tìm được tour phù hợp. Hãy hỏi khác hoặc gọi hotline nhé! 😊";
+      return "Xin lỗi, tôi không tìm được tour phù hợp. Hãy hỏi khác hoặc gọi hotline nhé!";
     }
 
     const tourList = tours
@@ -402,13 +377,13 @@ JSON: {location:"..."}`;
         const price = tour.discountPrice ? tour.discountPrice : tour.price;
         const tourDetailUrl = `${baseUrl}/tours/${tour.slug}`;
 
-        return `${idx + 1}. **${tour.name}** - 💰 ${this.formatPrice(
+        return `${idx + 1}. **${tour.name}** - ${this.formatPrice(
           price
         )}\n[Xem chi tiết & Đặt tour →](${tourDetailUrl})`;
       })
       .join("\n\n");
 
-    return `Đây là những tour tuyệt vời cho bạn:\n\n${tourList}\n\nBấm vào để xem chi tiết nha! 😍`;
+    return `Đây là những tour tuyệt vời cho bạn:\n\n${tourList}\n\nBấm vào để xem chi tiết nha!`;
   }
 
   /**
@@ -416,7 +391,7 @@ JSON: {location:"..."}`;
    */
   formatTourListWithLinks(tours, baseUrl = "http://localhost:8386") {
     if (!tours || tours.length === 0) {
-      return "Không tìm thấy tour phù hợp 😔";
+      return "Không tìm thấy tour phù hợp";
     }
 
     const tourList = tours
@@ -427,11 +402,11 @@ JSON: {location:"..."}`;
 
         return `${index + 1}. [${
           tour.name
-        }](${tourDetailUrl}) - 💰${this.formatPrice(price)}`;
+        }](${tourDetailUrl}) - ${this.formatPrice(price)}`;
       })
       .join("\n");
 
-    return `Tôi tìm thấy ${tours.length} tour phù hợp 🎉:\n\n${tourList}`;
+    return `Tôi tìm thấy ${tours.length} tour phù hợp:\n\n${tourList}`;
   }
 
   /**
@@ -488,10 +463,8 @@ JSON: {location:"..."}`;
 
       return response.text;
     } catch (error) {
-      console.error("Lỗi chat:", error);
-      throw new Error(
-        "Xin lỗi, tôi gặp sự cố kỹ thuật. Vui lòng thử lại sau! 🙏"
-      );
+      console.error("[ChatbotService] Lỗi chat:", error);
+      throw new Error("Xin lỗi, tôi gặp sự cố kỹ thuật. Vui lòng thử lại sau!");
     }
   }
 
@@ -525,10 +498,8 @@ Tư vấn chi tiết dựa trên thông tin trên.`;
 
       return response.text;
     } catch (error) {
-      console.error("Lỗi chat with tour:", error);
-      throw new Error(
-        "Xin lỗi, tôi gặp sự cố kỹ thuật. Vui lòng thử lại sau! 🙏"
-      );
+      console.error("[ChatbotService] Lỗi chat with tour:", error);
+      throw new Error("Xin lỗi, tôi gặp sự cố kỹ thuật. Vui lòng thử lại sau!");
     }
   }
 
@@ -568,8 +539,8 @@ Pick 3 best matches with 1-line reason each.`;
 
       return response.text;
     } catch (error) {
-      console.error("Lỗi suggest tours:", error);
-      throw new Error("Không thể gợi ý tour. Vui lòng thử lại! 🙏");
+      console.error("[ChatbotService] Lỗi suggest tours:", error);
+      throw new Error("Không thể gợi ý tour. Vui lòng thử lại!");
     }
   }
 
@@ -657,7 +628,7 @@ JSON: {
           return JSON.parse(jsonMatch[0]);
         }
       } catch (e) {
-        console.error("Parse JSON error:", e);
+        console.error("[ChatbotService] Parse JSON error:", e);
       }
 
       return {
@@ -669,7 +640,7 @@ JSON: {
         summary: userMessage.slice(0, 50),
       };
     } catch (error) {
-      console.error("Lỗi analyze intent:", error);
+      console.error("[ChatbotService] Lỗi analyze intent:", error);
       return {
         intent: "other",
         entities: {},
@@ -693,7 +664,7 @@ JSON: {
     }
     return `
  ${tour.name} (${tour.tourCode})
- ${tour.destination} | ⭐ ${tour.rating?.average || 0}/5 (${
+ ${tour.destination} | ${tour.rating?.average || 0}/5 (${
       tour.rating?.count || 0
     } reviews)
  ${this.formatPrice(tour.price)}${

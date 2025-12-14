@@ -2,18 +2,11 @@
 // QUẢN LÝ NHÂN VIÊN - ADMIN
 // ===========================
 
-// Global variables
-let staffData = []; // Danh sách nhân viên
+// Biến toàn cục
+let staffData = [];
 
-/**
- * Khởi tạo trang quản lý nhân viên
- * - Lấy danh sách nhân viên từ API
- * - Render bảng nhân viên
- * - Gán sự kiện cho các nút và form
- */
+// Khởi tạo trang quản lý nhân viên
 document.addEventListener("DOMContentLoaded", async function () {
-  console.log("🔧 Initializing staff management page...");
-
   // Lấy danh sách nhân viên từ API
   await loadStaffList();
 
@@ -21,7 +14,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   const staffTableBody = document.getElementById("staffTableBody");
   if (staffTableBody) {
     renderStaffTable();
-    // Remove: updateStaffStats() - không cần vì bỏ stats khỏi view
   }
 
   // Gán sự kiện tìm kiếm
@@ -69,7 +61,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   const addStaffBtn = document.getElementById("addStaffBtn");
   if (addStaffBtn) {
     addStaffBtn.addEventListener("click", showAddStaffModal);
-    console.log("✅ Add staff button listener attached");
   }
 
   // Gán sự kiện nút Hủy đóng modal
@@ -83,22 +74,15 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (cancelBtn) {
     cancelBtn.addEventListener("click", hideAddStaffModal);
   }
-
-  console.log("✅ Staff management page initialized successfully!");
 });
 
 // ===========================
-// QUẢN LÝ DỮ LIỆU - CỘNG GIAO VỚI API
+// QUẢN LÝ DỮ LIỆU - API
 // ===========================
 
-/**
- * Lấy danh sách nhân viên từ API
- * Gọi endpoint GET /api/admin/staff để lấy danh sách tất cả admin users
- */
+// Lấy danh sách nhân viên từ API
 async function loadStaffList() {
   try {
-    console.log("📡 Loading staff list from API...");
-
     const response = await fetch("/api/admin/staff", {
       method: "GET",
       headers: {
@@ -107,11 +91,6 @@ async function loadStaffList() {
     });
 
     if (!response.ok) {
-      // Nếu endpoint chưa tồn tại, dùng dữ liệu trống
-      console.warn(
-        "⚠️ Staff API endpoint not found, using empty data",
-        response.status
-      );
       staffData = [];
       return;
     }
@@ -119,30 +98,17 @@ async function loadStaffList() {
     const result = await response.json();
     if (result.success && Array.isArray(result.data)) {
       staffData = result.data;
-      console.log(
-        `✅ Loaded ${staffData.length} staff members from API`,
-        staffData
-      );
     } else {
       staffData = [];
-      console.log("📋 No staff data returned from API");
     }
   } catch (error) {
-    console.error("❌ Error loading staff list:", error);
     staffData = [];
   }
 }
 
-/**
- * Thêm nhân viên mới thông qua API
- * Gửi request POST tới /auth/add-staff
- * @param {FormData} formData - Dữ liệu form
- * @returns {Promise<boolean>} - Kết quả thêm nhân viên
- */
+// Thêm nhân viên mới thông qua API
 async function addStaffViaAPI(formData) {
   try {
-    console.log("📤 Sending add staff request to API...");
-
     const payload = {
       fullName: formData.get("staffName"),
       email: formData.get("staffEmail"),
@@ -150,8 +116,6 @@ async function addStaffViaAPI(formData) {
       password: formData.get("password"),
       passwordConfirm: formData.get("passwordConfirm"),
     };
-
-    console.log("📋 Payload:", payload);
 
     const response = await fetch("/auth/add-staff", {
       method: "POST",
@@ -164,7 +128,6 @@ async function addStaffViaAPI(formData) {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("❌ API Error:", result);
       return {
         success: false,
         message: result.message || "Có lỗi xảy ra khi thêm nhân viên",
@@ -172,14 +135,12 @@ async function addStaffViaAPI(formData) {
       };
     }
 
-    console.log("✅ Staff added successfully:", result.data);
     return {
       success: true,
       message: result.message,
       data: result.data.user,
     };
   } catch (error) {
-    console.error("❌ Network error:", error);
     return {
       success: false,
       message: "Lỗi kết nối server, vui lòng thử lại",
@@ -188,16 +149,9 @@ async function addStaffViaAPI(formData) {
   }
 }
 
-/**
- * Xóa nhân viên qua API
- * Gửi request DELETE tới /api/admin/staff/:id
- * @param {string} staffId - ID của nhân viên
- * @returns {Promise<boolean>} - Kết quả xóa
- */
+// Xóa nhân viên qua API
 async function deleteStaffViaAPI(staffId) {
   try {
-    console.log(`🗑️ Deleting staff ${staffId}...`);
-
     const response = await fetch(`/api/admin/staff/${staffId}`, {
       method: "DELETE",
       headers: {
@@ -208,20 +162,17 @@ async function deleteStaffViaAPI(staffId) {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Delete Error:", result);
       return {
         success: false,
         message: result.message || "Có lỗi xảy ra khi xóa nhân viên",
       };
     }
 
-    console.log("✅ Staff deleted successfully");
     return {
       success: true,
       message: result.message,
     };
   } catch (error) {
-    console.error("❌ Network error:", error);
     return {
       success: false,
       message: "Lỗi kết nối server, vui lòng thử lại",
@@ -233,17 +184,12 @@ async function deleteStaffViaAPI(staffId) {
 // RENDER & HIỂN THỊ DỮ LIỆU
 // ===========================
 
-/**
- * Render bảng danh sách nhân viên
- */
+// Render bảng danh sách nhân viên
 function renderStaffTable() {
   const tbody = document.getElementById("staffTableBody");
   if (!tbody) {
-    console.warn("⚠️ Staff table body not found");
     return;
   }
-
-  console.log(`📊 Rendering ${staffData.length} staff members...`);
 
   let filteredData = [...staffData];
 
@@ -262,15 +208,9 @@ function renderStaffTable() {
   }
 
   tbody.innerHTML = filteredData.map((staff) => renderStaffRow(staff)).join("");
-
-  console.log(`✅ Rendered ${filteredData.length} staff rows`);
 }
 
-/**
- * Render một dòng nhân viên trong bảng
- * @param {Object} staff - Thông tin nhân viên
- * @returns {string} - HTML của một dòng nhân viên
- */
+// Render một dòng nhân viên trong bảng
 function renderStaffRow(staff) {
   const status = staff.status || "active";
   const joinDate = staff.createdAt || new Date().toISOString();
@@ -340,32 +280,14 @@ function renderStaffRow(staff) {
   `;
 }
 
-/**
- * Cập nhật các thống kê nhân viên
- * Hàm này không dùng vì đã bỏ stats khỏi view
- */
-function updateStaffStats() {
-  // Removed - stats section removed from view
-}
-
-// ===========================
-// LỌC & TÌM KIẾM
-// ===========================
-
 // ===========================
 // TÌM KIẾM
 // ===========================
 
-/**
- * Tìm kiếm nhân viên theo từ khóa
- * Tìm trong tên, email, phone
- * @param {string} query - Từ khóa tìm kiếm
- */
+// Tìm kiếm nhân viên theo từ khóa (tên, email, phone)
 function searchStaff(query) {
   const tbody = document.getElementById("staffTableBody");
   if (!tbody) return;
-
-  console.log(`🔎 Searching for: "${query}"`);
 
   const searchQuery = query.toLowerCase();
   let filteredData = staffData.filter(
@@ -388,45 +310,33 @@ function searchStaff(query) {
       </td>
     </tr>
   `;
-
-  console.log(`✅ Found ${filteredData.length} matching staff`);
 }
 
 // ===========================
 // QUẢN LÝ HÀNH ĐỘNG
 // ===========================
 
-/**
- * Hiển thị modal thêm nhân viên
- */
+// Hiển thị modal thêm nhân viên
 function showAddStaffModal() {
   const modal = document.getElementById("addStaffModal");
   if (modal) {
     modal.classList.remove("hidden");
-    console.log("📝 Add staff modal opened");
   }
 }
 
-/**
- * Ẩn modal thêm nhân viên
- */
+// Ẩn modal thêm nhân viên
 function hideAddStaffModal() {
   const modal = document.getElementById("addStaffModal");
   if (modal) {
     modal.classList.add("hidden");
     const form = document.getElementById("addStaffForm");
     if (form) form.reset();
-    console.log("📝 Add staff modal closed");
   }
 }
 
-/**
- * Xử lý sự kiện thêm nhân viên mới
- * @param {Event} e - Sự kiện submit form
- */
+// Xử lý sự kiện thêm nhân viên mới
 async function handleAddStaff(e) {
   e.preventDefault();
-  console.log("➕ Adding new staff member...");
 
   const form = e.target;
   const formData = new FormData(form);
@@ -470,7 +380,6 @@ async function handleAddStaff(e) {
 
   // Hiển thị lỗi nếu có
   if (Object.keys(errors).length > 0) {
-    console.warn("❌ Validation errors:", errors);
     alert(
       "Vui lòng điền đầy đủ và chính xác thông tin:\n" +
         Object.values(errors).join("\n")
@@ -482,28 +391,22 @@ async function handleAddStaff(e) {
   const result = await addStaffViaAPI(formData);
 
   if (result.success) {
-    console.log("✅ Staff added successfully!");
     alert(result.message);
 
     // Tải lại danh sách nhân viên
     await loadStaffList();
     renderStaffTable();
-    updateStaffStats();
     hideAddStaffModal();
   } else {
-    console.error("❌ Error adding staff:", result.errors);
     const errorMsg =
       Object.values(result.errors || {}).join("\n") ||
       result.message ||
       "Có lỗi xảy ra";
-    alert("❌ Lỗi:\n" + errorMsg);
+    alert("Lỗi:\n" + errorMsg);
   }
 }
 
-/**
- * Xem chi tiết thông tin nhân viên
- * @param {string} staffId - ID của nhân viên
- */
+// Xem chi tiết thông tin nhân viên
 function viewStaffDetail(staffId) {
   const staff = staffData.find((s) => s._id === staffId);
   if (!staff) {
@@ -511,33 +414,28 @@ function viewStaffDetail(staffId) {
     return;
   }
 
-  console.log("👁️ Viewing staff details:", staff);
-
   const details = `
-  👤 THÔNG TIN NHÂN VIÊN
+  THÔNG TIN NHÂN VIÊN
   ━━━━━━━━━━━━━━━━━━━━
   
-  📛 Tên: ${staff.fullName}
-  📧 Email: ${staff.email}
-  📱 Điện thoại: ${staff.phone || "N/A"}
+  Tên: ${staff.fullName}
+  Email: ${staff.email}
+  Điện thoại: ${staff.phone || "N/A"}
   
-  👔 THÔNG TIN CÔNG VIỆC
+  THÔNG TIN CÔNG VIỆC
   ━━━━━━━━━━━━━━━━━━━━
   
   Chức vụ: ${staff.role || "admin"}
   Phòng ban: ${staff.department || "Quản trị"}
   Trạng thái: ${getStatusText(staff.status || "active")}
   
-  📅 Ngày tạo: ${formatDate(staff.createdAt || new Date().toISOString())}
+  Ngày tạo: ${formatDate(staff.createdAt || new Date().toISOString())}
   `;
 
   alert(details);
 }
 
-/**
- * Chỉnh sửa thông tin nhân viên
- * @param {string} staffId - ID của nhân viên
- */
+// Chỉnh sửa thông tin nhân viên
 function editStaff(staffId) {
   const staff = staffData.find((s) => s._id === staffId);
   if (!staff) {
@@ -545,28 +443,20 @@ function editStaff(staffId) {
     return;
   }
 
-  console.log("✏️ Editing staff:", staff);
-
   // Hiển thị prompt để chỉnh sửa tên
   const newName = prompt("Nhập tên mới:", staff.fullName);
   if (newName && newName !== staff.fullName) {
     alert("Chức năng chỉnh sửa đang được phát triển!");
-    console.log(`📝 Would update ${staff.fullName} to ${newName}`);
   }
 }
 
-/**
- * Xác nhận xóa nhân viên
- * @param {string} staffId - ID của nhân viên
- */
+// Xác nhận xóa nhân viên
 function confirmDelete(staffId) {
   const staff = staffData.find((s) => s._id === staffId);
   if (!staff) {
     alert("Không tìm thấy nhân viên");
     return;
   }
-
-  console.log("🗑️ Confirming delete for staff:", staff);
 
   const confirmed = confirm(
     `Bạn có chắc chắn muốn xóa nhân viên ${staff.fullName}?\n\nHành động này không thể hoàn tác!`
@@ -577,15 +467,11 @@ function confirmDelete(staffId) {
   }
 }
 
-/**
- * Xóa nhân viên sau khi được xác nhận
- * @param {string} staffId - ID của nhân viên
- */
+// Xóa nhân viên sau khi được xác nhận
 async function deleteStaffConfirmed(staffId) {
   const result = await deleteStaffViaAPI(staffId);
 
   if (result.success) {
-    console.log("✅ Staff deleted successfully!");
     alert(result.message);
 
     // Xóa khỏi mảng local
@@ -593,20 +479,14 @@ async function deleteStaffConfirmed(staffId) {
 
     // Render lại bảng
     renderStaffTable();
-    updateStaffStats();
   } else {
-    console.error("❌ Error deleting staff:", result);
-    alert("❌ " + result.message);
+    alert(result.message);
   }
 }
 
-/**
- * Xuất danh sách nhân viên ra file Excel
- */
+// Xuất danh sách nhân viên ra file Excel
 async function exportStaffData() {
   try {
-    console.log("📥 Exporting staff data to Excel...");
-
     if (staffData.length === 0) {
       alert("Không có dữ liệu nhân viên để xuất");
       return;
@@ -652,11 +532,9 @@ async function exportStaffData() {
     element.click();
     document.body.removeChild(element);
 
-    console.log("✅ Export completed successfully!");
-    alert("✅ Xuất dữ liệu thành công!");
+    alert("Xuất dữ liệu thành công!");
   } catch (error) {
-    console.error("❌ Export error:", error);
-    alert("❌ Có lỗi xảy ra khi xuất dữ liệu");
+    alert("Có lỗi xảy ra khi xuất dữ liệu");
   }
 }
 
@@ -664,11 +542,7 @@ async function exportStaffData() {
 // UTILITY FUNCTIONS
 // ===========================
 
-/**
- * Lấy class CSS tương ứng với trạng thái nhân viên
- * @param {string} status - Trạng thái nhân viên
- * @returns {string} - Class CSS
- */
+// Lấy class CSS tương ứng với trạng thái nhân viên
 function getStatusClass(status) {
   switch (status) {
     case "active":
@@ -682,11 +556,7 @@ function getStatusClass(status) {
   }
 }
 
-/**
- * Chuyển đổi mã trạng thái sang text hiển thị
- * @param {string} status - Mã trạng thái
- * @returns {string} - Text hiển thị
- */
+// Chuyển đổi mã trạng thái sang text hiển thị
 function getStatusText(status) {
   switch (status) {
     case "active":
@@ -700,11 +570,7 @@ function getStatusText(status) {
   }
 }
 
-/**
- * Định dạng ngày theo chuẩn Việt Nam
- * @param {string} dateString - Chuỗi ngày định dạng ISO
- * @returns {string} - Ngày định dạng dd/mm/yyyy
- */
+// Định dạng ngày theo chuẩn Việt Nam (dd/mm/yyyy)
 function formatDate(dateString) {
   try {
     const date = new Date(dateString);
@@ -718,18 +584,10 @@ function formatDate(dateString) {
   }
 }
 
-/**
- * Định dạng số tiền theo chuẩn Việt Nam
- * @param {number} amount - Số tiền
- * @returns {string} - Số tiền đã định dạng
- */
+// Định dạng số tiền theo chuẩn Việt Nam
 function formatCurrency(amount) {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
   }).format(amount);
 }
-
-console.log(
-  "✅ Staff management module (qly-nhan-viens.js) loaded successfully!"
-);

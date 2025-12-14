@@ -7,7 +7,7 @@ import {
   validateFullName,
 } from "../../utils/validators.js";
 
-// Helper function to format date to dd/mm/yyyy
+// Định dạng ngày sang dd/mm/yyyy
 function formatDateToDDMMYYYY(dateStr) {
   if (!dateStr) return "";
   const date = new Date(dateStr);
@@ -18,7 +18,7 @@ function formatDateToDDMMYYYY(dateStr) {
   return `${day}/${month}/${year}`;
 }
 
-// State management
+// Quản lý trạng thái đặt tour
 let bookingState = {
   tourId: null,
   guestCount: 1,
@@ -32,7 +32,7 @@ let bookingState = {
   userId: null,
 };
 
-// DOM Elements
+// Các phần tử DOM
 const step1Content = document.getElementById("step-1-content");
 const step2Content = document.getElementById("step-2-content");
 
@@ -41,7 +41,7 @@ const step2Circle = document.getElementById("step-2-circle");
 
 const line1 = document.getElementById("line-1");
 
-// Customer info inputs
+// Input thông tin khách hàng
 const customerNameInput = document.getElementById("customer-name");
 const customerEmailInput = document.getElementById("customer-email");
 const customerPhoneInput = document.getElementById("customer-phone");
@@ -66,14 +66,14 @@ const nextStep1Btn = document.getElementById("next-step-1");
 const backToStep1Btn = document.getElementById("back-to-step-1");
 const confirmPaymentBtn = document.getElementById("confirm-payment");
 
-// Get tour data from data attributes
+// Lấy dữ liệu tour từ data attributes
 const contentDiv = document.querySelector("[data-tour-id]");
 const tourId =
   contentDiv?.dataset.tourId || window.location.pathname.split("/").pop();
 const tourPrice = parseInt(contentDiv?.dataset.tourPrice) || 0;
 const tourCapacity = parseInt(contentDiv?.dataset.tourCapacity) || 1;
 
-// Bank transfer config
+// Thông tin ngân hàng
 const BANK_CONFIG = {
   bankName: "Ngân hàng Quân Đội (MB Bank)",
   accountNumber: "0001242921822",
@@ -81,51 +81,45 @@ const BANK_CONFIG = {
   bankCode: "MBB",
 };
 
-// Initialize
+// Khởi tạo
 document.addEventListener("DOMContentLoaded", () => {
   bookingState.tourId = tourId;
   bookingState.subtotal = tourPrice;
   bookingState.total = tourPrice;
 
-  // Update unit price display
+  // Cập nhật giá hiển thị
   unitPriceEl.textContent = formatPrice(tourPrice) + "₫";
 
-  // Fetch current user ID if logged in
+  // Lấy userId nếu đã đăng nhập
   fetchCurrentUserId();
 
   setupEventListeners();
   updatePriceSummary();
 });
 
-// Fetch current user ID from API
+// Lấy userId hiện tại từ API
 async function fetchCurrentUserId() {
   try {
-    console.log("Fetching current user...");
     const res = await fetch("/api/users/current-user");
-    console.log("Response status:", res.status, res.ok);
 
     if (res.ok) {
       const result = await res.json();
-      console.log("Current user result:", result);
       if (result.success && result.data?._id) {
         bookingState.userId = result.data._id;
-        console.log("Current user ID set:", bookingState.userId);
       } else {
-        console.log("No user data in response");
         bookingState.userId = null;
       }
     } else {
-      console.log("Response not ok");
       bookingState.userId = null;
     }
   } catch (error) {
-    console.log("Error fetching user:", error.message);
     bookingState.userId = null;
   }
 }
 
+// Gắn các sự kiện
 function setupEventListeners() {
-  // Customer name validation
+  // Validate tên khách hàng
   customerNameInput.addEventListener("blur", () => {
     validateCustomerName();
   });
@@ -133,7 +127,7 @@ function setupEventListeners() {
     clearFieldError("customer-name");
   });
 
-  // Customer email validation
+  // Validate email
   customerEmailInput.addEventListener("blur", () => {
     validateCustomerEmail();
   });
@@ -141,7 +135,7 @@ function setupEventListeners() {
     clearFieldError("customer-email");
   });
 
-  // Customer phone validation
+  // Validate số điện thoại
   customerPhoneInput.addEventListener("blur", () => {
     validateCustomerPhone();
   });
@@ -149,7 +143,7 @@ function setupEventListeners() {
     clearFieldError("customer-phone");
   });
 
-  // Guest count controls
+  // Điều khiển số lượng khách
   decreaseGuestBtn.addEventListener("click", () => {
     const current = parseInt(guestCountInput.value);
     if (current > 1) {
@@ -169,7 +163,7 @@ function setupEventListeners() {
 
   guestCountInput.addEventListener("change", onGuestCountChange);
 
-  // Coupon
+  // Mã giảm giá
   applyCouponBtn.addEventListener("click", applyCoupon);
   couponCodeInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") applyCoupon();
@@ -179,12 +173,12 @@ function setupEventListeners() {
     couponMessage.classList.add("hidden");
   });
 
-  // Step navigation
+  // Điều hướng các bước
   nextStep1Btn.addEventListener("click", goToStep2);
   backToStep1Btn.addEventListener("click", goToStep1);
   confirmPaymentBtn.addEventListener("click", confirmPayment);
 
-  // Payment method
+  // Phương thức thanh toán
   document.querySelectorAll('input[name="payment-method"]').forEach((radio) => {
     radio.addEventListener("change", (e) => {
       bookingState.paymentMethod = e.target.value;
@@ -192,7 +186,7 @@ function setupEventListeners() {
     });
   });
 
-  // Departure date validation
+  // Validate ngày khởi hành
   departureDateSelect.addEventListener("blur", () => {
     validateDepartureDate();
   });
@@ -202,6 +196,7 @@ function setupEventListeners() {
   });
 }
 
+// Khi thay đổi số lượng khách
 function onGuestCountChange() {
   const guestCount = parseInt(guestCountInput.value);
   bookingState.guestCount = guestCount;
@@ -209,18 +204,19 @@ function onGuestCountChange() {
   updatePriceSummary();
 }
 
+// Khi thay đổi ngày khởi hành
 function onDepartureDateChange() {
   const selected =
     departureDateSelect.options[departureDateSelect.selectedIndex];
   if (selected.value) {
-    // Store the ObjectId for API (if needed)
+    // Lưu ObjectId cho API
     bookingState.departureDateId = selected.value;
 
-    // Get actual date from data-date attribute
+    // Lấy ngày thực từ data-date attribute
     const dateStr = selected.getAttribute("data-date");
     bookingState.departureDate = dateStr;
 
-    // Extract price from text like "09/12/2025 - 123.213.213₫/người"
+    // Trích xuất giá từ text như "09/12/2025 - 123.213.213₫/người"
     const text = selected.textContent;
     const priceMatch = text.match(/[\d.]+(?=₫)/);
     const priceText = priceMatch ? priceMatch[0].replace(/\./g, "") : "";
@@ -230,6 +226,7 @@ function onDepartureDateChange() {
   }
 }
 
+// Cập nhật tóm tắt giá
 function updatePriceSummary() {
   const basePrice = bookingState.departureDatePrice || tourPrice;
   const subtotal = basePrice * bookingState.guestCount;
@@ -253,12 +250,12 @@ function updatePriceSummary() {
 
   bookingState.total = total;
 
-  // Update UI
+  // Cập nhật UI
   subtotalEl.textContent = formatPrice(subtotal) + "₫";
   discountAmountEl.textContent = formatPrice(bookingState.discountAmount) + "₫";
   finalTotalEl.textContent = formatPrice(total) + "₫";
 
-  // Update step 2 summary
+  // Cập nhật tóm tắt ở bước 2
   document.getElementById("summary-subtotal").textContent =
     formatPrice(subtotal) + "₫";
   document.getElementById("summary-discount-amount").textContent =
@@ -274,6 +271,7 @@ function updatePriceSummary() {
   }
 }
 
+// Áp dụng mã giảm giá
 async function applyCoupon() {
   const code = couponCodeInput.value.trim();
   if (!code) {
@@ -352,12 +350,12 @@ async function applyCoupon() {
       applyCouponBtn.disabled = false;
     }
   } catch (error) {
-    console.error("Error:", error);
     showCouponMessage("Có lỗi xảy ra, vui lòng thử lại", "error");
     applyCouponBtn.disabled = false;
   }
 }
 
+// Hiển thị thông báo mã giảm giá
 function showCouponMessage(message, type) {
   couponMessage.textContent = message;
   couponMessage.className = `text-sm mt-2 ${
@@ -366,12 +364,13 @@ function showCouponMessage(message, type) {
   couponMessage.classList.remove("hidden");
 }
 
+// Chuyển bước
 function goToStep(step) {
-  // Hide all steps
+  // Ẩn tất cả các bước
   step1Content.classList.add("hidden");
   step2Content.classList.add("hidden");
 
-  // Reset circle colors
+  // Reset màu các vòng tròn
   step1Circle.className =
     "w-12 h-12 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer hover:bg-gray-400 transition";
   step2Circle.className =
@@ -386,7 +385,7 @@ function goToStep(step) {
   } else if (step === 2) {
     step2Content.classList.remove("hidden");
 
-    // Highlight step 1 and 2
+    // Đánh dấu hoàn thành bước 1 và 2
     step1Circle.className =
       "w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg mb-2 cursor-pointer transition";
     step1Circle.innerHTML = "<span>✓</span>";
@@ -397,6 +396,7 @@ function goToStep(step) {
   }
 }
 
+// Validate tên khách hàng
 function validateCustomerName() {
   const name = customerNameInput.value.trim();
 
@@ -414,6 +414,7 @@ function validateCustomerName() {
   return true;
 }
 
+// Validate email
 function validateCustomerEmail() {
   const email = customerEmailInput.value.trim();
 
@@ -431,6 +432,7 @@ function validateCustomerEmail() {
   return true;
 }
 
+// Validate số điện thoại
 function validateCustomerPhone() {
   const phone = customerPhoneInput.value.trim();
 
@@ -451,6 +453,7 @@ function validateCustomerPhone() {
   return true;
 }
 
+// Validate ngày khởi hành
 function validateDepartureDate() {
   if (!departureDateSelect.value) {
     showFieldError("departure-date", "Vui lòng chọn ngày khởi hành");
@@ -461,6 +464,7 @@ function validateDepartureDate() {
   return true;
 }
 
+// Lấy hoặc tạo div hiển thị lỗi
 function getOrCreateErrorDiv(fieldId) {
   const input = document.getElementById(fieldId);
   const parent = input.parentElement;
@@ -475,6 +479,7 @@ function getOrCreateErrorDiv(fieldId) {
   return errorDiv;
 }
 
+// Hiển thị lỗi field
 function showFieldError(fieldId, message) {
   const errorDiv = getOrCreateErrorDiv(fieldId);
   const input = document.getElementById(fieldId);
@@ -484,6 +489,7 @@ function showFieldError(fieldId, message) {
   input.classList.remove("border-gray-300");
 }
 
+// Xóa lỗi field
 function clearFieldError(fieldId) {
   const input = document.getElementById(fieldId);
   const parent = input.parentElement;
@@ -498,6 +504,7 @@ function clearFieldError(fieldId) {
   input.classList.add("border-gray-300");
 }
 
+// Validate tất cả các trường ở bước 1
 function validateStep1() {
   const nameValid = validateCustomerName();
   const emailValid = validateCustomerEmail();
@@ -507,10 +514,12 @@ function validateStep1() {
   return nameValid && emailValid && phoneValid && dateValid;
 }
 
+// Quay về bước 1
 function goToStep1() {
   goToStep(1);
 }
 
+// Sang bước 2
 function goToStep2() {
   if (!validateStep1()) {
     return;
@@ -518,6 +527,7 @@ function goToStep2() {
   goToStep(2);
 }
 
+// Cập nhật UI phương thức thanh toán
 function updatePaymentMethodUI() {
   const bankSection = document.getElementById("bank-transfer-section");
   const confirmCheckbox = document.getElementById("bank-transfer-confirm");
@@ -531,6 +541,7 @@ function updatePaymentMethodUI() {
   }
 }
 
+// Cập nhật thông tin chuyển khoản
 function updateBankTransferInfo() {
   const qrImg = document.getElementById("qr-code-img");
   qrImg.src = "/images/QR.jpg";
@@ -546,11 +557,10 @@ function updateBankTransferInfo() {
     formatPrice(bookingState.total) + "₫";
 }
 
+// Xác nhận thanh toán
 async function confirmPayment() {
   try {
-    console.log("Current payment method:", bookingState.paymentMethod);
-
-    // Handle bank transfer
+    // Xử lý chuyển khoản ngân hàng
     if (bookingState.paymentMethod === "bank_transfer") {
       const confirmCheckbox = document.getElementById("bank-transfer-confirm");
       if (!confirmCheckbox.checked) {
@@ -607,7 +617,7 @@ async function confirmPayment() {
       return;
     }
 
-    // Handle cash payment
+    // Xử lý thanh toán tiền mặt
     if (bookingState.paymentMethod === "cash") {
       const bookingData = {
         customerName: customerNameInput.value.trim(),
@@ -658,7 +668,7 @@ async function confirmPayment() {
       return;
     }
 
-    // Handle MoMo payment
+    // Xử lý thanh toán MoMo
     confirmPaymentBtn.disabled = true;
     confirmPaymentBtn.textContent = "Đang xử lý...";
 
@@ -709,7 +719,6 @@ async function confirmPayment() {
       confirmPaymentBtn.textContent = "Xác nhận thanh toán";
     }
   } catch (error) {
-    console.error("Error:", error);
     Notification.error("Có lỗi xảy ra, vui lòng thử lại");
     confirmPaymentBtn.disabled = false;
     confirmPaymentBtn.textContent = "Xác nhận thanh toán";

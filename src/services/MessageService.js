@@ -3,12 +3,8 @@ const Conversation = require("../app/models/Conversation");
 const mongoose = require("mongoose");
 
 class MessageService {
-  /**
-   * Tìm hoặc tạo cuộc hội thoại giữa admin và client
-   */
   static async findOrCreateConversation(userId, isAdmin = false) {
     try {
-      // Validate userId
       if (!userId) {
         throw new Error("userId is required");
       }
@@ -39,7 +35,6 @@ class MessageService {
       }
 
       if (!conversation) {
-        // 🔴 FIX: Đánh dấu là conversation mới
         isNewConversation = true;
 
         // Tạo cuộc hội thoại mới
@@ -60,20 +55,20 @@ class MessageService {
         });
         await conversation.save();
 
-        // 🔴 FIX: Thêm flag để biết đây là conversation mới
         conversation.__isNew = true;
       }
 
       return conversation;
     } catch (error) {
-      console.error("Error finding or creating conversation:", error);
+      console.error(
+        "[MessageService] Error finding or creating conversation:",
+        error
+      );
       throw error;
     }
   }
 
-  /**
-   * Gửi tin nhắn
-   */
+  // Gửi tin nhắn
   static async sendMessage(data) {
     try {
       const {
@@ -117,27 +112,21 @@ class MessageService {
         { new: true }
       );
 
-      // ✅ QUAN TRỌNG: Nếu là admin reply → tự động mark as read
+      // Nếu admin gửi tin nhắn, đánh dấu cuộc hội thoại là đã đọc cho admin
       if (senderType === "admin") {
-        console.log(
-          "[MessageService] Admin replied, marking conversation as read"
-        );
         await this.markConversationAsReadByAdmin(conversationId);
       }
 
       return message;
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("[MessageService] Error sending message:", error);
       throw error;
     }
   }
 
-  /**
-   * Lấy danh sách tin nhắn của 1 cuộc hội thoại
-   */
+  // Lấy danh sách tin nhắn trong 1 cuộc hội thoại
   static async getMessages(conversationId, limit = 50, skip = 0) {
     try {
-      // 🔴 FIX: Validate conversationId
       if (
         !conversationId ||
         conversationId === "undefined" ||
@@ -146,10 +135,6 @@ class MessageService {
         throw new Error("Invalid conversationId");
       }
 
-      console.log("[MessageService] Getting messages for:", conversationId);
-
-      // 🔴 FIX: KHÔNG populate senderId vì nó có thể là string (guest) hoặc ObjectId
-      // Thay vào đó, lấy messages trước, sau đó manually populate nếu cần
       const messages = await Message.find({
         conversationId,
         isDeleted: false,
@@ -159,12 +144,8 @@ class MessageService {
         .skip(skip)
         .lean();
 
-      console.log("[MessageService] Found messages:", messages.length);
-
-      // 🔴 FIX: Manually populate cho ObjectId users, skip guest users
       const populatedMessages = await Promise.all(
         messages.map(async (msg) => {
-          // Nếu senderId là ObjectId hợp lệ → populate
           if (msg.senderId && mongoose.Types.ObjectId.isValid(msg.senderId)) {
             try {
               const User = mongoose.model("User");
@@ -176,29 +157,22 @@ class MessageService {
                 msg.senderId = user;
               }
             } catch (err) {
-              console.warn(
-                "[MessageService] Could not populate senderId:",
-                msg.senderId
-              );
-              // Keep original senderId if populate fails
+              console.error("[MessageService] Error populating senderId:", err);
             }
           }
-          // Nếu senderId là string (guest) → giữ nguyên
 
           return msg;
         })
       );
 
-      return populatedMessages.reverse(); // Sắp xếp lại từ cũ đến mới
+      return populatedMessages.reverse();
     } catch (error) {
       console.error("[MessageService] Error getting messages:", error);
       throw error;
     }
   }
 
-  /**
-   * Lấy danh sách cuộc hội thoại
-   */
+  // Lấy tất cả cuộc hội thoại của user
   static async getConversations(userId, isAdmin = false) {
     try {
       const conversations = await Conversation.find({
@@ -211,14 +185,12 @@ class MessageService {
 
       return conversations;
     } catch (error) {
-      console.error("Error getting conversations:", error);
+      console.error("[MessageService] Error getting conversations:", error);
       throw error;
     }
   }
 
-  /**
-   * Lấy tất cả cuộc hội thoại cho admin
-   */
+  // Lấy tất cả cuộc hội thoại cho admin
   static async getAllConversations(filters = {}) {
     try {
       const query = { status: { $ne: "archived" } };
@@ -240,20 +212,16 @@ class MessageService {
 
       console.log("[MessageService] getAllConversations query:", query);
 
-      // Lấy conversations có populate User info từ participantIds
       const conversations = await Conversation.find(query)
         .populate("closedBy", "name email")
         .sort({ lastMessageAt: -1 })
         .lean();
 
-      // 🔴 FIX: Manually populate participantIds vì nó là Mixed type (string hoặc ObjectId)
       const User = mongoose.model("User");
       const populatedConversations = await Promise.all(
         conversations.map(async (conv) => {
-          // Populate tất cả participantIds
           const populatedParticipants = await Promise.all(
             conv.participantIds.map(async (participantId) => {
-              // Nếu là ObjectId hợp lệ → populate từ User model
               if (
                 participantId &&
                 mongoose.Types.ObjectId.isValid(participantId)
@@ -263,7 +231,6 @@ class MessageService {
                     .select("fullName email avatar")
                     .lean();
                   if (user) {
-                    // Rename fullName thành name để dùng chung
                     return {
                       _id: participantId,
                       name: user.fullName,
@@ -275,7 +242,7 @@ class MessageService {
                   return { _id: participantId, name: "Khách hàng" };
                 }
               }
-              // Nếu là string (guest user) → tạo object tạm
+
               return { _id: participantId, name: "Khách hàng" };
             })
           );
@@ -285,33 +252,14 @@ class MessageService {
         })
       );
 
-      // 🔴 FIX: Validate và log conversations
-      console.log(
-        "[MessageService] Found conversations:",
-        populatedConversations.length
-      );
-
-      populatedConversations.forEach((conv, index) => {
-        if (!conv._id) {
-          console.error(
-            `[MessageService] Conversation ${index} missing _id:`,
-            conv
-          );
-        } else {
-          console.log(`[MessageService] Conv ${index}: _id = ${conv._id}`);
-        }
-      });
-
       return populatedConversations;
     } catch (error) {
-      console.error("Error getting all conversations:", error);
+      console.error("[MessageService] Error getting all conversations:", error);
       throw error;
     }
   }
 
-  /**
-   * Đánh dấu tin nhắn đã đọc
-   */
+  // Đánh dấu tin nhắn đã đọc
   static async markAsRead(messageId) {
     try {
       const message = await Message.findByIdAndUpdate(
@@ -325,14 +273,12 @@ class MessageService {
 
       return message;
     } catch (error) {
-      console.error("Error marking message as read:", error);
+      console.error("[MessageService] Error marking message as read:", error);
       throw error;
     }
   }
 
-  /**
-   * Đánh dấu tất cả tin nhắn của 1 cuộc hội thoại đã đọc
-   */
+  // Đánh dấu tất cả tin nhắn trong cuộc hội thoại đọc
   static async markConversationAsRead(conversationId) {
     try {
       await Message.updateMany(
@@ -356,14 +302,15 @@ class MessageService {
 
       return true;
     } catch (error) {
-      console.error("Error marking conversation as read:", error);
+      console.error(
+        "[MessageService] Error marking conversation as read:",
+        error
+      );
       throw error;
     }
   }
 
-  /**
-   * Xóa tin nhắn (soft delete)
-   */
+  // Xoá tin nhắn
   static async deleteMessage(messageId) {
     try {
       const message = await Message.findByIdAndUpdate(
@@ -377,14 +324,12 @@ class MessageService {
 
       return message;
     } catch (error) {
-      console.error("Error deleting message:", error);
+      console.error("[MessageService] Error deleting message:", error);
       throw error;
     }
   }
 
-  /**
-   * Đóng cuộc hội thoại
-   */
+  // Đóng cuộc hội thoại
   static async closeConversation(conversationId, closedBy) {
     try {
       const conversation = await Conversation.findByIdAndUpdate(
@@ -399,14 +344,12 @@ class MessageService {
 
       return conversation;
     } catch (error) {
-      console.error("Error closing conversation:", error);
+      console.error("[MessageService] Error closing conversation:", error);
       throw error;
     }
   }
 
-  /**
-   * Mở lại cuộc hội thoại
-   */
+  // Mở lại cuộc hội thoại
   static async reopenConversation(conversationId) {
     try {
       const conversation = await Conversation.findByIdAndUpdate(
@@ -421,14 +364,12 @@ class MessageService {
 
       return conversation;
     } catch (error) {
-      console.error("Error reopening conversation:", error);
+      console.error("[MessageService] Error reopening conversation:", error);
       throw error;
     }
   }
 
-  /**
-   * Cập nhật thời gian cuối cùng admin đọc tin nhắn
-   */
+  // Cập nhật trạng thái đọc cho admin
   static async updateAdminReadStatus(conversationId) {
     try {
       const conversation = await Conversation.findByIdAndUpdate(
@@ -441,14 +382,15 @@ class MessageService {
 
       return conversation;
     } catch (error) {
-      console.error("Error updating admin read status:", error);
+      console.error(
+        "[MessageService] Error updating admin read status:",
+        error
+      );
       throw error;
     }
   }
 
-  /**
-   * Lấy tất cả cuộc hội thoại cho admin
-   */
+  // Lấy tất cả cuộc hội thoại cho admin với filter tin nhắn chưa đọc
   static async getAllConversations(filters = {}) {
     try {
       const query = { status: { $ne: "archived" } };
@@ -461,10 +403,9 @@ class MessageService {
         query.priority = filters.priority;
       }
 
-      // ✅ THÊM: Filter tin nhắn chưa đọc
+      // Filter tin nhắn chưa đọc
       if (filters.unreadOnly === "true") {
         query["unreadCount.admin"] = { $gt: 0 };
-        console.log("[MessageService] Filtering unread conversations only");
       }
 
       if (filters.search) {
@@ -474,30 +415,16 @@ class MessageService {
         ];
       }
 
-      console.log(
-        "[MessageService] getAllConversations query:",
-        JSON.stringify(query, null, 2)
-      );
-
-      // Lấy conversations có populate User info từ participantIds
       const conversations = await Conversation.find(query)
         .populate("closedBy", "name email")
         .sort({ lastMessageAt: -1 })
         .lean();
 
-      console.log(
-        "[MessageService] Found conversations before populate:",
-        conversations.length
-      );
-
-      // 🔴 FIX: Manually populate participantIds vì nó là Mixed type (string hoặc ObjectId)
       const User = mongoose.model("User");
       const populatedConversations = await Promise.all(
         conversations.map(async (conv) => {
-          // Populate tất cả participantIds
           const populatedParticipants = await Promise.all(
             conv.participantIds.map(async (participantId) => {
-              // Nếu là ObjectId hợp lệ → populate từ User model
               if (
                 participantId &&
                 mongoose.Types.ObjectId.isValid(participantId)
@@ -507,7 +434,6 @@ class MessageService {
                     .select("fullName email avatar")
                     .lean();
                   if (user) {
-                    // Rename fullName thành name để dùng chung
                     return {
                       _id: participantId,
                       name: user.fullName,
@@ -519,7 +445,6 @@ class MessageService {
                   return { _id: participantId, name: "Khách hàng" };
                 }
               }
-              // Nếu là string (guest user) → tạo object tạm
               return { _id: participantId, name: "Khách hàng" };
             })
           );
@@ -529,43 +454,19 @@ class MessageService {
         })
       );
 
-      // 🔴 FIX: Validate và log conversations
-      console.log(
-        "[MessageService] Found conversations after populate:",
-        populatedConversations.length
-      );
-
-      // ✅ THÊM: Log unreadCount để debug
-      populatedConversations.forEach((conv, index) => {
-        if (!conv._id) {
-          console.error(
-            `[MessageService] Conversation ${index} missing _id:`,
-            conv
-          );
-        } else {
-          console.log(
-            `[MessageService] Conv ${index}: _id = ${
-              conv._id
-            }, unreadCount.admin = ${conv.unreadCount?.admin || 0}`
-          );
-        }
-      });
-
       return populatedConversations;
     } catch (error) {
-      console.error("Error getting all conversations:", error);
+      console.error("[MessageService] Error getting all conversations:", error);
       throw error;
     }
   }
-  /**
-   * Đánh dấu cuộc hội thoại đã đọc CHỈ KHI ADMIN REPLY
-   */
+  // Đánh dấu tất cả tin nhắn trong cuộc hội thoại đọc bởi admin
   static async markConversationAsReadByAdmin(conversationId) {
     try {
       await Message.updateMany(
         {
           conversationId,
-          senderType: "client", // ✅ CHỈ đánh dấu tin nhắn từ client
+          senderType: "client",
           read: false,
         },
         {
@@ -574,7 +475,6 @@ class MessageService {
         }
       );
 
-      // Reset unread count CHỈ cho admin
       await Conversation.findByIdAndUpdate(conversationId, {
         $set: {
           "unreadCount.admin": 0,
@@ -583,23 +483,10 @@ class MessageService {
 
       return true;
     } catch (error) {
-      console.error("Error marking conversation as read by admin:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * ✅ CẬP NHẬT: Đừng tự động mark as read, chỉ reset unread count
-   */
-  static async markConversationAsRead(conversationId) {
-    try {
-      // Không làm gì cả, hoặc chỉ log
-      console.log(
-        "[MessageService] markConversationAsRead called - doing nothing"
+      console.error(
+        "[MessageService] Error marking conversation as read by admin:",
+        error
       );
-      return true;
-    } catch (error) {
-      console.error("Error marking conversation as read:", error);
       throw error;
     }
   }

@@ -77,9 +77,6 @@ h1 {
   color: #1e40af;
 }
 
-/* ===============================
-   Modal - Custom style
-   =============================== */
 .tour-card {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid #e2e8f0;
@@ -230,7 +227,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #eef2ff; /* nền tím nhạt */
+  background: #eef2ff;
   color: #4338ca;
   font-weight: 500;
   padding: 6px 12px;
@@ -275,7 +272,6 @@ h1 {
   box-shadow: 0 0 0 2px #e0e7ff;
 }
 
-//Modal thông báo
 @keyframes fade-in {
   from {
     opacity: 0;

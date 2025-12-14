@@ -9,10 +9,11 @@ const methodOverride = require("method-override");
 const cookieParser = require("cookie-parser");
 const http = require("http");
 const socketIO = require("socket.io");
+const SocketService = require("./services/SocketService");
 
 const port = process.env.PORT || 3000;
 
-// Create HTTP server and Socket.io instance
+// Tạo server HTTP và tích hợp Socket.IO
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
@@ -21,9 +22,13 @@ const io = socketIO(server, {
   },
 });
 
-// Store socket instance globally for use in controllers/services
+// Khởi tạo SocketService
+const socketService = new SocketService(io);
+socketService.initialize();
+
+// Lưu trữ đối tượng io và danh sách người dùng kết nối vào biến toàn cục
 global.io = io;
-global.connectedUsers = new Map(); // Map to store userId -> socketId
+global.connectedUsers = socketService.getConnectedUsers();
 
 app.use(methodOverride("_method"));
 
@@ -99,7 +104,6 @@ const hbs = engine({
     "./src/resources/admin/views/CRUD/qly-tours",
     "./src/resources/admin/views/CRUD/qly-coupons",
     "./src/resources/client/views/partials",
-    "./src/resources/client/views/chatbot",
   ],
 });
 
@@ -111,142 +115,6 @@ app.set("views", [
 ]);
 
 route(app);
-
-// Socket.io connection handling
-io.on("connection", (socket) => {
-  // User joins - store the socket connection
-  socket.on("user:join", (userId) => {
-    if (!userId) {
-      return;
-    }
-
-    const userIdStr = userId.toString ? userId.toString() : userId;
-    const roomName = `user:${userIdStr}`;
-
-    global.connectedUsers.set(userIdStr, socket.id);
-    socket.join(roomName);
-  });
-
-  // Admin joins notification room
-  socket.on("admin:join", (data) => {
-    const adminId = data.adminId || data;
-    global.connectedUsers.set(`admin:${adminId}`, socket.id);
-    socket.join("admin-notifications");
-    socket.join("admin-messages"); // Admin messages room
-  });
-
-  // Client joins notification room
-  socket.on("client:join", (data) => {
-    const clientId = data.userId || data;
-    global.connectedUsers.set(`client:${clientId}`, socket.id);
-    socket.join("client-notifications");
-    socket.join(`client:${clientId}`); // Individual client room
-  });
-
-  // ===== MESSAGING EVENTS =====
-
-  /**
-   * Conversation:join - Join vào ROOM của cuộc hội thoại
-   * Client join khi mở chat, Admin join để quản lý tin nhắn
-   */
-  socket.on("conversation:join", (data) => {
-    const { conversationId, userId, userType = "client" } = data;
-    const roomName = `conversation:${conversationId}`;
-
-    socket.join(roomName);
-    console.log(`[Socket] ${userType}:${userId} joined ${roomName}`);
-
-    // Notify các user khác trong room
-    socket.to(roomName).emit("user:joined", {
-      userId,
-      userType,
-      timestamp: new Date(),
-    });
-  });
-
-  /**
-   * Conversation:leave - Rời khỏi ROOM
-   */
-  socket.on("conversation:leave", (data) => {
-    const { conversationId, userId } = data;
-    const roomName = `conversation:${conversationId}`;
-
-    socket.leave(roomName);
-    console.log(`[Socket] ${userId} left ${roomName}`);
-
-    socket.to(roomName).emit("user:left", {
-      userId,
-      timestamp: new Date(),
-    });
-  });
-
-  /**
-   * Typing:start - Người dùng bắt đầu gõ
-   */
-  socket.on("typing:start", (data) => {
-    const { conversationId, userId, userName } = data;
-    const roomName = `conversation:${conversationId}`;
-
-    // Broadcast tới những người khác trong room (không gửi lại cho người gửi)
-    socket.to(roomName).emit("typing:active", {
-      userId,
-      userName,
-    });
-  });
-
-  /**
-   * Typing:stop - Người dùng dừng gõ
-   */
-  socket.on("typing:stop", (data) => {
-    const { conversationId, userId } = data;
-    const roomName = `conversation:${conversationId}`;
-
-    socket.to(roomName).emit("typing:inactive", {
-      userId,
-    });
-  });
-
-  /**
-   * Message:read - Đánh dấu tin nhắn đã đọc
-   */
-  socket.on("message:read", (data) => {
-    const { conversationId, messageId, userId } = data;
-    const roomName = `conversation:${conversationId}`;
-
-    io.to(roomName).emit("message:marked-read", {
-      messageId,
-      userId,
-      timestamp: new Date(),
-    });
-  });
-
-  /**
-   * Conversation:read - Đánh dấu cuộc hội thoại đã đọc
-   */
-  socket.on("conversation:read", (data) => {
-    const { conversationId } = data;
-    io.to(`conversation:${conversationId}`).emit("conversation:read", data);
-  });
-
-  /**
-   * Conversation:closed - Đóng cuộc hội thoại
-   */
-  socket.on("conversation:closed", (data) => {
-    const { conversationId } = data;
-    io.to(`conversation:${conversationId}`).emit("conversation:closed", data);
-  });
-
-  // Disconnect handler
-  socket.on("disconnect", () => {
-    // Remove user from map
-    for (let [key, value] of global.connectedUsers.entries()) {
-      if (value === socket.id) {
-        global.connectedUsers.delete(key);
-        break;
-      }
-    }
-  });
-});
 
 server.listen(port, () => {
   console.log(

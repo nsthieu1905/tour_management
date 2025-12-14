@@ -11,11 +11,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/**
- * Gửi email xác nhận đặt tour
- * @param {Object} booking - Đối tượng booking
- * @param {Object} tour - Đối tượng tour
- */
+// Gửi email xác nhận đơn đặt tour
 const sendBookingConfirmationEmail = async (booking, tour) => {
   try {
     const departureDate = new Date(booking.departureDate).toLocaleDateString(
@@ -89,15 +85,15 @@ const sendBookingConfirmationEmail = async (booking, tour) => {
     });
     return { success: true, message: "Email xác nhận đã được gửi thành công" };
   } catch (error) {
-    console.error("Send booking confirmation email error:", error);
+    console.error(
+      "[EmailService] Send booking confirmation email error:",
+      error
+    );
     throw error;
   }
 };
 
-/**
- * Gửi email yêu cầu hoàn tiền được chấp nhận, vui lòng cung cấp thông tin
- * @param {Object} booking - Đối tượng booking
- */
+// Gửi email yêu cầu hoàn tiền được chấp nhận
 const sendRefundRequestApprovedEmail = async (booking) => {
   try {
     const refundPercentage = booking.refundInfo?.refundPercentage || 0;
@@ -180,16 +176,15 @@ const sendRefundRequestApprovedEmail = async (booking) => {
     });
     return { success: true, message: "Email yêu cầu hoàn tiền đã được gửi" };
   } catch (error) {
-    console.error("Send refund request approved email error:", error);
+    console.error(
+      "[EmailService] Send refund request approved email error:",
+      error
+    );
     throw error;
   }
 };
 
-/**
- * Gửi email hoàn tiền được duyệt
- * @param {Object} booking - Đối tượng booking
- * @param {number} refundAmount - Số tiền hoàn
- */
+// Gửi email hoàn tiền được chấp nhận
 const sendRefundApprovedEmail = async (booking, refundAmount) => {
   try {
     const refundAmountFormatted = new Intl.NumberFormat("vi-VN").format(
@@ -258,16 +253,12 @@ const sendRefundApprovedEmail = async (booking, refundAmount) => {
     });
     return { success: true, message: "Email hoàn tiền đã được gửi thành công" };
   } catch (error) {
-    console.error("Send refund approved email error:", error);
+    console.error("[EmailService] Send refund approved email error:", error);
     throw error;
   }
 };
 
-/**
- * Gửi email hoàn tiền bị từ chối
- * @param {Object} booking - Đối tượng booking
- * @param {string} rejectionReason - Lý do từ chối
- */
+// Gửi email yêu cầu hoàn tiền bị từ chối
 const sendRefundRejectedEmail = async (booking, rejectionReason) => {
   try {
     const htmlContent = `
@@ -320,16 +311,12 @@ const sendRefundRejectedEmail = async (booking, rejectionReason) => {
     });
     return { success: true, message: "Email từ chối hoàn tiền đã được gửi" };
   } catch (error) {
-    console.error("Send refund rejected email error:", error);
+    console.error("[EmailService] Send refund rejected email error:", error);
     throw error;
   }
 };
 
-/**
- * Gửi email cảm ơn sau khi tour kết thúc
- * @param {Object} booking - Đối tượng booking
- * @param {Object} tour - Đối tượng tour
- */
+// Gửi email cảm ơn sau khi hoàn thành tour
 const sendCompletionThankYouEmail = async (booking, tour) => {
   try {
     const departureDate = new Date(booking.departureDate).toLocaleDateString(
@@ -395,16 +382,15 @@ const sendCompletionThankYouEmail = async (booking, tour) => {
     });
     return { success: true, message: "Email cảm ơn đã được gửi thành công" };
   } catch (error) {
-    console.error("Send completion thank you email error:", error);
+    console.error(
+      "[EmailService] Send completion thank you email error:",
+      error
+    );
     throw error;
   }
 };
 
-/**
- * Gửi email xác nhận thanh toán tại quầy
- * @param {Object} booking - Đối tượng booking
- * @param {Object} tour - Đối tượng tour
- */
+// Gửi email xác nhận thanh toán
 const sendPaymentConfirmationEmail = async (booking, tour) => {
   try {
     const totalAmount = new Intl.NumberFormat("vi-VN").format(
@@ -474,7 +460,10 @@ const sendPaymentConfirmationEmail = async (booking, tour) => {
     });
     return { success: true, message: "Email xác nhận thanh toán đã được gửi" };
   } catch (error) {
-    console.error("Send payment confirmation email error:", error);
+    console.error(
+      "[EmailService] Send payment confirmation email error:",
+      error
+    );
     throw error;
   }
 };

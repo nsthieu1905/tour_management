@@ -16,9 +16,9 @@ const clientAuthRoutes = require("./client/auth");
 const favoriteRoutes = require("./client/favorites");
 const bookingRoutes = require("./client/bookings");
 
-// API
-const notificationRoutes = require("./api/notifications");
-const messageRoutes = require("./api/messages");
+// Real-time
+const notificationRoutes = require("./realtime/notifications");
+const messageRoutes = require("./realtime/messages");
 
 function route(app) {
   // Admin

@@ -1,54 +1,76 @@
+// Lấy booking ID từ URL
 const pathParts = window.location.pathname.split("/");
 const bookingId = pathParts[pathParts.length - 1];
+
 if (!bookingId) {
   showError("Không có mã đơn");
 } else {
   loadBookingDetail(bookingId);
 }
+
+// Tải chi tiết booking từ API
 async function loadBookingDetail(id) {
   try {
     const res = await fetch(`/api/bookings/${id}`);
     const result = await res.json();
+
     if (!result.success) {
       showError(result.message);
       return;
     }
+
     displayBookingDetail(result.data);
   } catch (error) {
     showError("Có lỗi xảy ra");
   }
 }
+
+// Hiển thị chi tiết booking
 function displayBookingDetail(booking) {
   const tour = booking.tourId;
+
+  // Thông tin booking
   document.getElementById("booking-code").querySelector("span").textContent =
     booking.bookingCode;
+
+  // Thông tin khách hàng
   document.getElementById("customer-name").textContent =
     booking.contactInfo.name;
   document.getElementById("customer-email").textContent =
     booking.contactInfo.email;
   document.getElementById("customer-phone").textContent =
     booking.contactInfo.phone;
+
+  // Thông tin tour
   document.getElementById("tour-name").textContent = tour.name;
   document.getElementById("departure-date").textContent = new Date(
     booking.departureDate
   ).toLocaleDateString("vi-VN");
   document.getElementById("guest-count").textContent =
     booking.numberOfPeople + " người";
+
+  // Thông tin giá
   const pricePerPerson = tour.price;
   const subtotal = booking.subtotal;
   const discountAmount = booking.discountAmount || 0;
   const total = booking.totalAmount;
+
   const fmt = (n) => new Intl.NumberFormat("vi-VN").format(Math.round(n)) + "₫";
+
   document.getElementById("price-per-person").textContent = fmt(pricePerPerson);
   document.getElementById("quantity").textContent = booking.numberOfPeople;
   document.getElementById("subtotal").textContent = fmt(subtotal);
   document.getElementById("total-amount").textContent = fmt(total);
+
+  // Thông tin mã giảm giá
   if (booking.couponId) {
     document.getElementById("coupon-section").classList.remove("hidden");
     document.getElementById("coupon-code").textContent = booking.couponId.code;
     document.getElementById("discount-amount").textContent =
       fmt(discountAmount);
   }
+
+  // Phương thức thanh toán
   const paymentLabels = {
     momo: "Ví MoMo",
     bank_transfer: "Chuyển khoản",
@@ -57,6 +79,8 @@ function displayBookingDetail(booking) {
   };
   document.getElementById("payment-method").textContent =
     paymentLabels[booking.paymentMethod] || booking.paymentMethod;
+
+  // Trạng thái thanh toán
   const statusBadge =
     {
       pending:
@@ -64,6 +88,8 @@ function displayBookingDetail(booking) {
       paid: '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">Đã TT</span>',
     }[booking.paymentStatus] || booking.paymentStatus;
   document.getElementById("payment-status").innerHTML = statusBadge;
+
+  // Trạng thái booking
   const bookingBadge =
     {
       pre_booking:
@@ -83,7 +109,7 @@ function displayBookingDetail(booking) {
     }[booking.bookingStatus] || booking.bookingStatus;
   document.getElementById("booking-status").innerHTML = bookingBadge;
 
-  // Display refund/cancellation section if applicable
+  // Hiển thị thông tin hoàn tiền/hủy nếu có
   if (
     booking.bookingStatus === "refund_requested" ||
     booking.bookingStatus === "refunded" ||
@@ -91,9 +117,7 @@ function displayBookingDetail(booking) {
   ) {
     document.getElementById("refund-section").classList.remove("hidden");
 
-    const fmt = (n) =>
-      new Intl.NumberFormat("vi-VN").format(Math.round(n)) + "₫";
-
+    // Yêu cầu hoàn tiền
     if (booking.bookingStatus === "refund_requested") {
       const refundSection = document.getElementById("refund-requested-status");
       refundSection.classList.remove("hidden");
@@ -119,7 +143,9 @@ function displayBookingDetail(booking) {
             timelineText;
         }
       }
-    } else if (booking.bookingStatus === "refunded") {
+    }
+    // Đã hoàn tiền
+    else if (booking.bookingStatus === "refunded") {
       const refundedSection = document.getElementById("refunded-status");
       refundedSection.classList.remove("hidden");
 
@@ -136,7 +162,9 @@ function displayBookingDetail(booking) {
           "Ngày xác nhận: " +
           new Date(booking.refundInfo.approvedAt).toLocaleDateString("vi-VN");
       }
-    } else if (booking.bookingStatus === "cancelled") {
+    }
+    // Đã hủy
+    else if (booking.bookingStatus === "cancelled") {
       const cancelledSection = document.getElementById("cancelled-status");
       cancelledSection.classList.remove("hidden");
 
@@ -147,12 +175,18 @@ function displayBookingDetail(booking) {
         new Date(booking.cancelledAt).toLocaleDateString("vi-VN");
     }
   }
+
+  // Hiển thị banner thành công nếu đã thanh toán
   if (booking.paymentStatus === "paid") {
     document.getElementById("success-banner").classList.remove("hidden");
   }
+
+  // Ẩn loading và hiển thị nội dung
   document.getElementById("loading").classList.add("hidden");
   document.getElementById("content").classList.remove("hidden");
 }
+
+// Hiển thị lỗi
 function showError(msg) {
   document.getElementById("loading").classList.add("hidden");
   document.getElementById("error-state").classList.remove("hidden");

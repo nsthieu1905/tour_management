@@ -1,14 +1,10 @@
 /**
- * ADMIN-SIDE REALTIME MESSAGING (FIXED)
- * - Fix lỗi 500 khi load messages
- * - Fix không nhận tin nhắn realtime
- * - Fix: Chỉ đánh dấu đã đọc khi admin reply
- * - Fix: Tab "Chưa đọc" filter theo unreadCount
+ * ADMIN-SIDE REALTIME MESSAGING
+ * Quản lý tin nhắn realtime cho admin
  */
 
 class AdminRealtimeMessaging {
   constructor() {
-    console.log("[Admin Chat] Initializing AdminRealtimeMessaging...");
     this.socket = null;
     this.adminId = null;
     this.currentConversationId = null;
@@ -16,9 +12,9 @@ class AdminRealtimeMessaging {
     this.messages = [];
     this.isTyping = false;
     this.typingTimeout = null;
-    this.currentTab = "all"; // ✅ Track current tab
+    this.currentTab = "all";
 
-    // DOM elements
+    // Các phần tử DOM
     this.conversationsList = document.getElementById("conversationsList");
     this.chatHeaderInfo = document.getElementById("chatHeaderInfo");
     this.messagesContainer = document.getElementById("messagesContainer");
@@ -28,12 +24,6 @@ class AdminRealtimeMessaging {
     this.searchInput = document.getElementById("searchConversation");
     this.filterStatus = document.getElementById("filterStatus");
     this.filterPriority = document.getElementById("filterPriority");
-
-    console.log("[Admin Chat] DOM elements loaded:", {
-      conversationsList: !!this.conversationsList,
-      messagesContainer: !!this.messagesContainer,
-      messageForm: !!this.messageForm,
-    });
 
     this.init();
   }
@@ -45,6 +35,7 @@ class AdminRealtimeMessaging {
     this.loadConversations();
   }
 
+  // Lấy admin ID
   getAdminId() {
     this.adminId =
       localStorage.getItem("adminId") ||
@@ -52,30 +43,24 @@ class AdminRealtimeMessaging {
       "admin_" + Math.random().toString(36).substr(2, 9);
 
     localStorage.setItem("adminId", this.adminId);
-    console.log("[Admin Chat] Admin ID:", this.adminId);
   }
 
+  // Khởi tạo Socket.io
   initSocket() {
     if (typeof io === "undefined") {
-      console.warn("[Admin Chat] Socket.io not available");
       return;
     }
 
     this.socket = io();
 
     this.socket.on("connect", () => {
-      console.log("[Admin Chat] Socket connected:", this.socket.id);
-
-      // Admin join admin room
+      // Admin join room
       this.socket.emit("admin:join", {
         adminId: this.adminId,
       });
 
-      // Auto re-join tất cả conversations sau khi reconnect
+      // Tự động join lại tất cả conversations sau khi reconnect
       if (this.conversations.length > 0) {
-        console.log(
-          "[Admin Chat] Re-joining all conversation rooms after connect"
-        );
         this.conversations.forEach((conv) => {
           if (conv._id) {
             this.socket.emit("conversation:join", {
@@ -90,32 +75,20 @@ class AdminRealtimeMessaging {
 
     // Lắng nghe tin nhắn mới
     this.socket.on("message:new", (data) => {
-      console.log("[Admin Chat] Received message:new", data);
-
       // Kiểm tra nếu tin nhắn thuộc conversation đang mở
       const incomingConvId = String(data.conversationId);
       const currentConvId = String(this.currentConversationId);
 
-      console.log("[Admin Chat] Comparing:", {
-        incoming: incomingConvId,
-        current: currentConvId,
-        matches: incomingConvId === currentConvId,
-      });
-
       if (incomingConvId === currentConvId) {
-        console.log("[Admin Chat] Adding message to UI");
         this.addMessageToUI(data);
-      } else {
-        console.log("[Admin Chat] Message not for current conversation");
       }
 
-      // Update preview trong danh sách
+      // Cập nhật preview trong danh sách
       this.updateConversationInList(incomingConvId);
     });
 
     // Lắng nghe conversation update
     this.socket.on("conversation:update", (data) => {
-      console.log("[Admin Chat] Conversation updated:", data);
       this.updateConversationPreview(data);
     });
 
@@ -134,14 +107,8 @@ class AdminRealtimeMessaging {
 
     // Cuộc hội thoại mới
     this.socket.on("conversation:new", (data) => {
-      console.log("[Admin Chat] New conversation created:", data);
-
       // Join room ngay khi có conversation mới
       if (data.conversationId) {
-        console.log(
-          "[Admin Chat] Auto-joining new conversation room:",
-          data.conversationId
-        );
         this.socket.emit("conversation:join", {
           conversationId: data.conversationId,
           userId: this.adminId,
@@ -155,21 +122,13 @@ class AdminRealtimeMessaging {
 
     // Cuộc hội thoại đóng
     this.socket.on("conversation:closed", (data) => {
-      console.log("[Admin Chat] Conversation closed:", data);
       if (String(data.conversationId) === String(this.currentConversationId)) {
         this.handleConversationClosed();
       }
     });
-
-    this.socket.on("disconnect", () => {
-      console.log("[Admin Chat] Socket disconnected");
-    });
-
-    this.socket.on("connect_error", (error) => {
-      console.error("[Admin Chat] Socket connection error:", error);
-    });
   }
 
+  // Gắn các sự kiện
   attachEventListeners() {
     if (this.messageForm) {
       this.messageForm.addEventListener("submit", (e) => {
@@ -202,13 +161,13 @@ class AdminRealtimeMessaging {
       });
     }
 
-    // ✅ THÊM: Tab filters
+    // Tab filters
     const tabs = document.querySelectorAll("[data-tab]");
     tabs.forEach((tab) => {
       tab.addEventListener("click", (e) => {
         e.preventDefault();
 
-        // Update active tab UI
+        // Cập nhật UI tab active
         tabs.forEach((t) => {
           t.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
           t.classList.add("border-transparent", "text-gray-600");
@@ -217,15 +176,16 @@ class AdminRealtimeMessaging {
         tab.classList.remove("border-transparent", "text-gray-600");
         tab.classList.add("border-b-2", "border-blue-500", "text-blue-600");
 
-        // Update current tab
+        // Cập nhật tab hiện tại
         this.currentTab = tab.dataset.tab;
 
-        // Load conversations with filter
+        // Tải conversations với filter
         this.loadConversations();
       });
     });
   }
 
+  // Tải danh sách conversations
   async loadConversations() {
     try {
       const params = new URLSearchParams();
@@ -242,13 +202,12 @@ class AdminRealtimeMessaging {
         params.append("priority", this.filterPriority.value);
       }
 
-      // ✅ THÊM: Unread filter based on current tab
+      // Filter unread dựa trên tab hiện tại
       if (this.currentTab === "unread") {
         params.append("unreadOnly", "true");
       }
 
       const url = `/api/messages/conversations?${params.toString()}`;
-      console.log("[Admin Chat] Loading conversations from:", url);
 
       const response = await fetch(url);
 
@@ -258,54 +217,31 @@ class AdminRealtimeMessaging {
 
       const data = await response.json();
 
-      console.log("[Admin Chat] Raw API response:", data);
-
       if (data.success) {
         // Validate từng conversation trong response
         const rawConversations = data.data || [];
-        console.log(
-          "[Admin Chat] Raw conversations count:",
-          rawConversations.length
-        );
 
         this.conversations = rawConversations.filter((conv, index) => {
           if (!conv || !conv._id) {
-            console.error(
-              `[Admin Chat] Conversation ${index} missing _id:`,
-              conv
-            );
             return false;
           }
 
           const id = String(conv._id);
-          console.log(
-            `[Admin Chat] Conversation ${index}: _id = "${id}" (length: ${id.length})`
-          );
 
           if (id.length < 20) {
-            console.error(
-              `[Admin Chat] Conversation ${index} has invalid _id (too short):`,
-              id
-            );
             return false;
           }
 
           return true;
         });
 
-        console.log(
-          "[Admin Chat] Valid conversations:",
-          this.conversations.length
-        );
-
         this.renderConversationsList();
 
-        // Join vào TẤT CẢ rooms ngay sau khi socket connect
+        // Join vào tất cả rooms ngay sau khi socket connect
         if (this.socket && this.socket.connected) {
           this.conversations.forEach((conv) => {
             if (conv._id) {
               const convId = String(conv._id);
-              console.log("[Admin Chat] Auto-joining room:", convId);
               this.socket.emit("conversation:join", {
                 conversationId: convId,
                 userId: this.adminId,
@@ -318,8 +254,6 @@ class AdminRealtimeMessaging {
         throw new Error(data.message || "Failed to load conversations");
       }
     } catch (error) {
-      console.error("[Admin Chat] Error loading conversations:", error);
-
       if (this.conversationsList) {
         this.conversationsList.innerHTML = `
           <div class="p-4 text-center text-red-500">
@@ -332,6 +266,7 @@ class AdminRealtimeMessaging {
     }
   }
 
+  // Render danh sách conversations
   renderConversationsList() {
     if (!this.conversationsList) return;
 
@@ -348,7 +283,6 @@ class AdminRealtimeMessaging {
     // Filter ra conversations hợp lệ
     const validConversations = this.conversations.filter((conv) => {
       if (!conv || !conv._id) {
-        console.error("[Admin Chat] Invalid conversation:", conv);
         return false;
       }
       return true;
@@ -356,7 +290,7 @@ class AdminRealtimeMessaging {
 
     this.conversationsList.innerHTML = validConversations
       .map((conv) => this.renderConversationItem(conv))
-      .filter((html) => html !== "") // Remove empty strings
+      .filter((html) => html !== "")
       .join("");
 
     // Gắn event listeners
@@ -369,37 +303,31 @@ class AdminRealtimeMessaging {
 
           // Validate conversationId từ dataset
           if (!convId || convId === "undefined" || convId === "null") {
-            console.error(
-              "[Admin Chat] Invalid conversationId from dataset:",
-              convId
-            );
             alert("Không thể mở cuộc hội thoại này. Vui lòng thử lại.");
             return;
           }
 
-          console.log("[Admin Chat] Conversation clicked:", convId);
           this.selectConversation(convId);
         });
       });
   }
 
+  // Render một item conversation
   renderConversationItem(conversation) {
     const unreadCount = conversation.unreadCount?.admin || 0;
     const participant = conversation.participantIds?.[0];
     const customerName = participant?.name || "Khách hàng";
     const lastMessageTime = this.formatTime(conversation.lastMessageAt);
 
-    // Escape HTML trong customerName để tránh XSS và lỗi render
+    // Escape HTML để tránh XSS
     const safeCustomerName = this.escapeHtml(customerName);
     const safeLastMessage = this.escapeHtml(
       conversation.lastMessage || "Không có tin nhắn"
     );
 
-    // Đảm bảo conversationId là string hợp lệ
     const conversationId = String(conversation._id || "");
 
     if (!conversationId || conversationId === "undefined") {
-      console.error("[Admin Chat] Invalid conversation._id:", conversation);
       return "";
     }
 
@@ -428,22 +356,14 @@ class AdminRealtimeMessaging {
     `;
   }
 
+  // Chọn một conversation
   async selectConversation(conversationId) {
-    // Debug và validate conversationId chi tiết
-    console.log("[Admin Chat] selectConversation called with:", {
-      conversationId,
-      type: typeof conversationId,
-      length: conversationId?.length,
-      value: conversationId,
-    });
-
     // Validate conversationId
     if (
       !conversationId ||
       conversationId === "undefined" ||
       conversationId === "null"
     ) {
-      console.error("[Admin Chat] Invalid conversationId:", conversationId);
       alert("Không thể mở cuộc hội thoại này");
       return;
     }
@@ -452,20 +372,14 @@ class AdminRealtimeMessaging {
     const cleanConversationId = String(conversationId).trim();
 
     if (cleanConversationId.length < 20) {
-      console.error(
-        "[Admin Chat] ConversationId too short:",
-        cleanConversationId
-      );
       alert("ID cuộc hội thoại không hợp lệ");
       return;
     }
 
-    console.log("[Admin Chat] Selecting conversation:", cleanConversationId);
-
     this.currentConversationId = cleanConversationId;
     this.messages = [];
 
-    // Update UI
+    // Cập nhật UI
     this.conversationsList
       ?.querySelectorAll(".conversation-item")
       .forEach((item) => {
@@ -475,8 +389,6 @@ class AdminRealtimeMessaging {
     const selectedItem = document.querySelector(
       `[data-conversation-id="${cleanConversationId}"]`
     );
-
-    console.log("[Admin Chat] Selected item found:", !!selectedItem);
 
     if (selectedItem) {
       selectedItem.classList.add("bg-blue-50");
@@ -488,10 +400,6 @@ class AdminRealtimeMessaging {
 
     // Join room cho conversation này
     if (this.socket) {
-      console.log(
-        "[Admin Chat] Joining conversation room:",
-        cleanConversationId
-      );
       this.socket.emit("conversation:join", {
         conversationId: cleanConversationId,
         userId: this.adminId,
@@ -499,27 +407,20 @@ class AdminRealtimeMessaging {
       });
     }
 
-    // ✅ BỎ: Không tự động mark as read khi chọn conversation
-    // await this.markConversationAsRead(cleanConversationId);
-
     // Tải tin nhắn
     await this.loadMessages(cleanConversationId);
     this.renderChatHeader();
   }
 
+  // Tải tin nhắn của conversation
   async loadMessages(conversationId) {
     // Kiểm tra conversationId hợp lệ
     if (!conversationId || conversationId === "undefined") {
-      console.error(
-        "[Admin Chat] Cannot load messages - invalid conversationId"
-      );
       return;
     }
 
     try {
-      // URL chính xác không có // liên tiếp
       const url = `/api/messages/conversations/${conversationId}/messages?limit=100&skip=0`;
-      console.log("[Admin Chat] Loading messages from:", url);
 
       const response = await fetch(url);
 
@@ -528,20 +429,14 @@ class AdminRealtimeMessaging {
       }
 
       const data = await response.json();
-      console.log("[Admin Chat] Messages loaded:", data);
 
       if (data.success) {
         this.messages = data.data || [];
         this.renderMessages();
-
-        // ✅ BỎ: Không đánh dấu đã đọc khi load messages
-        // await this.markConversationAsRead(conversationId);
       } else {
         throw new Error(data.message || "Failed to load messages");
       }
     } catch (error) {
-      console.error("[Admin Chat] Error loading messages:", error);
-
       if (this.messagesContainer) {
         this.messagesContainer.innerHTML = `
           <div class="text-center text-red-500 py-8">
@@ -554,6 +449,7 @@ class AdminRealtimeMessaging {
     }
   }
 
+  // Render danh sách tin nhắn
   renderMessages() {
     if (!this.messagesContainer) return;
 
@@ -574,6 +470,7 @@ class AdminRealtimeMessaging {
     this.scrollToBottom();
   }
 
+  // Render một tin nhắn
   renderMessage(message) {
     const isAdmin = message.senderType === "admin";
     const time = new Date(message.createdAt).toLocaleTimeString("vi-VN", {
@@ -581,7 +478,7 @@ class AdminRealtimeMessaging {
       minute: "2-digit",
     });
 
-    // Handle senderId có thể là object (User) hoặc string (guest)
+    // Xác định tên người gửi
     let senderName;
     if (isAdmin) {
       senderName = "Admin";
@@ -613,23 +510,22 @@ class AdminRealtimeMessaging {
     `;
   }
 
+  // Escape HTML để tránh XSS
   escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
   }
 
+  // Thêm tin nhắn vào UI
   addMessageToUI(message) {
     if (!this.messagesContainer) return;
-
-    console.log("[Admin Chat] Adding message to UI:", message);
 
     // Kiểm tra tin nhắn đã tồn tại chưa
     const existingMsg = this.messages.find(
       (m) => String(m._id) === String(message._id)
     );
     if (existingMsg) {
-      console.log("[Admin Chat] Message already exists, skipping");
       return;
     }
 
@@ -637,24 +533,15 @@ class AdminRealtimeMessaging {
     const msgHTML = this.renderMessage(message);
     this.messagesContainer.insertAdjacentHTML("beforeend", msgHTML);
     this.scrollToBottom();
-
-    console.log("[Admin Chat] Message added successfully");
   }
 
+  // Gửi tin nhắn
   async sendMessage() {
     const content = this.messageInput?.value.trim();
 
     if (!content || !this.currentConversationId) {
-      console.warn("[Admin Chat] Cannot send - no content or conversation");
       return;
     }
-
-    console.log("[Admin Chat] Sending message:", {
-      conversationId: this.currentConversationId,
-      content,
-      senderType: "admin",
-      senderId: this.adminId,
-    });
 
     try {
       const response = await fetch("/api/messages/send", {
@@ -671,7 +558,6 @@ class AdminRealtimeMessaging {
       });
 
       const data = await response.json();
-      console.log("[Admin Chat] Send response:", data);
 
       if (data.success) {
         if (this.messageInput) {
@@ -679,10 +565,7 @@ class AdminRealtimeMessaging {
         }
         this.stopTyping();
 
-        // ✅ QUAN TRỌNG: Sau khi admin reply, reload conversations để cập nhật unread count
-        console.log(
-          "[Admin Chat] Admin replied, reloading conversations to update unread count"
-        );
+        // Sau khi admin reply, reload conversations để cập nhật unread count
         setTimeout(() => {
           this.loadConversations();
         }, 500);
@@ -690,11 +573,11 @@ class AdminRealtimeMessaging {
         throw new Error(data.message || "Failed to send message");
       }
     } catch (error) {
-      console.error("[Admin Chat] Error sending message:", error);
       alert("Lỗi khi gửi tin nhắn: " + error.message);
     }
   }
 
+  // Render header chat
   renderChatHeader() {
     if (!this.chatHeaderInfo) return;
 
@@ -703,7 +586,6 @@ class AdminRealtimeMessaging {
     );
 
     if (!conversation) {
-      console.warn("[Admin Chat] Conversation not found for header");
       return;
     }
 
@@ -717,6 +599,7 @@ class AdminRealtimeMessaging {
     `;
   }
 
+  // Xử lý typing indicator
   handleTyping() {
     if (!this.currentConversationId || !this.socket) return;
 
@@ -735,6 +618,7 @@ class AdminRealtimeMessaging {
     }, 3000);
   }
 
+  // Dừng typing
   stopTyping() {
     if (!this.currentConversationId || !this.socket) return;
 
@@ -745,6 +629,7 @@ class AdminRealtimeMessaging {
     });
   }
 
+  // Hiển thị typing indicator
   showTypingIndicator(data) {
     if (!this.messagesContainer) return;
 
@@ -764,6 +649,7 @@ class AdminRealtimeMessaging {
     this.scrollToBottom();
   }
 
+  // Ẩn typing indicator
   hideTypingIndicator() {
     const existing = this.messagesContainer?.querySelector(".typing-indicator");
     if (existing) {
@@ -771,6 +657,7 @@ class AdminRealtimeMessaging {
     }
   }
 
+  // Đóng conversation
   async closeConversation() {
     if (!this.currentConversationId) return;
 
@@ -797,11 +684,11 @@ class AdminRealtimeMessaging {
         this.loadConversations();
       }
     } catch (error) {
-      console.error("[Admin Chat] Error closing conversation:", error);
       alert("Lỗi khi đóng cuộc hội thoại");
     }
   }
 
+  // Xử lý khi conversation bị đóng
   handleConversationClosed() {
     this.currentConversationId = null;
 
@@ -818,11 +705,12 @@ class AdminRealtimeMessaging {
     if (this.sendBtn) this.sendBtn.disabled = true;
   }
 
+  // Cập nhật conversation trong danh sách
   updateConversationInList(conversationId) {
-    // Reload để cập nhật preview
     this.loadConversations();
   }
 
+  // Cập nhật conversation preview
   updateConversationPreview(data) {
     const conversation = this.conversations.find(
       (c) => String(c._id) === String(data.conversationId)
@@ -835,6 +723,7 @@ class AdminRealtimeMessaging {
     }
   }
 
+  // Định dạng thời gian
   formatTime(dateString) {
     if (!dateString) return "";
 
@@ -857,6 +746,7 @@ class AdminRealtimeMessaging {
     return date.toLocaleDateString("vi-VN");
   }
 
+  // Scroll xuống cuối
   scrollToBottom() {
     if (this.messagesContainer) {
       setTimeout(() => {
@@ -866,8 +756,7 @@ class AdminRealtimeMessaging {
   }
 }
 
-// Khởi tạo khi DOM ready
+// Khởi tạo khi DOM đã sẵn sàng
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("[Admin Chat] DOM loaded, initializing...");
   window.adminChat = new AdminRealtimeMessaging();
 });

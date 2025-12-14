@@ -595,7 +595,7 @@
             <div id="cancel" class="hidden p-4 pt-0 text-gray-600">
               <ul class="space-y-2">
                 <li class="flex items-start gap-2">
-                  - Huỷ trước 30 - 45 ngày : 10% tổng giá thành tour.
+                  - Huỷ trước 31 ngày : 10% tổng giá thành tour.
                 </li>
                 <li class="flex items-start gap-2">
                   - Huỷ trước 20 - 30 ngày : 20% tổng giá thành tour.
@@ -793,32 +793,6 @@
     </div>
   </div>
 </main>
-{{!-- btn liên hệ --}}
-<div
-  class="floating-action flex flex-col items-center space-y-3 fixed bottom-6 right-6"
->
-  <button
-    id="aiAssistant"
-    class="w-14 h-14 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-colors"
-  >
-    <i class="fas fa-robot text-xl"></i>
-  </button>
-
-  <button
-    id="quickBooking"
-    class="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
-  >
-    <i class="fas fa-comment text-xl"></i>
-  </button>
-
-  <button
-    id="emergencyHelp"
-    class="w-14 h-14 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-700 transition-colors"
-  >
-    <i class="fas fa-phone text-xl"></i>
-  </button>
-</div>
-
 {{!-- Hiển thị ảnh --}}
 <div
   id="lightbox"
@@ -1186,7 +1160,7 @@
     </div>
   </div>
 </div>
-{{> chatbot-modal}}
+
 <script>
   const images = [
     {{#each tour.images as |image idx|}}
@@ -1201,6 +1175,4 @@
 </script>
 
 <script type="module" src="/client/js/tour-detail.js"></script>
-<script src="/client/js/chatbot.js"></script>
-<script src="/client/js/floating-buttons.js"></script>
 <script src="/utils/favorite-helper.js"></script>

@@ -1,20 +1,10 @@
 const { User } = require("../models/index");
 
-/**
- * [GET] /api/admin/staff
- * Lấy danh sách tất cả nhân viên (users với role = 'admin')
- */
+// [GET] /api/admin/staff
 const getStaffList = async (req, res) => {
   try {
-    console.log("📋 [AdminStaffController] Fetching staff list...");
-
-    // Lấy tất cả users với role 'admin'
     const staffList = await User.find({ role: "admin" }).select(
       "-password -metadata"
-    );
-
-    console.log(
-      `✅ [AdminStaffController] Found ${staffList.length} staff members`
     );
 
     return res.status(200).json({
@@ -23,28 +13,18 @@ const getStaffList = async (req, res) => {
       data: staffList,
     });
   } catch (error) {
-    console.error(
-      "❌ [AdminStaffController] Error fetching staff list:",
-      error
-    );
     return res.status(500).json({
       success: false,
-      message: "Lỗi server khi lấy danh sách nhân viên",
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
       error: error.message,
     });
   }
 };
 
-/**
- * [GET] /api/admin/staff/:id
- * Lấy thông tin chi tiết của một nhân viên
- */
+// [GET] /api/admin/staff/:id
 const getStaffDetail = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(
-      `📋 [AdminStaffController] Fetching staff detail for ID: ${id}`
-    );
 
     const staff = await User.findById(id).select("-password -metadata");
 
@@ -62,35 +42,23 @@ const getStaffDetail = async (req, res) => {
       });
     }
 
-    console.log(
-      `✅ [AdminStaffController] Staff detail found:`,
-      staff.fullName
-    );
-
     return res.status(200).json({
       success: true,
       data: staff,
     });
   } catch (error) {
-    console.error(
-      "❌ [AdminStaffController] Error fetching staff detail:",
-      error
-    );
+    console.error("Error in getStaffDetail:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi server khi lấy thông tin nhân viên",
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
     });
   }
 };
 
-/**
- * [DELETE] /api/admin/staff/:id
- * Xóa một nhân viên khỏi hệ thống
- */
+// [DELETE] /api/admin/staff/:id
 const deleteStaff = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`🗑️ [AdminStaffController] Deleting staff with ID: ${id}`);
 
     const staff = await User.findById(id);
 
@@ -119,31 +87,24 @@ const deleteStaff = async (req, res) => {
     // Xóa nhân viên
     await User.findByIdAndDelete(id);
 
-    console.log(`✅ [AdminStaffController] Staff deleted successfully`);
-
     return res.status(200).json({
       success: true,
       message: "Xóa nhân viên thành công",
     });
   } catch (error) {
-    console.error("❌ [AdminStaffController] Error deleting staff:", error);
+    console.error("Error in deleteStaff:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi server khi xóa nhân viên",
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
     });
   }
 };
 
-/**
- * [PUT] /api/admin/staff/:id
- * Cập nhật thông tin nhân viên
- */
+// [PUT] /api/admin/staff/:id
 const updateStaff = async (req, res) => {
   try {
     const { id } = req.params;
     const { fullName, email, phone, status, department } = req.body;
-
-    console.log(`📝 [AdminStaffController] Updating staff with ID: ${id}`);
 
     const staff = await User.findById(id);
 
@@ -181,18 +142,16 @@ const updateStaff = async (req, res) => {
 
     await staff.save();
 
-    console.log(`✅ [AdminStaffController] Staff updated successfully`);
-
     return res.status(200).json({
       success: true,
       message: "Cập nhật thông tin nhân viên thành công",
       data: staff,
     });
   } catch (error) {
-    console.error("❌ [AdminStaffController] Error updating staff:", error);
+    console.error("Error in updateStaff:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi server khi cập nhật thông tin nhân viên",
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
     });
   }
 };

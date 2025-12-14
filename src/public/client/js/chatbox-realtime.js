@@ -53,7 +53,7 @@ class RealtimeMessagingClient {
 
     // DOM elements
     this.chatWindow = document.getElementById("chatWindow");
-    this.openChatBtn = document.getElementById("open-mesage");
+    this.openChatBtn = document.getElementById("open-message");
     this.closeChatBtn = document.getElementById("closeChatBtn");
     this.chatInput = document.getElementById("chatInput");
     this.sendChatBtn = document.getElementById("sendChatBtn");
@@ -804,7 +804,7 @@ function initializeRealtimeChat() {
   }
 
   const chatWindow = document.getElementById("chatWindow");
-  const openBtn = document.getElementById("open-mesage");
+  const openBtn = document.getElementById("open-message");
 
   console.log("[Chat] Checking required elements:");
   console.log("[Chat] - chatWindow:", chatWindow);
@@ -820,7 +820,7 @@ function initializeRealtimeChat() {
 
   if (!openBtn) {
     console.error(
-      "[Chat] Cannot find #open-mesage button, retrying in 100ms..."
+      "[Chat] Cannot find #open-message button, retrying in 100ms..."
     );
     setTimeout(initializeRealtimeChat, 100);
     return;

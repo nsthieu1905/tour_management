@@ -12,18 +12,12 @@ class AdminNotificationManager {
     this.createNotificationUI();
     this.attachEventListeners();
     this.updateBadge();
-
-    // Fetch notifications from server immediately on page load
     this.fetchNotificationsFromServer();
-
     this.initializeSocket();
   }
 
-  /**
-   * Get admin ID from DOM (from user profile or data attribute)
-   */
+  // Lấy admin ID từ DOM
   getAdminIdFromDom() {
-    // Try to get from localStorage or data attribute
     const adminId =
       localStorage.getItem("adminId") ||
       document.body.dataset.adminId ||
@@ -31,13 +25,9 @@ class AdminNotificationManager {
     return adminId || "admin_" + Math.random().toString(36).substr(2, 9);
   }
 
-  /**
-   * Initialize Socket.io connection
-   */
+  // Khởi tạo kết nối Socket.io
   initializeSocket() {
     if (typeof io === "undefined") {
-      // Fallback to fake notifications if socket.io not available
-      this.startFakeNotifications();
       return;
     }
 
@@ -47,13 +37,13 @@ class AdminNotificationManager {
       this.socket.emit("admin:join", this.adminId);
     });
 
-    // Listen for new notifications
+    // Lắng nghe thông báo mới
     this.socket.on("notification:new", (notification) => {
-      // Deduplication: Check if notification already exists
+      // Kiểm tra trùng lặp
       const isDuplicate = this.notifications.some((n) => {
-        // Check by ID
+        // Kiểm tra theo ID
         if (n.id === notification.id) return true;
-        // Check by title + message + timestamp (within 1 second)
+        // Kiểm tra theo title + message + timestamp (trong vòng 1 giây)
         if (
           n.title === notification.title &&
           n.message === notification.message
@@ -61,7 +51,7 @@ class AdminNotificationManager {
           const timeDiff = Math.abs(
             new Date(n.time) - new Date(notification.time)
           );
-          if (timeDiff < 1000) return true; // Within 1 second = duplicate
+          if (timeDiff < 1000) return true;
         }
         return false;
       });
@@ -73,7 +63,7 @@ class AdminNotificationManager {
       this.addNotification(notification);
     });
 
-    // Listen for read status updates
+    // Lắng nghe cập nhật trạng thái đã đọc
     this.socket.on("notification:read", (notificationId) => {
       const notif = this.notifications.find((n) => n.id === notificationId);
       if (notif) {
@@ -81,19 +71,13 @@ class AdminNotificationManager {
       }
     });
 
-    // Listen for delete notifications
+    // Lắng nghe xóa thông báo
     this.socket.on("notification:delete", (notificationId) => {
       this.deleteNotification(notificationId);
     });
-
-    this.socket.on("disconnect", () => {});
-
-    // Catch-all listener for debugging
-    // this.socket.onAny((eventName, ...args) => {
-    //   console.log("Socket event received:", eventName, args);
-    // });
   }
 
+  // Tạo giao diện thông báo
   createNotificationUI() {
     // Overlay
     const overlay = document.createElement("div");
@@ -124,6 +108,7 @@ class AdminNotificationManager {
     document.body.appendChild(modal);
   }
 
+  // Gắn các sự kiện
   attachEventListeners() {
     const bellBtn = document.querySelector(".notification-bell-btn");
     const closeBtn = document.getElementById("notificationClose");
@@ -141,7 +126,7 @@ class AdminNotificationManager {
       overlay.addEventListener("click", () => this.closeModal());
     }
 
-    // Close modal when clicking outside
+    // Đóng modal khi click bên ngoài
     document.addEventListener("click", (e) => {
       const modal = document.getElementById("notificationModal");
       const bellBtn = document.querySelector(".notification-bell-btn");
@@ -156,6 +141,7 @@ class AdminNotificationManager {
     });
   }
 
+  // Mở/đóng modal thông báo
   toggleModal() {
     const modal = document.getElementById("notificationModal");
     const overlay = document.getElementById("notificationOverlay");
@@ -171,6 +157,7 @@ class AdminNotificationManager {
     }
   }
 
+  // Đóng modal thông báo
   closeModal() {
     const modal = document.getElementById("notificationModal");
     const overlay = document.getElementById("notificationOverlay");
@@ -181,9 +168,7 @@ class AdminNotificationManager {
     bellBtn.classList.remove("active");
   }
 
-  /**
-   * Fetch notifications from server API (admin only)
-   */
+  // Lấy danh sách thông báo từ server (admin)
   async fetchNotificationsFromServer() {
     try {
       const response = await fetch("/api/notifications/admin/all");
@@ -195,7 +180,7 @@ class AdminNotificationManager {
       const data = await response.json();
       const serverNotifications = data.data || data || [];
 
-      // Replace notifications with fresh data from server
+      // Thay thế thông báo bằng dữ liệu mới từ server
       this.notifications = [];
       this.unreadCount = 0;
 
@@ -205,13 +190,11 @@ class AdminNotificationManager {
 
       this.updateBadge();
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      // Xử lý lỗi im lặng
     }
   }
 
-  /**
-   * Add notification fetched from server database
-   */
+  // Thêm thông báo từ server database
   addNotificationFromServer(serverNotif) {
     const notification = {
       id: serverNotif._id,
@@ -233,11 +216,11 @@ class AdminNotificationManager {
     }
   }
 
+  // Thêm thông báo mới (realtime từ Socket.io)
   addNotification(notification) {
-    // Cấu trúc: { id, type, icon, title, message, time, read }
     const newNotif = {
       id: notification.id || `notif-${Date.now()}`,
-      type: notification.type || "tour", // tour, booking, promotion, alert
+      type: notification.type || "tour",
       icon: notification.icon || "fa-bell",
       iconBg: notification.iconBg || "bg-blue-100",
       title: notification.title,
@@ -254,17 +237,18 @@ class AdminNotificationManager {
     }
 
     this.updateBadge();
-
     this.showToast(newNotif);
   }
 
+  // Hiển thị danh sách thông báo
   renderNotifications() {
     const content = document.getElementById("notificationContent");
-    // Sort notifications by time (newest first)
+
+    // Sắp xếp thông báo theo thời gian (mới nhất trước)
     const displayNotifications = [...this.notifications].sort((a, b) => {
       const timeA = new Date(a.time).getTime();
       const timeB = new Date(b.time).getTime();
-      return timeB - timeA; // Newest first
+      return timeB - timeA;
     });
 
     if (displayNotifications.length === 0) {
@@ -281,8 +265,7 @@ class AdminNotificationManager {
     displayNotifications.forEach((notif, index) => {
       const timeStr = this.formatTime(notif.time);
       const unreadClass = notif.read ? "" : "unread";
-      const newestClass = index === 0 ? "newest" : ""; // Highlight the newest
-      // Use iconBg if available, otherwise default to type-based styling
+      const newestClass = index === 0 ? "newest" : "";
       const avatarClass = notif.iconBg ? notif.iconBg : notif.type;
 
       html += `
@@ -325,8 +308,9 @@ class AdminNotificationManager {
     this.attachNotificationActions();
   }
 
+  // Gắn sự kiện cho các thao tác trên thông báo
   attachNotificationActions() {
-    // Action button click
+    // Nút thao tác
     document.querySelectorAll(".notification-action-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -335,7 +319,7 @@ class AdminNotificationManager {
           `.notification-action-menu[data-id="${id}"]`
         );
 
-        // Close all other menus
+        // Đóng tất cả menu khác
         document
           .querySelectorAll(".notification-action-menu.active")
           .forEach((m) => {
@@ -346,7 +330,7 @@ class AdminNotificationManager {
       });
     });
 
-    // Mark as read
+    // Đánh dấu đã đọc/chưa đọc
     document.querySelectorAll(".mark-read").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -356,7 +340,7 @@ class AdminNotificationManager {
       });
     });
 
-    // Delete
+    // Xóa thông báo
     document
       .querySelectorAll(".notification-action-item.delete")
       .forEach((btn) => {
@@ -368,7 +352,7 @@ class AdminNotificationManager {
         });
       });
 
-    // Mark as read when clicking notification
+    // Đánh dấu đã đọc khi click vào thông báo
     document.querySelectorAll(".notification-item").forEach((item) => {
       item.addEventListener("click", () => {
         const id = item.dataset.id;
@@ -380,7 +364,7 @@ class AdminNotificationManager {
       });
     });
 
-    // Close menu when clicking outside
+    // Đóng menu khi click bên ngoài
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".notification-action-btn")) {
         document
@@ -390,17 +374,20 @@ class AdminNotificationManager {
     });
   }
 
+  // Chuyển đổi trạng thái đã đọc/chưa đọc
   toggleRead(id) {
     const notif = this.notifications.find((n) => n.id === id);
     if (notif) {
-      // Update server
+      // Cập nhật lên server
       fetch(`/api/notifications/${id}/read`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: "admin" }),
-      }).catch((err) => console.error("Error marking as read:", err));
+      }).catch((err) => {
+        // Xử lý lỗi im lặng
+      });
 
       if (notif.read) {
         notif.read = false;
@@ -413,6 +400,7 @@ class AdminNotificationManager {
     }
   }
 
+  // Xóa thông báo
   deleteNotification(id) {
     const index = this.notifications.findIndex((n) => n.id === id);
     if (index > -1) {
@@ -422,19 +410,22 @@ class AdminNotificationManager {
       }
       this.notifications.splice(index, 1);
 
-      // Delete from server
+      // Xóa trên server
       fetch(`/api/notifications/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: "admin" }),
-      }).catch((err) => console.error("Error deleting notification:", err));
+      }).catch((err) => {
+        // Xử lý lỗi im lặng
+      });
 
       this.updateBadge();
     }
   }
 
+  // Cập nhật badge số lượng thông báo chưa đọc
   updateBadge() {
     const badge = document.querySelector(".notification-badge");
     if (!badge) return;
@@ -447,6 +438,7 @@ class AdminNotificationManager {
     }
   }
 
+  // Hiển thị toast thông báo
   showToast(notification) {
     const toast = document.createElement("div");
     toast.className = `notification-toast ${notification.type}`;
@@ -465,13 +457,13 @@ class AdminNotificationManager {
 
     document.body.appendChild(toast);
 
-    // Auto remove after 5 seconds
+    // Tự động xóa sau 5 giây
     const timeout = setTimeout(() => {
       toast.classList.add("removing");
       setTimeout(() => toast.remove(), 300);
     }, 5000);
 
-    // Close button
+    // Nút đóng
     toast
       .querySelector(".notification-toast-close")
       .addEventListener("click", () => {
@@ -480,12 +472,13 @@ class AdminNotificationManager {
         setTimeout(() => toast.remove(), 300);
       });
 
-    // Click to open modal
+    // Click để mở modal
     toast.addEventListener("click", () => {
       this.toggleModal();
     });
   }
 
+  // Định dạng thời gian hiển thị
   formatTime(date) {
     const now = new Date();
     const diffMs = now - new Date(date);
@@ -501,34 +494,21 @@ class AdminNotificationManager {
     return new Date(date).toLocaleDateString("vi-VN");
   }
 
-  // saveNotificationsToStorage() {
-  //   // No longer saving to localStorage - all data from server
-  //   console.log("Notifications stored in database, not localStorage");
-  // }
-
+  // Không còn sử dụng localStorage - tất cả dữ liệu từ server
   loadNotificationsFromStorage() {
-    // No longer loading from localStorage - all data from server
     this.notifications = [];
     this.unreadCount = 0;
   }
-
-  // Fake notifications for demo (DISABLED - Use real notifications from server)
-  // startFakeNotifications() {
-  //   // Fake notifications disabled - all notifications come from server via Socket.io
-  //   console.log("Admin waiting for real notifications from server...");
-  //   // This method is no longer needed but kept for fallback purposes
-  // }
 }
 
-// Initialize notification manager when DOM is ready
+// Khởi tạo notification manager khi DOM đã sẵn sàng
 let adminNotificationManager;
 document.addEventListener("DOMContentLoaded", () => {
   adminNotificationManager = new AdminNotificationManager();
-  // Make it globally accessible for other scripts
   window.adminNotificationManager = adminNotificationManager;
 });
 
-// Export for use with Socket.io
+// Export để sử dụng với Socket.io
 if (typeof module !== "undefined" && module.exports) {
   module.exports = AdminNotificationManager;
 }

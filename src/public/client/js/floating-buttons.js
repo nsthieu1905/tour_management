@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const chatWindow = document.getElementById("chatWindow");
-  const openMessageBtn = document.getElementById("open-mesage");
+  const openMessageBtn = document.getElementById("open-message");
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {

@@ -2,9 +2,6 @@ const crypto = require("crypto");
 const https = require("https");
 const momoConfig = require("../config/momo");
 
-// MoMo payment amount constraints
-// Note: MoMo sandbox test-payment.momo.vn has max 50M limit
-// Production might have different limits
 const PAYMENT_LIMITS = {
   MIN_AMOUNT: 1000,
   MAX_AMOUNT: 50000000,
@@ -35,10 +32,8 @@ class MoMoService {
 
   static async createPaymentRequest(bookingData) {
     try {
-      // MoMo amount constraints
       let amount = Math.round(bookingData.amount);
 
-      // Adjust amount if it exceeds limits
       if (amount < PAYMENT_LIMITS.MIN_AMOUNT) {
         amount = PAYMENT_LIMITS.MIN_AMOUNT;
       } else if (amount > PAYMENT_LIMITS.MAX_AMOUNT) {
@@ -57,21 +52,18 @@ class MoMoService {
         orderInfo: `Tour Booking - ${bookingData.tourName} - ${bookingData.customerName}`,
         redirectUrl: momoConfig.redirectUrl,
         ipnUrl: momoConfig.ipnUrl,
-        extraData: bookingData.bookingId || "", // bookingId để theo dõi
-        requestType: "payWithMethod", // Cho phép user chọn phương thức thanh toán (ví, ngân hàng, etc)
+        extraData: bookingData.bookingId || "",
+        requestType: "payWithMethod",
         lang: "vi",
       };
 
-      // Build raw signature
       const rawSignature = this.buildRawSignature(params);
 
-      // Generate signature
       const signature = this.generateSignature(
         rawSignature,
         momoConfig.secretKey
       );
 
-      // Create request body với các field bổ sung
       const requestBody = JSON.stringify({
         partnerCode: params.partnerCode,
         partnerName: momoConfig.partnerName,
@@ -89,7 +81,6 @@ class MoMoService {
         signature: signature,
       });
 
-      // Send request to MoMo
       return await this.sendMoMoRequest(requestBody);
     } catch (error) {
       console.error("MoMo payment request error:", error);
@@ -162,7 +153,6 @@ class MoMoService {
 
       const receivedSignature = signature;
 
-      // Build raw signature string for verification
       const rawSignature =
         `accessKey=${momoConfig.accessKey}` +
         `&amount=${amount}` +
@@ -178,7 +168,6 @@ class MoMoService {
         `&resultCode=${resultCode}` +
         `&transId=${transId}`;
 
-      // Generate signature
       const computedSignature = this.generateSignature(
         rawSignature,
         momoConfig.secretKey

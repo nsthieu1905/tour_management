@@ -2,11 +2,6 @@ const mongoose = require("mongoose");
 const Notification = require("../app/models/Notification");
 
 class NotificationService {
-  /**
-   * Create and broadcast a notification
-   * @param {Object} notificationData - { userId, type, title, message, icon, link, data, priority, recipientType }
-   * @param {string} recipientType - 'admin' or 'client'
-   */
   static async createNotification(notificationData, recipientType = "client") {
     try {
       const notification = new Notification({
@@ -24,7 +19,6 @@ class NotificationService {
 
       await notification.save();
 
-      // Broadcast to appropriate room
       const notificationObj = {
         id: notification._id,
         ...notificationData,
@@ -32,14 +26,11 @@ class NotificationService {
       };
 
       if (recipientType === "admin") {
-        // Broadcast to all admins
         global.io
           .to("admin-notifications")
           .emit("notification:new", notificationObj);
       } else {
-        // Broadcast to specific user ONLY (not to all clients)
         if (notificationData.userId) {
-          // Convert ObjectId to string for room name
           const userIdStr = notificationData.userId.toString
             ? notificationData.userId.toString()
             : notificationData.userId;
@@ -50,17 +41,16 @@ class NotificationService {
       }
       return notification;
     } catch (error) {
-      console.error("Error creating notification:", error);
+      console.error(
+        "[NotificationService] Error creating notification:",
+        error
+      );
       throw error;
     }
   }
 
-  /**
-   * Get notifications for a user
-   */
   static async getNotifications(userId, limit = 50) {
     try {
-      // Convert string userId to ObjectId if needed
       let queryUserId = userId;
       if (typeof userId === "string") {
         queryUserId = new mongoose.Types.ObjectId(userId);
@@ -71,14 +61,6 @@ class NotificationService {
         .sort({ createdAt: -1 })
         .limit(limit);
 
-      // if (notifications.length > 0) {
-      //   console.log("   First notification userId:", notifications[0].userId);
-      //   console.log(
-      //     "   First notification userId type:",
-      //     typeof notifications[0].userId
-      //   );
-      // }
-
       return notifications;
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -86,9 +68,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Mark notification as read
-   */
   static async markAsRead(notificationId, userId) {
     try {
       const notification = await Notification.findByIdAndUpdate(
@@ -97,38 +76,36 @@ class NotificationService {
         { new: true }
       );
 
-      // Broadcast the read status update
       global.io.to(`user:${userId}`).emit("notification:read", notificationId);
 
       return notification;
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error(
+        "[NotificationService] Error marking notification as read:",
+        error
+      );
       throw error;
     }
   }
 
-  /**
-   * Delete notification
-   */
   static async deleteNotification(notificationId, userId) {
     try {
       await Notification.findByIdAndDelete(notificationId);
 
-      // Broadcast the delete event
       global.io
         .to(`user:${userId}`)
         .emit("notification:delete", notificationId);
 
       return true;
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error(
+        "[NotificationService] Error deleting notification:",
+        error
+      );
       throw error;
     }
   }
 
-  /**
-   * Broadcast notification to admin
-   */
   static broadcastToAdmin(notification) {
     if (global.io) {
       global.io
@@ -137,9 +114,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Broadcast notification to all clients
-   */
   static broadcastToAllClients(notification) {
     if (global.io) {
       global.io
@@ -148,30 +122,21 @@ class NotificationService {
     }
   }
 
-  /**
-   * Broadcast notification to specific user
-   */
   static broadcastToUser(userId, notification) {
     if (global.io) {
       global.io.to(`user:${userId}`).emit("notification:new", notification);
     }
   }
 
-  /**
-   * Get unread count for user
-   */
   static async getUnreadCount(userId) {
     try {
       return await Notification.countDocuments({ userId, read: false });
     } catch (error) {
-      console.error("Error getting unread count:", error);
+      console.error("[NotificationService] Error getting unread count:", error);
       throw error;
     }
   }
 
-  /**
-   * Create booking notification
-   */
   static async notifyBooking(bookingData) {
     const notification = {
       userId: bookingData.userId,
@@ -187,9 +152,6 @@ class NotificationService {
     return this.createNotification(notification, "client");
   }
 
-  /**
-   * Create tour update notification
-   */
   static async notifyTourUpdate(tourData) {
     const notification = {
       type: "tour_update",
@@ -204,9 +166,6 @@ class NotificationService {
     return this.broadcastToAllClients(notification);
   }
 
-  /**
-   * Create promotion notification
-   */
   static async notifyPromotion(promotionData) {
     const notification = {
       type: "promotion",
@@ -221,9 +180,6 @@ class NotificationService {
     return this.broadcastToAllClients(notification);
   }
 
-  /**
-   * Create payment notification
-   */
   static async notifyPayment(paymentData) {
     const notification = {
       userId: paymentData.userId,

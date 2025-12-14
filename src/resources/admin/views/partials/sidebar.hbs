@@ -79,37 +79,4 @@
   </aside>
 </div>
 
-<script type="module" src="/admin/js/dashboard.js"></script>
-{{!--
-<script>
-  // Highlight current page in sidebar
-  document.addEventListener("DOMContentLoaded", () => {
-    const currentPath = window.location.pathname;
-
-    // Remove active class from all menu items
-    document.querySelectorAll(".active-menu-item").forEach((item) => {
-      item.classList.remove(
-        "bg-gradient-to-r",
-        "from-blue-500",
-        "to-purple-600",
-        "text-white"
-      );
-      item.classList.add("text-gray-700");
-    });
-
-    // Add active class to current menu item
-    if (currentPath.includes("/qly-nhan-tin")) {
-      const nhanTinMenu = document.getElementById("nhan-tin-menu");
-      if (nhanTinMenu) {
-        nhanTinMenu.classList.remove("text-gray-700");
-        nhanTinMenu.classList.add(
-          "bg-gradient-to-r",
-          "from-blue-500",
-          "to-purple-600",
-          "text-white"
-        );
-      }
-    }
-  });
-</script>
---}}
+<script type="module" src="/admin/js/utils.js"></script>

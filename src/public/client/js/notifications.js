@@ -12,22 +12,11 @@ class ClientNotificationManager {
     this.createNotificationUI();
     this.attachEventListeners();
     this.updateBadge();
-
-    // Test API
-    // fetch("/api/notifications/test-api")
-    //   .then((r) => r.json())
-    //   .then((d) => console.log("[Client] API test response:", d))
-    //   .catch((e) => console.error("[Client] API test error:", e));
-
-    // Always fetch userId from API to ensure we get current user
     this.fetchUserIdFromApi();
-
     this.initializeSocket();
   }
 
-  /**
-   * Fallback: Fetch userId from /api/users/current-user API
-   */
+  // Lấy userId từ API server (cho người dùng đã đăng nhập)
   async fetchUserIdFromApi() {
     try {
       const response = await fetch("/api/users/current-user");
@@ -38,7 +27,7 @@ class ClientNotificationManager {
 
       const data = await response.json();
 
-      // Try multiple ways to extract userId
+      // Thử nhiều cách để trích xuất userId
       let userId = null;
       if (data.user && data.user._id) {
         userId = data.user._id;
@@ -65,11 +54,8 @@ class ClientNotificationManager {
     }
   }
 
-  /**
-   * Get client ID from DOM (from user profile or data attribute)
-   */
+  // Lấy client ID từ DOM hoặc tạo một ID ngẫu nhiên
   getClientIdFromDom() {
-    // Try to get from localStorage or data attribute
     const clientId =
       localStorage.getItem("clientId") ||
       document.body.dataset.clientId ||
@@ -77,11 +63,8 @@ class ClientNotificationManager {
     return clientId || "client_" + Math.random().toString(36).substr(2, 9);
   }
 
-  /**
-   * Get user ID from DOM (for logged-in users)
-   */
+  // Lấy user ID từ DOM
   getUserIdFromDom() {
-    // Try multiple sources
     const userId =
       document.body.dataset.userId ||
       document.querySelector("[data-user-id]")?.dataset.userId ||
@@ -91,25 +74,20 @@ class ClientNotificationManager {
     return userId;
   }
 
-  /**
-   * Initialize Socket.io connection
-   */
+  // Khởi tạo kết nối Socket.io
   initializeSocket() {
     if (typeof io === "undefined") {
-      // Fallback to fake notifications if socket.io not available
-      this.startFakeNotifications();
       return;
     }
 
     this.socket = io();
 
-    // Set up all listeners BEFORE connect event fires
-    // Listen for new notifications
+    // Lắng nghe thông báo mới
     this.socket.on("notification:new", (notification) => {
       this.addNotification(notification);
     });
 
-    // Listen for read status updates
+    // Lắng nghe cập nhật trạng thái đã đọc
     this.socket.on("notification:read", (notificationId) => {
       const notif = this.notifications.find((n) => n.id === notificationId);
       if (notif) {
@@ -117,44 +95,35 @@ class ClientNotificationManager {
       }
     });
 
-    // Listen for delete notifications
+    // Lắng nghe xóa thông báo
     this.socket.on("notification:delete", (notificationId) => {
       this.deleteNotification(notificationId);
     });
 
-    this.socket.on("disconnect", () => {});
-
-    // Debug: log all socket events
-    this.socket.onAny((event, ...args) => {});
-
-    // NOW handle connect event
+    // Xử lý sự kiện kết nối thành công
     this.socket.on("connect", () => {
-      // Emit client:join for general notifications
+      // Gửi client:join cho thông báo chung
       this.socket.emit("client:join", this.clientId);
 
-      // If logged in, emit user:join with userId for personal notifications
+      // Nếu đã đăng nhập, gửi user:join với userId cho thông báo cá nhân
       let userId = this.getUserIdFromDom();
       if (!userId) {
-        // Fallback: fetch from API
+        // Dự phòng: lấy từ API
         this.fetchUserIdFromApi().then((apiUserId) => {
           if (apiUserId) {
             userId = apiUserId;
             this.emitUserJoin(userId);
-            // Fetch notifications after getting userId from API
             this.fetchNotificationsFromServer(userId);
           }
         });
       } else {
         this.emitUserJoin(userId);
-        // Fetch notifications from server to catch any that were missed
         this.fetchNotificationsFromServer(userId);
       }
     });
   }
 
-  /**
-   * Helper to emit user:join
-   */
+  // Gửi sự kiện user:join
   emitUserJoin(userId) {
     if (!userId) {
       return;
@@ -163,6 +132,7 @@ class ClientNotificationManager {
     this.socket.emit("user:join", userId);
   }
 
+  // Tạo giao diện thông báo
   createNotificationUI() {
     // Overlay
     const overlay = document.createElement("div");
@@ -193,6 +163,7 @@ class ClientNotificationManager {
     document.body.appendChild(modal);
   }
 
+  // Gắn các sự kiện
   attachEventListeners() {
     const bellBtn = document.querySelector(".notification-bell-btn");
     const closeBtn = document.getElementById("notificationClose");
@@ -210,7 +181,7 @@ class ClientNotificationManager {
       overlay.addEventListener("click", () => this.closeModal());
     }
 
-    // Close modal when clicking outside
+    // Đóng modal khi click bên ngoài
     document.addEventListener("click", (e) => {
       const modal = document.getElementById("notificationModal");
       const bellBtn = document.querySelector(".notification-bell-btn");
@@ -225,6 +196,7 @@ class ClientNotificationManager {
     });
   }
 
+  // Mở/đóng modal thông báo
   toggleModal() {
     const modal = document.getElementById("notificationModal");
     const overlay = document.getElementById("notificationOverlay");
@@ -240,6 +212,7 @@ class ClientNotificationManager {
     }
   }
 
+  // Đóng modal thông báo
   closeModal() {
     const modal = document.getElementById("notificationModal");
     const overlay = document.getElementById("notificationOverlay");
@@ -250,25 +223,20 @@ class ClientNotificationManager {
     bellBtn.classList.remove("active");
   }
 
-  /**
-   * Fetch notifications from server API to catch any missed realtime updates
-   */
+  // Lấy danh sách thông báo từ server để đồng bộ
   async fetchNotificationsFromServer(userId) {
     try {
       const response = await fetch(`/api/notifications/user`);
 
       if (!response.ok) {
-        const errorText = await response.text();
         return;
       }
 
       const data = await response.json();
-
       const serverNotifications = data.data || data || [];
 
-      // Merge with existing notifications, avoiding duplicates
+      // Gộp với thông báo hiện có, tránh trùng lặp
       serverNotifications.forEach((serverNotif) => {
-        // Check if notification already exists
         const exists = this.notifications.some((n) => n.id === serverNotif._id);
         if (!exists) {
           this.addNotificationFromServer(serverNotif);
@@ -277,13 +245,11 @@ class ClientNotificationManager {
 
       this.updateBadge();
     } catch (error) {
-      console.error("Error fetching notifications from server:", error);
+      // Xử lý lỗi im lặng
     }
   }
 
-  /**
-   * Add notification fetched from server database
-   */
+  // Thêm thông báo từ server database
   addNotificationFromServer(serverNotif) {
     const notification = {
       id: serverNotif._id,
@@ -305,11 +271,11 @@ class ClientNotificationManager {
     }
   }
 
+  // Thêm thông báo mới (realtime từ Socket.io)
   addNotification(notification) {
-    // Cấu trúc: { id, type, icon, title, message, time, read }
     const newNotif = {
       id: notification.id || `notif-${Date.now()}`,
-      type: notification.type || "tour", // tour, booking, promotion, alert
+      type: notification.type || "tour",
       icon: notification.icon || "fa-bell",
       iconBg: notification.iconBg || "bg-blue-100",
       title: notification.title,
@@ -326,17 +292,18 @@ class ClientNotificationManager {
     }
 
     this.updateBadge();
-
     this.showToast(newNotif);
   }
 
+  // Hiển thị danh sách thông báo
   renderNotifications() {
     const content = document.getElementById("notificationContent");
-    // Sort notifications by time (newest first)
+
+    // Sắp xếp thông báo theo thời gian (mới nhất trước)
     const displayNotifications = [...this.notifications].sort((a, b) => {
       const timeA = new Date(a.time).getTime();
       const timeB = new Date(b.time).getTime();
-      return timeB - timeA; // Newest first
+      return timeB - timeA;
     });
 
     if (displayNotifications.length === 0) {
@@ -353,8 +320,7 @@ class ClientNotificationManager {
     displayNotifications.forEach((notif, index) => {
       const timeStr = this.formatTime(notif.time);
       const unreadClass = notif.read ? "" : "unread";
-      const newestClass = index === 0 ? "newest" : ""; // Highlight the newest
-      // Use iconBg if available, otherwise default to type-based styling
+      const newestClass = index === 0 ? "newest" : "";
       const avatarClass = notif.iconBg ? notif.iconBg : notif.type;
 
       html += `
@@ -397,8 +363,9 @@ class ClientNotificationManager {
     this.attachNotificationActions();
   }
 
+  // Gắn sự kiện cho các thao tác trên thông báo
   attachNotificationActions() {
-    // Action button click
+    // Nút thao tác
     document.querySelectorAll(".notification-action-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -407,7 +374,7 @@ class ClientNotificationManager {
           `.notification-action-menu[data-id="${id}"]`
         );
 
-        // Close all other menus
+        // Đóng tất cả menu khác
         document
           .querySelectorAll(".notification-action-menu.active")
           .forEach((m) => {
@@ -418,7 +385,7 @@ class ClientNotificationManager {
       });
     });
 
-    // Mark as read
+    // Đánh dấu đã đọc/chưa đọc
     document.querySelectorAll(".mark-read").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -428,7 +395,7 @@ class ClientNotificationManager {
       });
     });
 
-    // Delete
+    // Xóa thông báo
     document
       .querySelectorAll(".notification-action-item.delete")
       .forEach((btn) => {
@@ -440,7 +407,7 @@ class ClientNotificationManager {
         });
       });
 
-    // Mark as read when clicking notification
+    // Đánh dấu đã đọc khi click vào thông báo
     document.querySelectorAll(".notification-item").forEach((item) => {
       item.addEventListener("click", () => {
         const id = item.dataset.id;
@@ -452,7 +419,7 @@ class ClientNotificationManager {
       });
     });
 
-    // Close menu when clicking outside
+    // Đóng menu khi click bên ngoài
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".notification-action-btn")) {
         document
@@ -462,16 +429,19 @@ class ClientNotificationManager {
     });
   }
 
+  // Chuyển đổi trạng thái đã đọc/chưa đọc
   toggleRead(id) {
     const notif = this.notifications.find((n) => n.id === id);
     if (notif) {
-      // Update server
+      // Cập nhật lên server
       fetch(`/api/notifications/${id}/read`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-      }).catch((err) => console.error("Error marking as read:", err));
+      }).catch((err) => {
+        // Xử lý lỗi im lặng
+      });
 
       if (notif.read) {
         notif.read = false;
@@ -484,6 +454,7 @@ class ClientNotificationManager {
     }
   }
 
+  // Xóa thông báo
   deleteNotification(id) {
     const index = this.notifications.findIndex((n) => n.id === id);
     if (index > -1) {
@@ -493,18 +464,21 @@ class ClientNotificationManager {
       }
       this.notifications.splice(index, 1);
 
-      // Delete from server
+      // Xóa trên server
       fetch(`/api/notifications/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-      }).catch((err) => console.error("Error deleting notification:", err));
+      }).catch((err) => {
+        // Xử lý lỗi im lặng
+      });
 
       this.updateBadge();
     }
   }
 
+  // Cập nhật badge số lượng thông báo chưa đọc
   updateBadge() {
     const badge = document.querySelector(".notification-badge");
     if (!badge) return;
@@ -517,6 +491,7 @@ class ClientNotificationManager {
     }
   }
 
+  // Hiển thị toast thông báo
   showToast(notification) {
     const toast = document.createElement("div");
     toast.className = `notification-toast ${notification.type}`;
@@ -535,13 +510,13 @@ class ClientNotificationManager {
 
     document.body.appendChild(toast);
 
-    // Auto remove after 10 seconds
+    // Tự động xóa sau 10 giây
     const timeout = setTimeout(() => {
       toast.classList.add("removing");
       setTimeout(() => toast.remove(), 300);
     }, 10000);
 
-    // Close button
+    // Nút đóng
     toast
       .querySelector(".notification-toast-close")
       .addEventListener("click", () => {
@@ -550,12 +525,13 @@ class ClientNotificationManager {
         setTimeout(() => toast.remove(), 300);
       });
 
-    // Click to open modal
+    // Click để mở modal
     toast.addEventListener("click", () => {
       this.toggleModal();
     });
   }
 
+  // Định dạng thời gian hiển thị
   formatTime(date) {
     const now = new Date();
     const diffMs = now - new Date(date);
@@ -571,32 +547,20 @@ class ClientNotificationManager {
     return new Date(date).toLocaleDateString("vi-VN");
   }
 
-  saveNotificationsToStorage() {
-    // No longer saving to localStorage - all data from server
-    console.log("Notifications stored in database, not localStorage");
-  }
-
+  // Không còn sử dụng localStorage - tất cả dữ liệu từ server
   loadNotificationsFromStorage() {
-    // No longer loading from localStorage - all data from server
     this.notifications = [];
     this.unreadCount = 0;
   }
-
-  // Fake notifications for demo (DISABLED - Use real notifications from server)
-  startFakeNotifications() {
-    // Fake notifications disabled - all notifications come from server via Socket.io
-    console.log("Waiting for real notifications from server...");
-    // This method is no longer needed but kept for fallback purposes
-  }
 }
 
-// Initialize notification manager when DOM is ready
+// Khởi tạo notification manager khi DOM đã sẵn sàng
 let clientNotificationManager;
 document.addEventListener("DOMContentLoaded", () => {
   clientNotificationManager = new ClientNotificationManager();
 });
 
-// Export for use with Socket.io
+// Export để sử dụng với Socket.io
 if (typeof module !== "undefined" && module.exports) {
   module.exports = ClientNotificationManager;
 }

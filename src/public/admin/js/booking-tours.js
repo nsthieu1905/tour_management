@@ -83,35 +83,6 @@ function formatPrice(price) {
   return new Intl.NumberFormat("vi-VN").format(Math.round(price)) + " VNĐ";
 }
 
-// Show toast notification (non-blocking)
-// function showActionToast(message, type = "success") {
-//   // Find AdminNotificationManager instance (global)
-//   if (
-//     window.adminNotificationManager &&
-//     typeof window.adminNotificationManager.showToast === "function"
-//   ) {
-//     window.adminNotificationManager.showToast({
-//       type: type,
-//       title:
-//         type === "success"
-//           ? "Thành công"
-//           : type === "error"
-//           ? "Lỗi"
-//           : "ℹThông báo",
-//       message: message,
-//       icon:
-//         type === "success"
-//           ? "fa-check-circle"
-//           : type === "error"
-//           ? "fa-exclamation-circle"
-//           : "fa-info-circle",
-//     });
-//   } else {
-//     // Fallback: if notification manager not available, just log
-//     console.log(`[${type.toUpperCase()}] ${message}`);
-//   }
-// }
-
 // Get status badge - Kết hợp cả bookingStatus và paymentStatus
 function getStatusBadge(bookingStatus, paymentStatus) {
   if (bookingStatus === "pending" && paymentStatus === "pending") {

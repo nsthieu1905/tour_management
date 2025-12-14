@@ -24,7 +24,7 @@ const clientLogin = (req, res) => {
 
   if (accessToken) {
     try {
-      const decoded = jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
+      jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
       return res.redirect("/");
     } catch (error) {
       console.error(error);
@@ -33,6 +33,7 @@ const clientLogin = (req, res) => {
 
   res.render("auth/login-client", {
     bodyClass: "bg-gray-50 transition-all duration-300",
+    layout: false,
   });
 };
 
@@ -40,6 +41,7 @@ const clientLogin = (req, res) => {
 const clientRegister = (req, res) => {
   res.render("auth/register", {
     bodyClass: "bg-gray-50 transition-all duration-300",
+    layout: false,
   });
 };
 
