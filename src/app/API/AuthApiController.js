@@ -45,7 +45,17 @@ const adminLogin = async (req, res) => {
       user,
       isPasswordValid
     );
+
+    // Xử lý các loại lỗi validation khác nhau
     if (!credentialsValidation.isValid) {
+      if (credentialsValidation.errorType === "account_locked") {
+        return res.status(403).json({
+          success: false,
+          message: "Tài khoản của bạn đã bị khoá",
+          error: "ACCOUNT_LOCKED",
+        });
+      }
+      // Các lỗi khác (invalid_credentials, invalid_account_status, v.v.)
       return res.status(401).json({
         success: false,
         message: "Tên đăng nhập hoặc mật khẩu không chính xác",
@@ -57,15 +67,6 @@ const adminLogin = async (req, res) => {
         success: false,
         message: "Tài khoản này không có quyền truy cập hệ thống quản trị.",
         error: "INVALID_ROLE",
-      });
-    }
-
-    // Kiểm tra trạng thái tài khoản
-    if (user.status === "inactive" || user.status === "blocked") {
-      return res.status(403).json({
-        success: false,
-        message: "Tài khoản của bạn đã bị khoá",
-        error: "ACCOUNT_LOCKED",
       });
     }
 
@@ -195,19 +196,20 @@ const clientLogin = async (req, res) => {
       user,
       isPasswordValid
     );
+
+    // Xử lý các loại lỗi validation khác nhau
     if (!credentialsValidation.isValid) {
+      if (credentialsValidation.errorType === "account_locked") {
+        return res.status(403).json({
+          success: false,
+          message: "Tài khoản của bạn đã bị khoá",
+          error: "ACCOUNT_LOCKED",
+        });
+      }
+      // Các lỗi khác (invalid_credentials, invalid_account_status, v.v.)
       return res.status(401).json({
         success: false,
         message: "Email hoặc mật khẩu không chính xác",
-      });
-    }
-
-    // Kiểm tra trạng thái tài khoản
-    if (user.status === "inactive" || user.status === "blocked") {
-      return res.status(403).json({
-        success: false,
-        message: "Tài khoản của bạn đã bị khoá",
-        error: "ACCOUNT_LOCKED",
       });
     }
 

@@ -103,14 +103,32 @@ const create = async (req, res) => {
 // [GET] /api/staffs
 const findAll = async (req, res) => {
   try {
-    const staffList = await User.find({ role: "admin" }).select(
-      "-password -metadata"
-    );
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Lấy tổng số nhân viên
+    const total = await User.countDocuments({ role: "admin" });
+
+    // Lấy dữ liệu nhân viên với phân trang
+    const staffList = await User.find({ role: "admin" })
+      .select("-password -metadata")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const totalPages = Math.ceil(total / limit);
 
     return res.status(200).json({
       success: true,
       message: "Lấy danh sách nhân viên thành công",
       data: staffList,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: totalPages,
+      },
     });
   } catch (error) {
     return res.status(500).json({

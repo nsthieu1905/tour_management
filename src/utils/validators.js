@@ -48,12 +48,30 @@ const validateLoginInput = (email, password) => {
  * Trả về lỗi chung để không tiết lộ thông tin (bảo mật)
  */
 const validateCredentials = (email, password, user, isPasswordValid) => {
-  const isValid = user && isPasswordValid && user.status === "active";
-
-  if (!isValid) {
+  // Kiểm tra user tồn tại và password đúng
+  if (!user || !isPasswordValid) {
     return {
       isValid: false,
       hasError: true,
+      errorType: "invalid_credentials",
+    };
+  }
+
+  // Kiểm tra trạng thái tài khoản
+  if (user.status === "inactive" || user.status === "blocked") {
+    return {
+      isValid: false,
+      hasError: true,
+      errorType: "account_locked",
+    };
+  }
+
+  // Kiểm tra xem status có phải "active" không
+  if (user.status !== "active") {
+    return {
+      isValid: false,
+      hasError: true,
+      errorType: "invalid_account_status",
     };
   }
 

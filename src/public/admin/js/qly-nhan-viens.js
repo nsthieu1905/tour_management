@@ -6,6 +6,24 @@ let staffData = [];
 let modalMode = "create";
 let currentStaffId = null;
 let currentStatusFilter = "";
+let currentPage = 1;
+let pageSize = 10;
+let totalStaffs = 0;
+
+// ===========================
+// HELPER FUNCTIONS
+// ===========================
+
+function attachFormValidationListeners(form) {
+  if (!form) return;
+
+  // Use event delegation - attach listeners to form, not individual inputs
+  // This captures all blur/input events that bubble up from inputs
+
+  // Remove previous event listeners to avoid duplicates
+  // We need to recreate the form to truly remove all listeners
+  // Simpler approach: just attach listeners - they won't duplicate if we use proper delegation
+}
 
 // ===========================
 // KHỞI TẠO
@@ -31,19 +49,47 @@ function initializeEventListeners() {
   if (statusFilter) {
     statusFilter.addEventListener("change", (e) => {
       currentStatusFilter = e.target.value;
+      currentPage = 1;
       renderStaffTable();
     });
   }
 
-  // Form validation
+  // Dropdown pageSize
+  const pageSizeSelect = document.getElementById("pageSizeSelect");
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", async (e) => {
+      pageSize = parseInt(e.target.value);
+      currentPage = 1;
+      await loadStaffList(1);
+      renderStaffTable();
+    });
+  }
+
+  // Form validation - use event delegation
   const addStaffForm = document.getElementById("addStaffForm");
   if (addStaffForm) {
     addStaffForm.addEventListener("submit", handleAddStaff);
 
-    const inputs = addStaffForm.querySelectorAll("input, select");
-    inputs.forEach((input) => {
-      input.addEventListener("blur", () => validateFormField(input));
-      input.addEventListener("input", () => clearFieldError(input));
+    // Event delegation for blur and input events
+    addStaffForm.addEventListener(
+      "blur",
+      function (e) {
+        console.log(
+          "Blur event triggered on:",
+          e.target.name,
+          e.target.tagName
+        );
+        if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") {
+          validateFormField(e.target);
+        }
+      },
+      true
+    ); // Use capture phase to catch blur
+
+    addStaffForm.addEventListener("input", function (e) {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") {
+        clearFieldError(e.target);
+      }
     });
   }
 
@@ -100,23 +146,32 @@ function handleTableActions(e) {
 // API CALLS
 // ===========================
 
-async function loadStaffList() {
+async function loadStaffList(page = 1) {
   try {
-    const response = await fetch("/api/staffs", {
+    currentPage = page;
+    const response = await fetch(`/api/staffs?page=${page}&limit=${pageSize}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
       staffData = [];
+      totalStaffs = 0;
       return;
     }
 
     const result = await response.json();
-    staffData = result.success && Array.isArray(result.data) ? result.data : [];
+    if (result.success) {
+      staffData = Array.isArray(result.data) ? result.data : [];
+      totalStaffs = result.pagination?.total || 0;
+    } else {
+      staffData = [];
+      totalStaffs = 0;
+    }
   } catch (error) {
     console.error("Error loading staff list:", error);
     staffData = [];
+    totalStaffs = 0;
   }
 }
 
@@ -187,6 +242,15 @@ function renderStaffTable() {
   }
 
   tbody.innerHTML = filteredData.map((staff) => renderStaffRow(staff)).join("");
+
+  // Update pagination
+  const totalPages = Math.ceil(totalStaffs / pageSize);
+  updatePagination({
+    page: currentPage,
+    limit: pageSize,
+    total: totalStaffs,
+    pages: totalPages,
+  });
 }
 
 function renderStaffRow(staff) {
@@ -402,7 +466,8 @@ async function handleAddStaff(e) {
         : "Cập nhật nhân viên thành công";
     Notification.success(result.message || successMsg);
 
-    await loadStaffList();
+    currentPage = 1;
+    await loadStaffList(1);
     renderStaffTable();
     hideAddStaffModal();
   } else {
@@ -454,6 +519,19 @@ window.showAddStaffModal = function () {
 
     form.reset();
     clearAllErrors(form);
+
+    // Attach blur listeners directly to inputs
+    const inputs = form.querySelectorAll("input, select");
+    inputs.forEach((input) => {
+      input.addEventListener("blur", function () {
+        console.log("Direct blur on:", this.name);
+        validateFormField(this);
+      });
+      input.addEventListener("input", function () {
+        clearFieldError(this);
+      });
+    });
+
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
   }
@@ -523,6 +601,19 @@ async function editStaff(staffId) {
     }
 
     clearAllErrors(form);
+
+    // Attach blur listeners directly to inputs
+    const inputs = form.querySelectorAll("input, select");
+    inputs.forEach((input) => {
+      input.addEventListener("blur", function () {
+        console.log("Direct blur on:", this.name);
+        validateFormField(this);
+      });
+      input.addEventListener("input", function () {
+        clearFieldError(this);
+      });
+    });
+
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
   } catch (error) {
@@ -559,7 +650,8 @@ async function confirmDelete(staffId) {
         const result = await response.json();
 
         if (result.success) {
-          staffData = staffData.filter((s) => s._id !== staffId);
+          currentPage = 1;
+          await loadStaffList(1);
           renderStaffTable();
           Notification.success("Xóa nhân viên thành công");
         } else {
@@ -603,10 +695,7 @@ async function toggleStaffStatus(staffId, newStatus) {
         const result = await response.json();
 
         if (result.success) {
-          const staffIndex = staffData.findIndex((s) => s._id === staffId);
-          if (staffIndex !== -1) {
-            staffData[staffIndex].status = newStatus;
-          }
+          await loadStaffList(currentPage);
           renderStaffTable();
           Notification.success(
             result.message ||
@@ -681,6 +770,135 @@ async function exportStaffData() {
 }
 
 // ===========================
+// PHÂN TRANG
+// ===========================
+
+window.goToPage = async function (page) {
+  const totalPages = Math.ceil(totalStaffs / pageSize);
+
+  if (page < 1 || page > totalPages) {
+    return;
+  }
+
+  await loadStaffList(page);
+  renderStaffTable();
+
+  // Scroll to top
+  document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+// Update pagination
+function updatePagination(pagination) {
+  const start = Math.max((pagination.page - 1) * pagination.limit + 1, 0);
+  const end = Math.min(pagination.page * pagination.limit, pagination.total);
+
+  document.getElementById("recordStart").textContent =
+    pagination.total > 0 ? start : 0;
+  document.getElementById("recordEnd").textContent = end;
+  document.getElementById("recordTotal").textContent = pagination.total;
+
+  // Update pagination nav
+  const paginationNav = document.getElementById("paginationNav");
+  let html = "";
+
+  // Previous button
+  html += `
+    <button
+      class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === 1 ? "opacity-50 cursor-not-allowed" : ""
+      }"
+      onclick="goToPage(${pagination.page - 1})"
+      ${pagination.page === 1 ? "disabled" : ""}
+    >
+      ←
+    </button>
+  `;
+
+  // Page numbers (show max 5 pages)
+  const maxPages = 5;
+  let startPage = Math.max(1, pagination.page - Math.floor(maxPages / 2));
+  let endPage = Math.min(pagination.pages, startPage + maxPages - 1);
+
+  if (endPage - startPage < maxPages - 1) {
+    startPage = Math.max(1, endPage - maxPages + 1);
+  }
+
+  if (startPage > 1) {
+    html += `
+      <button
+        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+        onclick="goToPage(1)"
+      >
+        1
+      </button>
+    `;
+    if (startPage > 2) {
+      html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>`;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    if (i === pagination.page) {
+      html += `
+        <button
+          class="relative inline-flex items-center px-4 py-2 border border-blue-300 bg-blue-50 text-sm font-medium text-blue-600"
+        >
+          ${i}
+        </button>
+      `;
+    } else {
+      html += `
+        <button
+          class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+          onclick="goToPage(${i})"
+        >
+          ${i}
+        </button>
+      `;
+    }
+  }
+
+  if (endPage < pagination.pages) {
+    if (endPage < pagination.pages - 1) {
+      html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>`;
+    }
+    html += `
+      <button
+        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+        onclick="goToPage(${pagination.pages})"
+      >
+        ${pagination.pages}
+      </button>
+    `;
+  }
+
+  // Next button
+  html += `
+    <button
+      class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === pagination.pages
+          ? "opacity-50 cursor-not-allowed"
+          : ""
+      }"
+      onclick="goToPage(${pagination.page + 1})"
+      ${pagination.page === pagination.pages ? "disabled" : ""}
+    >
+      →
+    </button>
+  `;
+
+  paginationNav.innerHTML = html;
+
+  // Update mobile buttons
+  const prevBtnMobile = document.getElementById("prevBtnMobile");
+  const nextBtnMobile = document.getElementById("nextBtnMobile");
+
+  if (prevBtnMobile) prevBtnMobile.disabled = pagination.page === 1;
+  if (nextBtnMobile)
+    nextBtnMobile.disabled = pagination.page === pagination.pages;
+}
+
+// ===========================
 // VALIDATION HELPERS
 // ===========================
 
@@ -727,38 +945,31 @@ function validateFormField(input) {
   if (!form) return;
 
   const fieldValue = input.value.trim();
-  const formData = getFormData(form);
-
-  // Dùng validateRegisterInput để validate
-  const validation = validateRegisterInput(
-    formData.fullName || "abc", // Dummy nếu empty
-    formData.email || "test@test.com",
-    formData.phone || "0123456789",
-    formData.password || "123456",
-    formData.passwordConfirm || "123456"
-  );
-
-  let errorMessage = "";
   const fieldName = input.name;
+  let errorMessage = "";
 
-  // Map lỗi từ validation
-  if (fieldName === "staffName" && validation.errors.fullName) {
+  console.log("Validating field:", fieldName, "Value:", fieldValue);
+
+  // Validation logic for each field
+  if (fieldName === "staffName") {
     if (!fieldValue) {
       errorMessage = "Vui lòng nhập tên nhân viên";
-    } else {
-      errorMessage = validation.errors.fullName;
+    } else if (fieldValue.length < 3) {
+      errorMessage = "Tên nhân viên phải tối thiểu 3 ký tự";
     }
-  } else if (fieldName === "staffEmail" && validation.errors.email) {
+  } else if (fieldName === "staffEmail") {
     if (!fieldValue) {
       errorMessage = "Vui lòng nhập email";
-    } else {
-      errorMessage = validation.errors.email;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldValue)) {
+      errorMessage = "Email không hợp lệ";
     }
-  } else if (fieldName === "staffPhone" && validation.errors.phone) {
+  } else if (fieldName === "staffPhone") {
     if (!fieldValue) {
       errorMessage = "Vui lòng nhập số điện thoại";
-    } else {
-      errorMessage = validation.errors.phone;
+    } else if (
+      !/^(?:\+84|0|84)[1-9]\d{8}$/.test(fieldValue.replace(/\s/g, ""))
+    ) {
+      errorMessage = "Số điện thoại không hợp lệ";
     }
   } else if (fieldName === "password") {
     if (modalMode === "create" && !fieldValue) {
@@ -779,7 +990,11 @@ function validateFormField(input) {
     }
   }
 
+  // Display or clear error
+  console.log("Error message:", errorMessage);
+
   if (errorMessage) {
+    // Add error
     input.classList.add("border-red-500", "focus:ring-red-500");
     let errorContainer = input.parentElement.querySelector(".error-message");
     if (!errorContainer) {
@@ -788,7 +1003,9 @@ function validateFormField(input) {
       input.parentElement.appendChild(errorContainer);
     }
     errorContainer.textContent = errorMessage;
+    console.log("Error displayed for:", fieldName);
   } else {
+    // Clear error
     clearFieldError(input);
   }
 }
