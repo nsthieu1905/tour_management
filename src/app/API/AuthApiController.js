@@ -60,6 +60,15 @@ const adminLogin = async (req, res) => {
       });
     }
 
+    // Kiểm tra trạng thái tài khoản
+    if (user.status === "inactive" || user.status === "blocked") {
+      return res.status(403).json({
+        success: false,
+        message: "Tài khoản của bạn đã bị khoá",
+        error: "ACCOUNT_LOCKED",
+      });
+    }
+
     // Cập nhật metadata
     user.metadata.lastLogin = new Date();
     user.metadata.loginCount += 1;
@@ -190,6 +199,15 @@ const clientLogin = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: "Email hoặc mật khẩu không chính xác",
+      });
+    }
+
+    // Kiểm tra trạng thái tài khoản
+    if (user.status === "inactive" || user.status === "blocked") {
+      return res.status(403).json({
+        success: false,
+        message: "Tài khoản của bạn đã bị khoá",
+        error: "ACCOUNT_LOCKED",
       });
     }
 

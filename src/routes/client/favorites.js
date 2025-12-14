@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const favoriteController = require("../../app/API/FavoriteController");
+const favoriteController = require("../../app/API/FavoriteApiController");
 const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
 router.use(protectClientRoutes);

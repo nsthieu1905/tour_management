@@ -27,8 +27,8 @@ function route(app) {
   app.use("/api/tours", toursApiRoutes);
   app.use("/api/coupons", couponApiRoutes);
   app.use("/api/users", usersApiRoutes);
-  app.use("/api/admin/bookings", adminBookingRoutes);
-  app.use("/api/admin/staff", adminStaffRoutes);
+  app.use("/api/bookings", adminBookingRoutes);
+  app.use("/api/staffs", adminStaffRoutes);
   app.use("/api/notifications", notificationRoutes);
   app.use("/api/messages", messageRoutes);
 

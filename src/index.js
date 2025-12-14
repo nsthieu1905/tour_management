@@ -103,6 +103,7 @@ const hbs = engine({
     "./src/resources/admin/views/partials",
     "./src/resources/admin/views/CRUD/qly-tours",
     "./src/resources/admin/views/CRUD/qly-coupons",
+    "./src/resources/admin/views/CRUD/qly-nhanviens",
     "./src/resources/client/views/partials",
   ],
 });

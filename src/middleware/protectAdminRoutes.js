@@ -29,6 +29,11 @@ const protectAdminRoutes = async (req, res, next) => {
           });
         }
 
+        // Kiểm tra trạng thái tài khoản
+        if (user.status === "inactive" || user.status === "blocked") {
+          return res.redirect("/auth/admin");
+        }
+
         req.userId = decoded.userId;
         req.user = {
           userId: user._id,
@@ -61,6 +66,11 @@ const protectAdminRoutes = async (req, res, next) => {
                 message: "Bạn không đủ quyền truy cập.",
                 layout: false,
               });
+            }
+
+            // Kiểm tra trạng thái tài khoản
+            if (user.status === "inactive" || user.status === "blocked") {
+              return res.redirect("/auth/admin");
             }
 
             const newAccessToken = generateAccessToken(decodedRefresh.userId);

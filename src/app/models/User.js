@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     phone: String,
+    gender: String,
+    dateOfBirth: Date,
     password: { type: String, required: true },
     role: {
       type: String,

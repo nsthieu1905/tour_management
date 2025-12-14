@@ -1,0 +1,133 @@
+<div
+  id="addStaffModal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
+>
+  <div
+    class="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+  >
+    <div class="flex justify-between items-center mb-4 p-6 border-b">
+      <h3 id="staffModalTitle" class="text-xl font-semibold text-gray-900">
+        Thêm nhân viên
+      </h3>
+      <button
+        onclick="hideAddStaffModal()"
+        class="text-gray-400 hover:text-gray-600"
+      >
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <!-- UNIFIED FORM -->
+    <form id="addStaffForm" class="p-6 space-y-4">
+      <div class="relative">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Họ và tên <span class="text-red-500">*</span></label
+        >
+        <input
+          type="text"
+          id="staffName"
+          name="staffName"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="Nhập họ và tên"
+        />
+        <div id="fullNameError" class="hidden text-red-500 text-sm mt-1"></div>
+      </div>
+
+      <div class="relative">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Email <span class="text-red-500">*</span></label
+        >
+        <input
+          type="email"
+          id="staffEmail"
+          name="staffEmail"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="user@gmail.com"
+        />
+        <div id="emailError" class="hidden text-red-500 text-sm mt-1"></div>
+      </div>
+
+      <div class="relative">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Giới tính</label
+        >
+        <select
+          id="gender"
+          name="gender"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">-- Chọn giới tính --</option>
+          <option value="Nam">Nam</option>
+          <option value="Nữ">Nữ</option>
+        </select>
+      </div>
+
+      <div class="relative">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Ngày sinh</label
+        >
+        <input
+          type="date"
+          id="dateOfBirth"
+          name="dateOfBirth"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div class="relative">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Mật khẩu <span class="text-red-500">*</span></label
+        >
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="Tạo mật khẩu mạnh"
+        />
+        <button
+          type="button"
+          onclick="toggleRegisterPassword()"
+          class="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+        >
+          <i class="fas fa-eye" id="regPasswordToggle"></i>
+        </button>
+        <div id="passwordError" class="hidden text-red-500 text-sm mt-1"></div>
+      </div>
+
+      <div class="relative">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Xác nhận mật khẩu <span class="text-red-500">*</span></label
+        >
+        <input
+          type="password"
+          id="passwordConfirm"
+          name="passwordConfirm"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="Nhập lại mật khẩu"
+        />
+        <div
+          id="passwordConfirmError"
+          class="hidden text-red-500 text-sm mt-1"
+        ></div>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-4">
+        <button
+          type="button"
+          onclick="hideAddStaffModal()"
+          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+        >
+          Hủy
+        </button>
+        <button
+          type="submit"
+          id="submitBtn"
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          Thêm nhân viên
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

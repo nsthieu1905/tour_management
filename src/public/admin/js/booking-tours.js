@@ -211,7 +211,7 @@ async function fetchBookings(page = 1, status = currentStatus) {
       params.append("tour", currentFilters.tour);
     }
 
-    const response = await fetch(`/api/admin/bookings/all?${params}`);
+    const response = await fetch(`/api/bookings/all?${params}`);
     const result = await response.json();
 
     if (result.success) {
@@ -248,7 +248,7 @@ async function fetchAllCounts() {
 
     for (const status of statuses) {
       const response = await fetch(
-        `/api/admin/bookings/all?page=1&limit=1&status=${status}`
+        `/api/bookings/all?page=1&limit=1&status=${status}`
       );
       const result = await response.json();
 
@@ -499,7 +499,7 @@ function confirmPayment(bookingId) {
     confirmText: "Xác nhận",
     confirmColor: "green",
     onConfirm: async () => {
-      const response = await fetch(`/api/admin/bookings/confirm-payment`, {
+      const response = await fetch(`/api/bookings/confirm-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId }),
@@ -526,7 +526,7 @@ function confirmBooking(bookingId) {
     confirmText: "Xác nhận",
     confirmColor: "green",
     onConfirm: async () => {
-      const response = await fetch(`/api/admin/bookings/confirm-booking`, {
+      const response = await fetch(`/api/bookings/confirm-booking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId }),
@@ -556,7 +556,7 @@ function completeBooking(bookingId) {
     confirmText: "Hoàn thành",
     confirmColor: "green",
     onConfirm: async () => {
-      const response = await fetch(`/api/admin/bookings/complete`, {
+      const response = await fetch(`/api/bookings/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId }),
@@ -586,7 +586,7 @@ function requestRefund(bookingId) {
     confirmText: "Yêu cầu",
     confirmColor: "yellow",
     onConfirm: async () => {
-      const response = await fetch(`/api/admin/bookings/request-refund`, {
+      const response = await fetch(`/api/bookings/request-refund`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId, reason: "Admin requested" }),
@@ -637,7 +637,7 @@ function approveRefund(bookingId, totalAmount, departureDate) {
     confirmText: "Xác nhận",
     confirmColor: "green",
     onConfirm: async () => {
-      const response = await fetch(`/api/admin/bookings/approve-refund`, {
+      const response = await fetch(`/api/bookings/approve-refund`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -668,7 +668,7 @@ function cancelBooking(bookingId) {
     confirmText: "Hủy",
     confirmColor: "red",
     onConfirm: async () => {
-      const response = await fetch(`/api/admin/bookings/cancel`, {
+      const response = await fetch(`/api/bookings/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId, reason: "Admin cancelled" }),

@@ -20,6 +20,11 @@ const protectClientRoutes = async (req, res, next) => {
           return res.redirect("/");
         }
 
+        // Kiểm tra trạng thái tài khoản
+        if (user.status === "inactive" || user.status === "blocked") {
+          return res.redirect("/");
+        }
+
         req.userId = decoded.userId;
         req.user = {
           userId: user._id,
@@ -44,6 +49,11 @@ const protectClientRoutes = async (req, res, next) => {
 
             const user = await User.findById(decodedRefresh.userId);
             if (!user) {
+              return res.redirect("/");
+            }
+
+            // Kiểm tra trạng thái tài khoản
+            if (user.status === "inactive" || user.status === "blocked") {
               return res.redirect("/");
             }
 
