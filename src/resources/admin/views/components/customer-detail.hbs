@@ -1,0 +1,404 @@
+<div class="flex pt-16">
+  <main class="flex-1 ml-64 p-6">
+    <!-- Back Button -->
+    <div class="mb-6">
+      <a
+        href="/admin/qly-khach-hang"
+        class="inline-flex items-center text-blue-600 hover:text-blue-800 transition"
+      >
+        <i class="fas fa-chevron-left mr-2"></i>Quay lại danh sách
+      </a>
+    </div>
+
+    <!-- Customer Header -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div class="flex items-start justify-between">
+        <div class="flex items-start gap-6">
+          <div
+            id="avatarDiv"
+            class="h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl"
+          ></div>
+          <div>
+            <h1 id="customerName" class="text-3xl font-bold text-gray-900">
+              Loading...
+            </h1>
+            <p id="customerEmail" class="text-gray-600 mt-1">Loading...</p>
+            <p id="customerPhone" class="text-gray-600">Loading...</p>
+            <div id="customerTypeBadge" class="mt-4"></div>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-sm text-gray-600">Tổng chi tiêu</p>
+          <p id="totalSpent" class="text-2xl font-bold text-gray-900">0 VNĐ</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm">
+        <p class="text-sm text-gray-600 mb-2">Số tour đã đặt</p>
+        <p id="bookingCount" class="text-3xl font-bold text-gray-900">0</p>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm">
+        <p class="text-sm text-gray-600 mb-2">Khách quay lại</p>
+        <p id="returningCustomer" class="text-3xl font-bold text-gray-900">
+          Không
+        </p>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm">
+        <p class="text-sm text-gray-600 mb-2">Ngày đăng ký</p>
+        <p id="createdDate" class="text-3xl font-bold text-gray-900">
+          Loading...
+        </p>
+      </div>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Thông tin cơ bản</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="text-sm font-medium text-gray-600"
+            >Tên khách hàng</label
+          >
+          <p id="infoFullName" class="text-gray-900 mt-1">Loading...</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-600">Email</label>
+          <p id="infoEmail" class="text-gray-900 mt-1">Loading...</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-600">Số điện thoại</label>
+          <p id="infoPhone" class="text-gray-900 mt-1">Loading...</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-600">Giới tính</label>
+          <p id="infoGender" class="text-gray-900 mt-1">Loading...</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-600">Ngày sinh</label>
+          <p id="infoDOB" class="text-gray-900 mt-1">Loading...</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-600">Trạng thái</label>
+          <p id="infoStatus" class="text-gray-900 mt-1">Loading...</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-600">Địa chỉ</label>
+          <p id="infoAddress" class="text-gray-900 mt-1">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking History -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-gray-900">Lịch sử đặt tour</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="border-b border-gray-200 bg-gray-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Mã đặt
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Tour
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Số người
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Tổng tiền
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Trạng thái
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Thanh toán
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Ngày đặt
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200" id="bookingList">
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                Loading...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const API_BASE = "/api/users";
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount);
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "Chưa có";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN");
+  };
+
+  // Get customer type badge
+  const getCustomerTypeBadge = (type) => {
+    const badgeMap = {
+      "Kim cương": {
+        class: "bg-yellow-100 text-yellow-800",
+        icon: "fas fa-crown",
+      },
+      Vàng: { class: "bg-orange-100 text-orange-800", icon: "fas fa-gem" },
+      Bạc: { class: "bg-gray-200 text-gray-800", icon: "fas fa-coins" },
+      "Khách mới": {
+        class: "bg-green-100 text-green-800",
+        icon: "fas fa-star",
+      },
+    };
+
+    const config = badgeMap[type] || badgeMap["Khách mới"];
+    return `
+    <span class="px-3 py-1 text-sm font-medium rounded-full ${config.class}">
+      <i class="${config.icon} mr-2"></i>${type}
+    </span>
+  `;
+  };
+
+  // Get initials for avatar
+  const getInitials = (fullName) => {
+    return fullName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  // Get avatar color
+  const getAvatarColor = (fullName) => {
+    const colors = [
+      "#667eea",
+      "#764ba2",
+      "#f093fb",
+      "#4facfe",
+      "#00f2fe",
+      "#43e97b",
+      "#fa709a",
+      "#fee140",
+    ];
+    const hash = fullName.charCodeAt(0) + fullName.charCodeAt(1);
+    return colors[hash % colors.length];
+  };
+
+  // Get status badge
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      active: { class: "bg-green-100 text-green-800", text: "Hoạt động" },
+      inactive: { class: "bg-gray-100 text-gray-800", text: "Tạm dừng" },
+      blocked: { class: "bg-red-100 text-red-800", text: "Bị khóa" },
+    };
+
+    const config = statusMap[status] || statusMap["inactive"];
+    return `<span class="px-2 py-1 text-xs font-medium rounded-full ${config.class}">${config.text}</span>`;
+  };
+
+  // Get booking status badge
+  const getBookingStatusBadge = (status) => {
+    const statusMap = {
+      confirmed: { class: "bg-blue-100 text-blue-800", text: "Đã xác nhận" },
+      pending: { class: "bg-yellow-100 text-yellow-800", text: "Chờ xác nhận" },
+      completed: { class: "bg-green-100 text-green-800", text: "Hoàn tất" },
+      cancelled: { class: "bg-red-100 text-red-800", text: "Đã hủy" },
+    };
+
+    const config = statusMap[status] || statusMap["pending"];
+    return `<span class="px-2 py-1 text-xs font-medium rounded-full ${config.class}">${config.text}</span>`;
+  };
+
+  // Get payment status badge
+  const getPaymentStatusBadge = (status) => {
+    const statusMap = {
+      pending: { class: "bg-gray-100 text-gray-800", text: "Chưa thanh toán" },
+      partial: {
+        class: "bg-yellow-100 text-yellow-800",
+        text: "Thanh toán một phần",
+      },
+      paid: { class: "bg-green-100 text-green-800", text: "Đã thanh toán" },
+      refunded: {
+        class: "bg-purple-100 text-purple-800",
+        text: "Đã hoàn tiền",
+      },
+    };
+
+    const config = statusMap[status] || statusMap["pending"];
+    return `<span class="px-2 py-1 text-xs font-medium rounded-full ${config.class}">${config.text}</span>`;
+  };
+
+  // Load customer detail
+  const loadCustomerDetail = async () => {
+    try {
+      const customerId = window.location.pathname.split("/").pop();
+      const response = await fetch(
+        `${API_BASE}/customers/${customerId}/detail`
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        const customer = result.data;
+
+        // Set avatar
+        const initials = getInitials(customer.fullName);
+        const avatarColor = getAvatarColor(customer.fullName);
+        document.getElementById("avatarDiv").style.backgroundColor =
+          avatarColor;
+        document.getElementById("avatarDiv").textContent = initials;
+
+        // Set header info
+        document.getElementById("customerName").textContent = customer.fullName;
+        document.getElementById("customerEmail").textContent = customer.email;
+        document.getElementById("customerPhone").textContent =
+          customer.phone || "Chưa cập nhật";
+        document.getElementById("customerTypeBadge").innerHTML =
+          getCustomerTypeBadge(customer.customerType);
+        document.getElementById("totalSpent").textContent = formatCurrency(
+          customer.totalSpent
+        );
+
+        // Set stats
+        document.getElementById("bookingCount").textContent =
+          customer.bookingCount;
+        document.getElementById("returningCustomer").textContent =
+          customer.isReturningCustomer ? "Có" : "Không";
+        document.getElementById("createdDate").textContent = formatDate(
+          customer.createdAt
+        );
+
+        // Set basic info
+        document.getElementById("infoFullName").textContent = customer.fullName;
+        document.getElementById("infoEmail").textContent = customer.email;
+        document.getElementById("infoPhone").textContent =
+          customer.phone || "Chưa cập nhật";
+        document.getElementById("infoGender").textContent = customer.gender
+          ? {
+              male: "Nam",
+              female: "Nữ",
+              other: "Khác",
+            }[customer.gender] || customer.gender
+          : "Chưa cập nhật";
+        document.getElementById("infoDOB").textContent = customer.dateOfBirth
+          ? formatDate(customer.dateOfBirth)
+          : "Chưa cập nhật";
+        document.getElementById("infoStatus").innerHTML = getStatusBadge(
+          customer.status
+        );
+
+        const address = customer.address;
+        const addressStr = address
+          ? `${address.street || ""} ${address.district || ""} ${
+              address.city || ""
+            } ${address.country || ""}`
+          : "Chưa cập nhật";
+        document.getElementById("infoAddress").textContent = addressStr.trim();
+
+        // Render bookings
+        renderBookings(customer.bookings);
+      } else {
+        document.body.innerHTML =
+          '<div class="flex items-center justify-center h-screen"><p class="text-xl text-gray-600">Không tìm thấy khách hàng</p></div>';
+      }
+    } catch (error) {
+      console.error("Error loading customer detail:", error);
+      document.body.innerHTML =
+        '<div class="flex items-center justify-center h-screen"><p class="text-xl text-red-600">Lỗi khi tải thông tin</p></div>';
+    }
+  };
+
+  // Render bookings
+  const renderBookings = (bookings) => {
+    const bookingList = document.getElementById("bookingList");
+    bookingList.innerHTML = "";
+
+    if (!bookings || bookings.length === 0) {
+      bookingList.innerHTML = `
+      <tr>
+        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+          <i class="fas fa-inbox text-3xl mb-2"></i>
+          <p>Khách hàng chưa đặt tour nào</p>
+        </td>
+      </tr>
+    `;
+      return;
+    }
+
+    bookings.forEach((booking) => {
+      const tourName = booking.tour
+        ? `${booking.tour.name} (${booking.tour.destination})`
+        : "Tour không có";
+
+      const row = `
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          ${booking.bookingCode}
+        </td>
+        <td class="px-6 py-4 text-sm text-gray-900">
+          <div>${tourName}</div>
+          ${
+            booking.tour
+              ? `<div class="text-xs text-gray-500">${booking.tour.tourCode}</div>`
+              : ""
+          }
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${booking.numberOfPeople} người
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          ${formatCurrency(booking.totalAmount)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">
+          ${getBookingStatusBadge(booking.bookingStatus)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">
+          ${getPaymentStatusBadge(booking.paymentStatus)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${formatDate(booking.createdAt)}
+        </td>
+      </tr>
+    `;
+
+      bookingList.innerHTML += row;
+    });
+  };
+
+  // Load on page load
+  document.addEventListener("DOMContentLoaded", loadCustomerDetail);
+</script>

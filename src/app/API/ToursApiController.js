@@ -185,7 +185,6 @@ const create = async (req, res) => {
         name: tour.name,
         tourType: tour.tourType,
       });
-      console.log("📢 [Socket] Emitted tour:created for admin panels");
     }
 
     return res.status(201).json({
@@ -215,7 +214,6 @@ const softDelete = async (req, res) => {
     // Emit socket event for real-time update
     if (global.io) {
       global.io.emit("tour:deleted", { tourId: req.params.id });
-      console.log("📢 [Socket] Emitted tour:deleted for id:", req.params.id);
     }
 
     return res.status(200).json({
@@ -261,10 +259,7 @@ const deleteOne = async (req, res) => {
     // Emit socket event for real-time update
     if (global.io) {
       global.io.emit("tour:deleted", { tourId: req.params.id });
-      console.log(
-        "📢 [Socket] Emitted tour:deleted (permanent) for id:",
-        req.params.id
-      );
+      console.log(req.params.id);
     }
 
     return res.status(200).json({
@@ -293,7 +288,6 @@ const restore = async (req, res) => {
     // Emit socket event for real-time update
     if (global.io) {
       global.io.emit("tour:restored", { tourId: req.params.id });
-      console.log("📢 [Socket] Emitted tour:restored for id:", req.params.id);
     }
 
     return res.status(200).json({

@@ -88,6 +88,21 @@ const qlyKhachHang = (req, res) => {
   }
 };
 
+// [GET] /admin/customers/:id
+const customerDetail = (req, res) => {
+  try {
+    return res.render("components/customer-detail", {
+      bodyClass: "bg-gray-50 transition-all duration-300",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
+    });
+  }
+};
+
 // [GET] /admin/doi-tac
 const doiTac = (req, res) => {
   try {
@@ -169,6 +184,7 @@ module.exports = {
   bookingTour,
   qlyNhanVien,
   qlyKhachHang,
+  customerDetail,
   doiTac,
   thongKe,
   settings,
