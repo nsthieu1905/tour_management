@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const usersApiController = require("../../app/API/UsersApiController");
-const staffApiController = require("../../app/API/StaffApiController");
+const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
 const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
 router.get(
@@ -10,9 +10,10 @@ router.get(
   usersApiController.getCurrentUser
 );
 
-// Customer APIs
-router.get("/customers", staffApiController.getCustomersWithStats);
-router.get("/customers/stats", staffApiController.getCustomerStats);
-router.get("/customers/:id/detail", staffApiController.getCustomerDetail);
+router.use(protectAdminRoutes);
+
+router.get("/qly-khach-hang", usersApiController.findAll);
+router.get("/qly-khach-hang/:id/detail", usersApiController.findOne);
+router.get("/qly-khach-hang/stats", usersApiController.getCustomerStats);
 
 module.exports = router;

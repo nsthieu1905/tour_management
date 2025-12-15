@@ -17,7 +17,7 @@ router.get("/qly-nhan-vien", siteController.qlyNhanVien);
 
 router.get("/qly-khach-hang", siteController.qlyKhachHang);
 
-router.get("/customers/:id", siteController.customerDetail);
+router.get("/qly-khach-hang/:id", siteController.customerDetail);
 
 router.get("/doi-tac", siteController.doiTac);
 

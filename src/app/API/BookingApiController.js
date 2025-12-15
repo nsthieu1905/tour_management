@@ -585,7 +585,6 @@ const confirmPayment = async (req, res) => {
     await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
 
     // Gửi notification cho client
-    console.log("4. Sending client notification...");
     try {
       await notifyBookingPaid({
         userId: booking.userId,
@@ -598,7 +597,6 @@ const confirmPayment = async (req, res) => {
     }
 
     // Emit socket event for admin panel real-time update
-    console.log("5. Emitting admin socket event...");
     if (global.io) {
       global.io.emit("booking:payment-confirmed", {
         bookingId: booking._id,
@@ -664,7 +662,6 @@ const confirmBooking = async (req, res) => {
     }
 
     // Emit socket event for admin panel real-time update
-    console.log("5. Emitting admin socket event...");
     if (global.io) {
       global.io.emit("booking:confirmed", {
         bookingId: booking._id,
