@@ -100,7 +100,7 @@ function showProfileTab() {
     profileTabBtn.classList.add("bg-blue-600", "text-white");
   }
   if (passwordTabBtn) {
-    passwordTabBtn.classList.remove("bg-green-600", "text-white");
+    passwordTabBtn.classList.remove("bg-blue-600", "text-white");
     passwordTabBtn.classList.add(
       "bg-white",
       "text-gray-700",
@@ -120,7 +120,7 @@ function showProfileTab() {
     profileTabBtn2.classList.add("bg-blue-600", "text-white");
   }
   if (passwordTabBtn2) {
-    passwordTabBtn2.classList.remove("bg-green-600", "text-white");
+    passwordTabBtn2.classList.remove("bg-blue-600", "text-white");
     passwordTabBtn2.classList.add(
       "bg-white",
       "text-gray-700",
@@ -153,7 +153,7 @@ function showPasswordTab() {
       "border-gray-300",
       "hover:bg-gray-50"
     );
-    passwordTabBtn.classList.add("bg-green-600", "text-white");
+    passwordTabBtn.classList.add("bg-blue-600", "text-white");
   }
   if (profileTabBtn) {
     profileTabBtn.classList.remove("bg-blue-600", "text-white");
@@ -173,7 +173,7 @@ function showPasswordTab() {
       "border-gray-300",
       "hover:bg-gray-50"
     );
-    passwordTabBtn2.classList.add("bg-green-600", "text-white");
+    passwordTabBtn2.classList.add("bg-blue-600", "text-white");
   }
   if (profileTabBtn2) {
     profileTabBtn2.classList.remove("bg-blue-600", "text-white");

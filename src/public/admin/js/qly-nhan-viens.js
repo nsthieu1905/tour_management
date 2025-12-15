@@ -2,6 +2,16 @@ import { Modal, Notification } from "../../utils/modal.js";
 import { validateRegisterInput } from "../../utils/validators.js";
 import { formatDate } from "../../utils/helpers.js";
 
+// Helper function để convert gender từ tiếng Anh sang tiếng Việt
+function getGenderText(gender) {
+  const genderMap = {
+    male: "Nam",
+    female: "Nữ",
+    other: "Khác",
+  };
+  return genderMap[gender] || gender || "N/A";
+}
+
 // Biến toàn cục
 let staffData = [];
 let modalMode = "create";
@@ -245,7 +255,7 @@ function renderStaffRow(staff) {
         </div>
       </td>
       <td class="px-6 py-4 whitespace-nowrap" data-label="Giới tính">
-        <div class="text-sm text-gray-900">${staff.gender || ""}</div>
+        <div class="text-sm text-gray-900">${getGenderText(staff.gender)}</div>
       </td>
       <td class="px-6 py-4 whitespace-nowrap" data-label="Ngày sinh">
         <div class="text-sm text-gray-900">${dateOfBirth}</div>
@@ -663,7 +673,7 @@ async function exportStaffData() {
       staff.fullName,
       staff.email,
       staff.phone || "N/A",
-      staff.gender || "N/A",
+      getGenderText(staff.gender),
       getStatusText(staff.status || "active"),
       formatDate(staff.createdAt || new Date().toISOString()),
     ]);

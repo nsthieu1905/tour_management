@@ -1,4 +1,5 @@
 const { User, Booking } = require("../models/index");
+const bcrypt = require("bcrypt");
 
 // [GET] /api/admin/profile
 const getProfile = async (req, res) => {
@@ -439,12 +440,14 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// [PUT] /api/admin/staff/change-password
+// [PUT] /api/staffs/change-password
 const changePassword = async (req, res) => {
   try {
     const userId = req.user?.userId;
     const { currentPassword, newPassword, confirmPassword } = req.body;
-    const bcryptjs = require("bcryptjs");
+
+    console.log("changePassword called - userId:", userId);
+    console.log("req.user:", req.user);
 
     if (!userId) {
       return res.status(401).json({
@@ -481,7 +484,18 @@ const changePassword = async (req, res) => {
     }
 
     // Kiểm tra mật khẩu cũ
-    const user = await User.findById(userId);
+    let user;
+    try {
+      user = await User.findById(userId);
+    } catch (dbError) {
+      console.error("Database error finding user:", dbError);
+      return res.status(500).json({
+        success: false,
+        message: "Lỗi truy cập cơ sở dữ liệu",
+        error: dbError.message,
+      });
+    }
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -489,10 +503,26 @@ const changePassword = async (req, res) => {
       });
     }
 
-    const isPasswordValid = await bcryptjs.compare(
-      currentPassword,
-      user.password
+    console.log("User found:", user.email);
+    console.log("Comparing password...");
+    console.log(
+      "Current password hash:",
+      user.password.substring(0, 20) + "..."
     );
+
+    let isPasswordValid = false;
+    try {
+      isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    } catch (bcryptError) {
+      console.error("Bcrypt error:", bcryptError);
+      return res.status(500).json({
+        success: false,
+        message: "Lỗi khi xác thực mật khẩu",
+        error: bcryptError.message,
+      });
+    }
+
+    console.log("Password valid:", isPasswordValid);
 
     if (!isPasswordValid) {
       return res.status(400).json({
@@ -506,7 +536,16 @@ const changePassword = async (req, res) => {
 
     // Cập nhật mật khẩu mới
     user.password = newPassword;
-    await user.save();
+    try {
+      await user.save();
+    } catch (saveError) {
+      console.error("Error saving user:", saveError);
+      return res.status(500).json({
+        success: false,
+        message: "Lỗi khi lưu mật khẩu mới",
+        error: saveError.message,
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -514,9 +553,11 @@ const changePassword = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in changePassword:", error);
+    console.error("Error stack:", error.stack);
     return res.status(500).json({
       success: false,
       message: "Lỗi máy chủ, vui lòng thử lại sau.",
+      error: error.message,
     });
   }
 };
