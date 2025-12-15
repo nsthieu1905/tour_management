@@ -1,5 +1,3 @@
-import { API_BASE_URL } from "./utils.js";
-
 // ===========================
 // DASHBOARD CHARTS INITIALIZATION
 // ===========================
@@ -64,7 +62,7 @@ async function initDashboardCharts() {
     // Initialize Popular Tours Chart
     const popularCtx = document.getElementById("popularToursChart");
     if (popularCtx && embeddedPopularTours.length > 0) {
-      const topTours = embeddedPopularTours.slice(0, 8);
+      const topTours = embeddedPopularTours.slice(0, 5);
 
       new Chart(popularCtx, {
         type: "bar",
@@ -80,16 +78,13 @@ async function initDashboardCharts() {
                 "#60A5FA",
                 "#34D399",
                 "#F87171",
-                "#FBBF24",
-                "#818CF8",
-                "#14B8A6",
               ],
               borderRadius: 8,
             },
           ],
         },
         options: {
-          indexAxis: "y",
+          indexAxis: "x",
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
@@ -97,9 +92,23 @@ async function initDashboardCharts() {
               display: true,
               position: "top",
             },
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                title: (context) => {
+                  return context[0].label;
+                },
+                label: (context) => {
+                  return `Số lượng: ${context.parsed.y}`;
+                },
+              },
+            },
           },
           scales: {
             x: {
+              display: false,
+            },
+            y: {
               beginAtZero: true,
             },
           },

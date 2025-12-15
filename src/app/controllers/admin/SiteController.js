@@ -1,5 +1,16 @@
 const { Tour, Booking, User } = require("../../models/index");
 
+// Format doanh thu
+const formatRevenue = (value) => {
+  const num = Number(value) || 0;
+  if (num >= 1000000000) {
+    return (num / 1000000000).toFixed(1) + "B";
+  } else if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + "M";
+  }
+  return num.toLocaleString("vi-VN");
+};
+
 // [GET] /admin/dashboard
 const dashboard = async (req, res) => {
   try {
@@ -65,7 +76,7 @@ const dashboard = async (req, res) => {
       createdAt: { $gte: startOfMonth },
     });
 
-    // Top 10 tour
+    // Top 10 tour - Sắp xếp theo số booking, nếu bằng nhau thì theo doanh thu
     const topTours = await Booking.aggregate([
       {
         $match: {
@@ -81,7 +92,10 @@ const dashboard = async (req, res) => {
         },
       },
       {
-        $sort: { bookingCount: -1 },
+        $sort: {
+          bookingCount: -1, // Sắp xếp theo số booking giảm dần
+          totalRevenue: -1, // Nếu booking bằng nhau, sắp xếp theo doanh thu giảm dần
+        },
       },
       {
         $limit: 10,
@@ -150,12 +164,54 @@ const dashboard = async (req, res) => {
       revenues[item._id - 1] = item.total;
     });
 
-    // Lấy booking count của top tours để vẽ biểu đồ
-    const topToursForChart = topTours.slice(0, 8);
+    // Lấy top 5 tours phổ biến để vẽ biểu đồ
+    const topToursForChart = topTours.slice(0, 5);
+
+    // Lấy top 10 khách hàng VIP (sắp xếp theo tổng chi tiêu)
+    const topVIPCustomers = await Booking.aggregate([
+      {
+        $match: {
+          bookingStatus: { $in: ["confirmed", "completed"] },
+          paymentStatus: { $in: ["paid"] },
+        },
+      },
+      {
+        $group: {
+          _id: "$userId",
+          totalSpent: { $sum: "$totalAmount" },
+          bookingCount: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { totalSpent: -1 },
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userInfo",
+        },
+      },
+      {
+        $unwind: "$userInfo",
+      },
+      {
+        $project: {
+          _id: 1,
+          userName: "$userInfo.fullName",
+          totalSpent: 1,
+          bookingCount: 1,
+        },
+      },
+    ]);
 
     return res.render("components/dashboard", {
       bodyClass: "bg-gray-50 transition-all duration-300",
-      monthlyRevenue: Number(monthlyRevenue).toLocaleString("vi-VN"),
+      monthlyRevenue: formatRevenue(monthlyRevenue),
       totalBookings,
       avgCapacity,
       newCustomers,
@@ -182,6 +238,64 @@ const dashboard = async (req, res) => {
           bookingCount: tour.bookingCount,
         }))
       ),
+      topExpensiveTours: topTours.slice(0, 10).map((tour, index) => {
+        let rankColor = "gray";
+        let bgColor = "white";
+        let borderColor = "gray-100";
+
+        if (index === 0) {
+          rankColor = "yellow";
+          bgColor = "yellow-50";
+          borderColor = "yellow-500";
+        } else if (index === 1) {
+          rankColor = "purple";
+          bgColor = "purple-50";
+          borderColor = "purple-400";
+        } else if (index === 2) {
+          rankColor = "blue";
+          bgColor = "blue-50";
+          borderColor = "blue-500";
+        }
+
+        return {
+          ...tour,
+          rank: index + 1,
+          isTopThree: index < 3,
+          rankColor,
+          bgColor,
+          borderColor,
+          totalRevenue: formatRevenue(tour.totalRevenue),
+        };
+      }),
+      topVIPCustomers: topVIPCustomers.map((customer, index) => {
+        let rankColor = "gray";
+        let bgColor = "white";
+        let borderColor = "gray-100";
+
+        if (index === 0) {
+          rankColor = "yellow";
+          bgColor = "yellow-50";
+          borderColor = "yellow-500";
+        } else if (index === 1) {
+          rankColor = "purple";
+          bgColor = "purple-50";
+          borderColor = "purple-400";
+        } else if (index === 2) {
+          rankColor = "blue";
+          bgColor = "blue-50";
+          borderColor = "blue-500";
+        }
+
+        return {
+          ...customer,
+          rank: index + 1,
+          isTopThree: index < 3,
+          rankColor,
+          bgColor,
+          borderColor,
+          totalSpent: formatRevenue(customer.totalSpent),
+        };
+      }),
     });
   } catch (error) {
     console.error(error);
@@ -300,95 +414,226 @@ const doiTac = (req, res) => {
 // [GET] /admin/thong-ke
 const thongKe = async (req, res) => {
   try {
-    // Get booking trends data
-    const bookingTrends = await Booking.aggregate([
+    // Lấy số ngày từ query (mặc định 30 ngày)
+    const days = parseInt(req.query.days) || 30;
+    const currentDate = new Date();
+    const startDate = new Date(currentDate);
+    startDate.setDate(startDate.getDate() - days);
+
+    // Ngày để tính xu hướng (từ ngày days+1 đến days*2)
+    const trendStartDate = new Date(currentDate);
+    trendStartDate.setDate(trendStartDate.getDate() - days * 2);
+    const trendEndDate = new Date(currentDate);
+    trendEndDate.setDate(trendEndDate.getDate() - days);
+
+    // ===========================
+    // 1. TÍNH CÁC CHỈ SỐ HÀNG ĐẦU
+    // ===========================
+
+    // Tổng doanh thu và số đơn trong khoảng thời gian
+    const revenueData = await Booking.aggregate([
       {
         $match: {
-          createdAt: {
-            $gte: new Date(new Date().getFullYear(), 0, 1),
-            $lt: new Date(new Date().getFullYear() + 1, 0, 1),
-          },
+          createdAt: { $gte: startDate },
+          bookingStatus: { $in: ["confirmed", "completed"] },
+          paymentStatus: "paid",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalAmount" },
+          totalBookings: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalRevenue = revenueData[0]?.totalRevenue || 0;
+    const totalBookings = revenueData[0]?.totalBookings || 0;
+
+    // Doanh thu trung bình/ngày
+    const avgDailyRevenue = days > 0 ? totalRevenue / days : 0;
+
+    // Giá trị đơn hàng trung bình
+    const avgOrderValue = totalBookings > 0 ? totalRevenue / totalBookings : 0;
+
+    // Tỷ lệ đặt lại (khách hàng đặt >= 2 lần trong khoảng thời gian)
+    const customerBookings = await Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate },
+          bookingStatus: { $in: ["confirmed", "completed"] },
+          userId: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: "$userId",
+          bookingCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const repeatCustomers = customerBookings.filter(
+      (c) => c.bookingCount >= 2
+    ).length;
+    const totalCustomers = customerBookings.length;
+    const repeatRate =
+      totalCustomers > 0 ? (repeatCustomers / totalCustomers) * 100 : 0;
+
+    // ===========================
+    // 2. XU HƯỚNG THEO MÙA
+    // ===========================
+    const seasonalData = await Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: new Date(currentDate.getFullYear(), 0, 1) },
+          bookingStatus: { $in: ["confirmed", "completed"] },
         },
       },
       {
         $group: {
           _id: { $month: "$createdAt" },
-          bookingCount: { $sum: 1 },
-          revenue: {
-            $sum: {
-              $cond: [
-                { $eq: ["$paymentStatus", "completed"] },
-                "$totalAmount",
-                0,
-              ],
-            },
-          },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    // Create array with all 12 months
-    const monthLabels = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const bookingCounts = new Array(12).fill(0);
-    const revenues = new Array(12).fill(0);
-
-    bookingTrends.forEach((item) => {
-      const monthIndex = item._id - 1;
-      bookingCounts[monthIndex] = item.bookingCount || 0;
-      revenues[monthIndex] = item.revenue || 0;
-    });
-
-    // Get tour type distribution
-    const tourTypeDistribution = await Tour.aggregate([
-      {
-        $group: {
-          _id: "$tourType",
           count: { $sum: 1 },
         },
       },
-      { $sort: { count: -1 } },
     ]);
 
-    // Get booking status distribution
-    const bookingStatusDistribution = await Booking.aggregate([
+    // Nhóm theo mùa: Xuân (1-3), Hạ (4-6), Thu (7-9), Đông (10-12)
+    const seasons = { spring: 0, summer: 0, autumn: 0, winter: 0 };
+
+    seasonalData.forEach((item) => {
+      if (item._id >= 1 && item._id <= 3) seasons.spring += item.count;
+      else if (item._id >= 4 && item._id <= 6) seasons.summer += item.count;
+      else if (item._id >= 7 && item._id <= 9) seasons.autumn += item.count;
+      else if (item._id >= 10 && item._id <= 12) seasons.winter += item.count;
+    });
+
+    const totalSeasonalBookings = Object.values(seasons).reduce(
+      (a, b) => a + b,
+      0
+    );
+    const seasonalPercentages =
+      totalSeasonalBookings > 0
+        ? [
+            ((seasons.spring / totalSeasonalBookings) * 100).toFixed(1),
+            ((seasons.summer / totalSeasonalBookings) * 100).toFixed(1),
+            ((seasons.autumn / totalSeasonalBookings) * 100).toFixed(1),
+            ((seasons.winter / totalSeasonalBookings) * 100).toFixed(1),
+          ]
+        : [0, 0, 0, 0];
+
+    // ===========================
+    // 3. PHÂN LOẠI TOUR
+    // ===========================
+    const tourTypes = await Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate },
+          bookingStatus: { $in: ["confirmed", "completed"] },
+        },
+      },
+      {
+        $lookup: {
+          from: "tours",
+          localField: "tourId",
+          foreignField: "_id",
+          as: "tourInfo",
+        },
+      },
+      {
+        $unwind: "$tourInfo",
+      },
+      {
+        $group: {
+          _id: "$tourInfo.tourType",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          label: "$_id",
+          count: 1,
+        },
+      },
+    ]);
+
+    // Tính % cho từng loại tour
+    const totalTourBookings = tourTypes.reduce(
+      (sum, item) => sum + item.count,
+      0
+    );
+    const tourTypesWithPercent = tourTypes.map((item) => ({
+      ...item,
+      percentage:
+        totalTourBookings > 0
+          ? ((item.count / totalTourBookings) * 100).toFixed(1)
+          : 0,
+    }));
+
+    // ===========================
+    // 4. TRẠNG THÁI ĐẶT TOUR (3 trạng thái)
+    // ===========================
+    const bookingStatus = await Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate },
+          bookingStatus: { $in: ["cancelled", "refunded", "completed"] },
+        },
+      },
       {
         $group: {
           _id: "$bookingStatus",
           count: { $sum: 1 },
         },
       },
+      {
+        $project: {
+          label: "$_id",
+          count: 1,
+        },
+      },
     ]);
 
-    // Get top tours for performance table
+    // Tính % cho trạng thái
+    const totalStatusBookings = bookingStatus.reduce(
+      (sum, item) => sum + item.count,
+      0
+    );
+    const bookingStatusWithPercent = bookingStatus.map((item) => ({
+      ...item,
+      percentage:
+        totalStatusBookings > 0
+          ? ((item.count / totalStatusBookings) * 100).toFixed(1)
+          : 0,
+    }));
+
+    // ===========================
+    // 5. TOP TOURS VÀ HIỆU SUẤT
+    // ===========================
     const topTours = await Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate },
+          bookingStatus: { $in: ["confirmed", "completed"] },
+        },
+      },
       {
         $group: {
           _id: "$tourId",
           bookingCount: { $sum: 1 },
-          totalRevenue: {
-            $sum: {
-              $cond: [
-                { $eq: ["$paymentStatus", "completed"] },
-                "$totalAmount",
-                0,
-              ],
-            },
-          },
+          totalRevenue: { $sum: "$totalAmount" },
+          totalPeople: { $sum: "$numberOfPeople" },
         },
+      },
+      {
+        $sort: {
+          bookingCount: -1,
+          totalRevenue: -1,
+        },
+      },
+      {
+        $limit: 10,
       },
       {
         $lookup: {
@@ -398,47 +643,92 @@ const thongKe = async (req, res) => {
           as: "tourInfo",
         },
       },
-      { $unwind: "$tourInfo" },
+      {
+        $unwind: "$tourInfo",
+      },
       {
         $project: {
+          _id: 1,
           tourName: "$tourInfo.name",
-          tourCode: "$tourInfo.tourCode",
           bookingCount: 1,
           totalRevenue: 1,
-          avgRevenue: {
-            $divide: ["$totalRevenue", "$bookingCount"],
-          },
+          totalPeople: 1,
+          maxCapacity: "$tourInfo.capacity.max",
         },
       },
-      { $sort: { bookingCount: -1 } },
-      { $limit: 10 },
     ]);
 
-    const chartData = {
-      bookingTrends: {
-        labels: monthLabels,
-        bookingCounts: bookingCounts,
-        revenues: revenues,
-      },
-      tourTypes: tourTypeDistribution.map((item) => ({
-        label: item._id || "Chưa phân loại",
-        count: item.count,
-      })),
-      bookingStatus: bookingStatusDistribution.map((item) => ({
-        label: item._id || "Chưa xác định",
-        count: item.count,
-      })),
-      topTours: topTours.map((tour) => ({
-        tourName: tour.tourName,
-        bookingCount: tour.bookingCount,
-        totalRevenue: tour.totalRevenue,
-        avgRevenue: Math.round(tour.avgRevenue),
-      })),
-    };
+    // Tính xu hướng và tỷ lệ lấp đầy cho từng tour
+    const toursWithDetails = await Promise.all(
+      topTours.map(async (tour) => {
+        // Số booking trong khoảng thời gian gần nhất (days ngày gần nhất)
+        const recentBookings = await Booking.countDocuments({
+          tourId: tour._id,
+          createdAt: { $gte: startDate },
+          bookingStatus: { $in: ["confirmed", "completed"] },
+        });
 
+        // Số booking trong khoảng thời gian trước đó (từ ngày 31-61 trở về trước)
+        const previousBookings = await Booking.countDocuments({
+          tourId: tour._id,
+          createdAt: { $gte: trendStartDate, $lt: trendEndDate },
+          bookingStatus: { $in: ["confirmed", "completed"] },
+        });
+
+        // Tính xu hướng
+        let trendPercent = 0;
+        let trendDirection = "neutral";
+
+        if (previousBookings > 0) {
+          trendPercent = (
+            ((recentBookings - previousBookings) / previousBookings) *
+            100
+          ).toFixed(1);
+          trendDirection = parseFloat(trendPercent) > 0 ? "up" : "down";
+        } else if (recentBookings > 0) {
+          trendPercent = 100;
+          trendDirection = "up";
+        }
+
+        // Tính tỷ lệ lấp đầy: số chỗ đã đặt / (tổng số chỗ * số lần tour được đặt)
+        const totalCapacity = tour.maxCapacity * tour.bookingCount;
+        const capacityRate =
+          totalCapacity > 0
+            ? ((tour.totalPeople / totalCapacity) * 100).toFixed(1)
+            : 0;
+
+        return {
+          tourName: tour.tourName,
+          bookingCount: tour.bookingCount,
+          totalRevenue: tour.totalRevenue,
+          capacityRate: capacityRate,
+          trendPercent: Math.abs(parseFloat(trendPercent)),
+          trendDirection: trendDirection,
+        };
+      })
+    );
+
+    // ===========================
+    // RENDER VIEW
+    // ===========================
     return res.render("components/thong-ke", {
       bodyClass: "bg-gray-50 transition-all duration-300",
-      statisticsData: JSON.stringify(chartData),
+      selectedDays: days,
+      statisticsData: JSON.stringify({
+        kpis: {
+          avgDailyRevenue: avgDailyRevenue,
+          avgOrderValue: avgOrderValue,
+          totalRevenue: totalRevenue,
+          repeatRate: repeatRate.toFixed(1),
+        },
+        seasonalTrends: {
+          labels: ["Xuân", "Hạ", "Thu", "Đông"],
+          percentages: seasonalPercentages.map((p) => parseFloat(p)),
+        },
+        tourTypes: tourTypesWithPercent,
+        bookingStatus: bookingStatusWithPercent,
+        topTours: toursWithDetails,
+      }),
     });
   } catch (error) {
     console.error(error);

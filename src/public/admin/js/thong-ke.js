@@ -11,225 +11,231 @@ async function initStatisticsCharts() {
       return;
     }
 
-    // Calculate and display KPIs
-    calculateKPIs(data);
+    // Hiển thị các KPI
+    displayKPIs(data.kpis);
 
-    // Initialize Booking Trends Chart (Line)
-    const bookingTrendsCtx = document.getElementById("bookingTrendsChart");
-    if (bookingTrendsCtx) {
-      new Chart(bookingTrendsCtx, {
-        type: "line",
-        data: {
-          labels: data.bookingTrends.labels,
-          datasets: [
-            {
-              label: "Số lượng đặt",
-              data: data.bookingTrends.bookingCounts,
-              borderColor: "#3B82F6",
-              backgroundColor: "rgba(59, 130, 246, 0.1)",
-              borderWidth: 2,
-              fill: true,
-              tension: 0.4,
-              yAxisID: "y",
-            },
-            {
-              label: "Doanh thu (VNĐ)",
-              data: data.bookingTrends.revenues.map((v) => v / 1000000),
-              borderColor: "#10B981",
-              backgroundColor: "rgba(16, 185, 129, 0.1)",
-              borderWidth: 2,
-              fill: true,
-              tension: 0.4,
-              yAxisID: "y1",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            mode: "index",
-            intersect: false,
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: "top",
-            },
-          },
-          scales: {
-            y: {
-              type: "linear",
-              display: true,
-              position: "left",
-              title: {
-                display: true,
-                text: "Số lượng đặt",
-              },
-            },
-            y1: {
-              type: "linear",
-              display: true,
-              position: "right",
-              title: {
-                display: true,
-                text: "Doanh thu (Triệu VNĐ)",
-              },
-              grid: {
-                drawOnChartArea: false,
-              },
-            },
-          },
-        },
-      });
-    }
+    // Khởi tạo biểu đồ xu hướng theo mùa (Bar Chart)
+    initSeasonalTrendsChart(data.seasonalTrends);
 
-    // Initialize Tour Type Distribution Chart (Doughnut)
-    const tourTypeCtx = document.getElementById("tourTypeChart");
-    if (tourTypeCtx && data.tourTypes && data.tourTypes.length > 0) {
-      const colors = [
-        "#3B82F6",
-        "#10B981",
-        "#F59E0B",
-        "#EF4444",
-        "#8B5CF6",
-        "#EC4899",
-        "#06B6D4",
-        "#6366F1",
-      ];
+    // Khởi tạo biểu đồ phân loại tour (Doughnut)
+    initTourTypeChart(data.tourTypes);
 
-      new Chart(tourTypeCtx, {
-        type: "doughnut",
-        data: {
-          labels: data.tourTypes.map((item) => item.label),
-          datasets: [
-            {
-              data: data.tourTypes.map((item) => item.count),
-              backgroundColor: colors.slice(0, data.tourTypes.length),
-              borderColor: "#fff",
-              borderWidth: 2,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: "bottom",
-            },
-          },
-        },
-      });
-    }
+    // Khởi tạo biểu đồ trạng thái đơn (Pie)
+    initBookingStatusChart(data.bookingStatus);
 
-    // Initialize Booking Status Distribution Chart (Pie)
-    const bookingStatusCtx = document.getElementById("bookingStatusChart");
-    if (
-      bookingStatusCtx &&
-      data.bookingStatus &&
-      data.bookingStatus.length > 0
-    ) {
-      const statusColors = {
-        pending: "#FCD34D",
-        confirmed: "#60A5FA",
-        completed: "#34D399",
-        cancelled: "#F87171",
-        failed: "#A78BFA",
-      };
-
-      const statusLabels = {
-        pending: "Đang chờ",
-        confirmed: "Đã xác nhận",
-        completed: "Hoàn thành",
-        cancelled: "Hủy",
-        failed: "Thất bại",
-      };
-
-      new Chart(bookingStatusCtx, {
-        type: "pie",
-        data: {
-          labels: data.bookingStatus.map(
-            (item) => statusLabels[item.label] || item.label
-          ),
-          datasets: [
-            {
-              data: data.bookingStatus.map((item) => item.count),
-              backgroundColor: data.bookingStatus.map(
-                (item) => statusColors[item.label] || "#9CA3AF"
-              ),
-              borderColor: "#fff",
-              borderWidth: 2,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: "bottom",
-            },
-          },
-        },
-      });
-    }
-
-    // Populate performance table
+    // Hiển thị bảng hiệu suất tour
     populatePerformanceTable(data.topTours);
   } catch (error) {
     console.error("Lỗi khởi tạo biểu đồ thống kê:", error);
   }
 }
 
-// Calculate and display KPIs
-function calculateKPIs(data) {
+// Hiển thị các KPI
+function displayKPIs(kpis) {
   try {
-    // Average daily revenue
-    const totalRevenue = data.bookingTrends.revenues.reduce((a, b) => a + b, 0);
-    const avgDailyRevenue = Math.ceil(totalRevenue / 365);
-    const element1 = document.getElementById("avgDailyRevenue");
-    if (element1) {
-      element1.textContent = `${(avgDailyRevenue / 1000000).toFixed(1)}M VNĐ`;
+    const avgDailyEl = document.getElementById("avgDailyRevenue");
+    if (avgDailyEl) {
+      avgDailyEl.textContent = `${(kpis.avgDailyRevenue / 1000000).toFixed(
+        1
+      )}M VNĐ`;
     }
 
-    // Conversion rate (simplified: bookings / expected)
-    const totalBookings = data.bookingTrends.bookingCounts.reduce(
-      (a, b) => a + b,
-      0
-    );
-    const conversionRate = totalBookings > 0 ? (totalBookings / 1000) * 100 : 0;
-    const element2 = document.getElementById("conversionRate");
-    if (element2) {
-      element2.textContent = `${conversionRate.toFixed(1)}%`;
+    const avgOrderEl = document.getElementById("avgOrderValue");
+    if (avgOrderEl) {
+      avgOrderEl.textContent = `${(kpis.avgOrderValue / 1000000).toFixed(
+        1
+      )}M VNĐ`;
     }
 
-    // Average order value
-    const avgOrderValue =
-      totalBookings > 0 ? Math.ceil(totalRevenue / totalBookings) : 0;
-    const element3 = document.getElementById("avgOrderValue");
-    if (element3) {
-      element3.textContent = `${(avgOrderValue / 1000000).toFixed(1)}M VNĐ`;
+    const totalRevenueEl = document.getElementById("totalRevenue");
+    if (totalRevenueEl) {
+      totalRevenueEl.textContent = `${(kpis.totalRevenue / 1000000).toFixed(
+        1
+      )}M VNĐ`;
     }
 
-    // Cancellation rate
-    const cancelledCount =
-      data.bookingStatus.find((item) => item.label === "cancelled")?.count || 0;
-    const totalCount = data.bookingStatus.reduce((a, b) => a + b.count, 0);
-    const cancellationRate =
-      totalCount > 0 ? ((cancelledCount / totalCount) * 100).toFixed(1) : 0;
-    const element4 = document.getElementById("cancellationRate");
-    if (element4) {
-      element4.textContent = `${cancellationRate}%`;
+    const repeatRateEl = document.getElementById("repeatRate");
+    if (repeatRateEl) {
+      repeatRateEl.textContent = `${kpis.repeatRate}%`;
     }
   } catch (error) {
-    console.error("Lỗi tính toán KPI:", error);
+    console.error("Lỗi hiển thị KPI:", error);
   }
 }
 
-// Populate performance table
+// Biểu đồ xu hướng theo mùa (Bar Chart)
+function initSeasonalTrendsChart(seasonalData) {
+  const ctx = document.getElementById("bookingTrendsChart");
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: seasonalData.labels,
+      datasets: [
+        {
+          label: "Phần trăm (%)",
+          data: seasonalData.percentages,
+          backgroundColor: [
+            "rgba(59, 130, 246, 0.8)", // Xuân - Xanh dương
+            "rgba(249, 115, 22, 0.8)", // Hạ - Cam
+            "rgba(234, 179, 8, 0.8)", // Thu - Vàng
+            "rgba(147, 197, 253, 0.8)", // Đông - Xanh nhạt
+          ],
+          borderColor: [
+            "rgb(59, 130, 246)",
+            "rgb(249, 115, 22)",
+            "rgb(234, 179, 8)",
+            "rgb(147, 197, 253)",
+          ],
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return context.parsed.y.toFixed(1) + "%";
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            callback: function (value) {
+              return value + "%";
+            },
+          },
+          title: {
+            display: true,
+            text: "Tỷ lệ (%)",
+          },
+        },
+      },
+    },
+  });
+}
+
+// Biểu đồ phân loại tour (Doughnut)
+function initTourTypeChart(tourTypes) {
+  const ctx = document.getElementById("tourTypeChart");
+  if (!ctx || !tourTypes || tourTypes.length === 0) return;
+
+  const colors = [
+    "#3B82F6",
+    "#10B981",
+    "#F59E0B",
+    "#EF4444",
+    "#8B5CF6",
+    "#EC4899",
+    "#06B6D4",
+    "#6366F1",
+  ];
+
+  new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: tourTypes.map((item) => item.label || "Chưa phân loại"),
+      datasets: [
+        {
+          data: tourTypes.map((item) => item.count),
+          backgroundColor: colors.slice(0, tourTypes.length),
+          borderColor: "#fff",
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const label = context.label || "";
+              const value = context.parsed;
+              const percentage = tourTypes[context.dataIndex].percentage;
+              return `${label}: ${value} (${percentage}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+// Biểu đồ trạng thái đơn (Pie)
+function initBookingStatusChart(bookingStatus) {
+  const ctx = document.getElementById("bookingStatusChart");
+  if (!ctx || !bookingStatus || bookingStatus.length === 0) return;
+
+  const statusColors = {
+    cancelled: "#F87171",
+    refunded: "#FCD34D",
+    completed: "#34D399",
+  };
+
+  const statusLabels = {
+    cancelled: "Đã hủy",
+    refunded: "Đã hoàn tiền",
+    completed: "Đã hoàn thành",
+  };
+
+  new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: bookingStatus.map(
+        (item) => statusLabels[item.label] || item.label
+      ),
+      datasets: [
+        {
+          data: bookingStatus.map((item) => item.count),
+          backgroundColor: bookingStatus.map(
+            (item) => statusColors[item.label] || "#9CA3AF"
+          ),
+          borderColor: "#fff",
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const label = context.label || "";
+              const value = context.parsed;
+              const percentage = bookingStatus[context.dataIndex].percentage;
+              return `${label}: ${value} (${percentage}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+// Hiển thị bảng hiệu suất tour
 function populatePerformanceTable(tours) {
   try {
     const tableBody = document.getElementById("tourPerformanceTable");
@@ -239,8 +245,9 @@ function populatePerformanceTable(tours) {
 
     tours.slice(0, 5).forEach((tour) => {
       const row = document.createElement("tr");
-      const trendPercent = Math.floor(Math.random() * 30) + 1;
-      const isGrowing = Math.random() > 0.5;
+      const isGrowing = tour.trendDirection === "up";
+      const trendColor = isGrowing ? "text-green-600" : "text-red-600";
+      const trendIcon = isGrowing ? "↗ +" : "↘ -";
 
       row.innerHTML = `
         <td class="px-4 py-4 text-sm font-medium text-gray-900">
@@ -252,13 +259,9 @@ function populatePerformanceTable(tours) {
         <td class="px-4 py-4 text-sm text-gray-900">${(
           tour.totalRevenue / 1000000
         ).toFixed(1)}M VNĐ</td>
-        <td class="px-4 py-4 text-sm text-gray-900">${(
-          tour.avgRevenue / 1000000
-        ).toFixed(1)}M VNĐ</td>
-        <td class="px-4 py-4 text-sm ${
-          isGrowing ? "text-green-600" : "text-red-600"
-        }">
-          ${isGrowing ? "↗ +" : "↘ -"}${trendPercent}%
+        <td class="px-4 py-4 text-sm text-gray-900">${tour.capacityRate}%</td>
+        <td class="px-4 py-4 text-sm ${trendColor}">
+          ${trendIcon}${tour.trendPercent}%
         </td>
       `;
       tableBody.appendChild(row);
@@ -268,5 +271,19 @@ function populatePerformanceTable(tours) {
   }
 }
 
-// Initialize when DOM is ready
-document.addEventListener("DOMContentLoaded", initStatisticsCharts);
+// Xử lý thay đổi khoảng thời gian
+function handleTimeRangeChange() {
+  const selectElement = document.querySelector('select[name="timeRange"]');
+  if (selectElement) {
+    selectElement.addEventListener("change", function () {
+      const days = this.value;
+      window.location.href = `/admin/thong-ke?days=${days}`;
+    });
+  }
+}
+
+// Khởi tạo khi DOM ready
+document.addEventListener("DOMContentLoaded", function () {
+  initStatisticsCharts();
+  handleTimeRangeChange();
+});
