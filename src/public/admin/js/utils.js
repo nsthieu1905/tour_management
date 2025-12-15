@@ -1,3 +1,6 @@
+// API Base URL
+export const API_BASE_URL = window.location.origin;
+
 /**
  * Khởi tạo các biểu đồ Chart.js
  * Tạo 4 biểu đồ: Doanh thu, Tour phổ biến, Theo mùa, Theo điểm đến
