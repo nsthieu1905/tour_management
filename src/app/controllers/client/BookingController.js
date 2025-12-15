@@ -2,6 +2,48 @@ const { Tour, Booking, User } = require("../../models/index");
 const MoMoService = require("../../../services/MoMoService");
 const { notifyPayment } = require("../../../utils/NotificationHelper");
 
+const updateTourCapacity = async (
+  tourId,
+  numberOfPeople,
+  action = "increase"
+) => {
+  try {
+    const tour = await Tour.findById(tourId);
+    if (!tour) {
+      throw new Error("Tour không tồn tại");
+    }
+
+    if (!tour.capacity) {
+      tour.capacity = {
+        max: 0,
+        current: 0,
+        available: 0,
+      };
+    }
+
+    if (action === "increase") {
+      tour.capacity.current = (tour.capacity.current || 0) + numberOfPeople;
+
+      if (tour.capacity.max) {
+        tour.capacity.available = tour.capacity.max - tour.capacity.current;
+
+        if (tour.capacity.available <= 0) {
+          tour.status = "soldout";
+          tour.capacity.available = 0;
+        }
+      }
+
+      tour.bookingCount = (tour.bookingCount || 0) + 1;
+    }
+
+    await tour.save();
+    return tour;
+  } catch (error) {
+    console.error("Error updating tour capacity:", error);
+    throw error;
+  }
+};
+
 // GET /booking/:slug
 const bookingPage = async (req, res, next) => {
   try {
@@ -26,95 +68,62 @@ const bookingSuccess = async (req, res) => {
   try {
     const { resultCode, extraData, signature, transId, amount } = req.query;
 
-    if (resultCode !== undefined) {
-      // Verify signature
-      if (signature && extraData) {
-        const isValidSignature = MoMoService.verifySignature(req.query);
-
-        if (!isValidSignature) {
-          return res.status(400).json({
-            success: false,
-            message: "Chữ ký không hợp lệ.",
-          });
-        }
+    if (signature && extraData && resultCode !== undefined) {
+      const isValidSignature = MoMoService.verifySignature(req.query);
+      if (!isValidSignature) {
+        return res.status(400).json({
+          success: false,
+          message: "Chữ ký không hợp lệ.",
+        });
       }
+    }
 
-      // Process payment callback
-      if (resultCode === "0" && extraData) {
-        // Payment successful
-        const booking = await Booking.findById(extraData).populate("tourId");
+    if (resultCode === "0" && extraData) {
+      setTimeout(async () => {
+        try {
+          const booking = await Booking.findById(extraData).populate("tourId");
 
-        if (booking) {
-          // Check if payment was already processed (to prevent duplicate notifications)
-          const wasAlreadyPaid = booking.paymentStatus === "paid";
+          if (booking && booking.paymentStatus !== "paid") {
+            booking.bookingStatus = "pending";
+            booking.paymentStatus = "paid";
+            booking.payments.push({
+              amount: parseInt(amount) || 0,
+              method: "momo",
+              transactionId: transId,
+              status: "success",
+              paidAt: new Date(),
+            });
 
-          booking.bookingStatus = "pending";
-          booking.paymentStatus = "paid";
-          booking.payments.push({
-            amount: parseInt(amount) || 0,
-            method: "momo",
-            transactionId: transId,
-            status: "success",
-            paidAt: new Date(),
-          });
+            await booking.save();
 
-          await booking.save();
+            try {
+              await updateTourCapacity(
+                booking.tourId._id,
+                booking.numberOfPeople,
+                "increase"
+              );
+            } catch (capacityError) {
+              console.error(`Fallback capacity update failed:`, capacityError);
+            }
 
-          // ==================== SEND NOTIFICATION ====================
-          // CHỈ GỬI LẦN ĐẦU (không gửi lại khi F5)
-          if (!wasAlreadyPaid) {
             try {
               const user = await User.findById(booking.userId);
-              const tour = booking.tourId;
-
-              console.log("🔔 [BookingController] Triggering notifyPayment");
-              console.log("   User ID:", booking.userId);
-              console.log("   Booking ID:", booking._id);
-              console.log("   Customer Name:", user?.fullName || "N/A");
-              console.log("   Amount:", parseInt(amount) || 0);
-
-              // Notify both admin and client about payment
               await notifyPayment({
-                userId: booking.userId?._id,
-                paymentId: booking._id,
+                userId: booking.userId,
                 bookingId: booking._id,
                 bookingCode: booking.bookingCode,
                 customerName: user?.fullName || booking.contactInfo.name,
                 tourName: booking.tourId?.name || "Tour",
                 amount: parseInt(amount) || 0,
               });
-
-              console.log("✅ Payment notification sent successfully");
             } catch (notificationError) {
-              console.error(
-                "⚠️ Error sending payment notification:",
-                notificationError
-              );
-              // Continue even if notification fails
+              console.error(`Fallback notification failed:`, notificationError);
             }
-          } else {
-            console.log(
-              "⏭️ [BookingController] Booking already paid, skipping notification to prevent duplicate"
-            );
           }
-          // ========================================================
+        } catch (error) {
+          console.error(`Fallback handler error:`, error);
         }
-      } else if (extraData) {
-        // Payment failed
-        const booking = await Booking.findById(extraData);
-
-        if (booking) {
-          booking.payments.push({
-            amount: parseInt(amount) || 0,
-            method: "momo",
-            transactionId: transId,
-            status: "failed",
-            paidAt: new Date(),
-          });
-
-          await booking.save();
-        }
-      }
+      }, 3000);
     }
 
     res.render("booking-success", {

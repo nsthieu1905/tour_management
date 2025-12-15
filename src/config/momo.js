@@ -8,7 +8,9 @@ module.exports = {
   endpoint: "https://test-payment.momo.vn/v2/gateway/api/create",
   redirectUrl:
     process.env.MOMO_REDIRECT_URL || "http://localhost:8386/booking-success",
-  ipnUrl: process.env.MOMO_IPN_URL || "http://localhost:8386/api/momo-callback",
+  ipnUrl:
+    process.env.MOMO_IPN_URL ||
+    "http://localhost:8386/api/bookings/momo-callback",
   requestType: "payWithMethod", // Cho phép user chọn phương thức: ví MoMo, ngân hàng, etc
   autoCapture: true,
   lang: "vi",

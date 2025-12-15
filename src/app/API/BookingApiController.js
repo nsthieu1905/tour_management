@@ -12,6 +12,65 @@ const {
 } = require("../../utils/NotificationHelper");
 const { PAYMENT_LIMITS } = require("../../services/MoMoService");
 
+// ==================== HELPER FUNCTIONS ====================
+
+const updateTourCapacity = async (
+  tourId,
+  numberOfPeople,
+  action = "increase"
+) => {
+  try {
+    const tour = await Tour.findById(tourId);
+    if (!tour) {
+      throw new Error("Tour không tồn tại");
+    }
+
+    if (!tour.capacity) {
+      tour.capacity = {
+        max: 0,
+        current: 0,
+        available: 0,
+      };
+    }
+
+    if (action === "increase") {
+      tour.capacity.current = (tour.capacity.current || 0) + numberOfPeople;
+
+      if (tour.capacity.max) {
+        tour.capacity.available = tour.capacity.max - tour.capacity.current;
+
+        if (tour.capacity.available <= 0) {
+          tour.status = "soldout";
+          tour.capacity.available = 0;
+        }
+      }
+      tour.bookingCount = (tour.bookingCount || 0) + 1;
+    } else if (action === "decrease") {
+      tour.capacity.current = Math.max(
+        0,
+        (tour.capacity.current || 0) - numberOfPeople
+      );
+
+      if (tour.capacity.max) {
+        tour.capacity.available = tour.capacity.max - tour.capacity.current;
+
+        if (tour.status === "soldout" && tour.capacity.available > 0) {
+          tour.status = "active";
+        }
+      }
+
+      tour.bookingCount = Math.max(0, (tour.bookingCount || 0) - 1);
+    }
+
+    await tour.save();
+
+    return tour;
+  } catch (error) {
+    console.error("Error updating tour capacity:", error);
+    throw error;
+  }
+};
+
 const sendBookingNotification = async (booking, tour, customerName) => {
   try {
     const paymentDeadline = new Date(booking.createdAt);
@@ -135,7 +194,7 @@ const createMoMoPayment = async (req, res) => {
   try {
     const userId = req.user.userId;
     const validatedData = validateAndParseBookingData(req.body);
-    const { tourId, customerName, total, couponCode } = req.body;
+    const { tourId, customerName, total, couponCode, guestCount } = req.body;
 
     const tour = await Tour.findById(tourId);
     if (!tour) {
@@ -145,7 +204,18 @@ const createMoMoPayment = async (req, res) => {
       });
     }
 
-    // Validate total amount (MoMo limits)
+    if (tour.capacity && tour.capacity.max) {
+      const availableSeats =
+        tour.capacity.available ||
+        tour.capacity.max - (tour.capacity.current || 0);
+      if (availableSeats < guestCount) {
+        return res.status(400).json({
+          success: false,
+          message: `Tour chỉ còn ${availableSeats} chỗ trống, không đủ cho ${guestCount} người`,
+        });
+      }
+    }
+
     const totalAmount = Math.round(total);
     if (totalAmount < PAYMENT_LIMITS.MIN_AMOUNT) {
       return res.status(400).json({
@@ -164,7 +234,6 @@ const createMoMoPayment = async (req, res) => {
       });
     }
 
-    // Create pre-booking (auto expires after 3 minutes)
     const bookingData = await createBookingDataObject({
       userId,
       ...validatedData,
@@ -177,7 +246,6 @@ const createMoMoPayment = async (req, res) => {
     const booking = new Booking(bookingData);
     await booking.save();
 
-    // Create MoMo payment request
     const paymentData = {
       bookingId: booking._id.toString(),
       tourName: tour.name,
@@ -199,7 +267,6 @@ const createMoMoPayment = async (req, res) => {
         },
       });
     } else {
-      // Delete pre-booking if payment request fails
       await Booking.findByIdAndDelete(booking._id);
 
       return res.status(400).json({
@@ -226,7 +293,8 @@ const createBankPayment = async (req, res) => {
   try {
     const userId = req.user.userId;
     const validatedData = validateAndParseBookingData(req.body);
-    const { tourId, customerName, couponCode, paymentMethod } = req.body;
+    const { tourId, customerName, couponCode, paymentMethod, guestCount } =
+      req.body;
 
     const tour = await Tour.findById(tourId);
     if (!tour) {
@@ -234,6 +302,18 @@ const createBankPayment = async (req, res) => {
         success: false,
         message: "Tour không tồn tại",
       });
+    }
+
+    if (tour.capacity && tour.capacity.max) {
+      const availableSeats =
+        tour.capacity.available ||
+        tour.capacity.max - (tour.capacity.current || 0);
+      if (availableSeats < guestCount) {
+        return res.status(400).json({
+          success: false,
+          message: `Tour chỉ còn ${availableSeats} chỗ trống, không đủ cho ${guestCount} người`,
+        });
+      }
     }
 
     const bookingData = await createBookingDataObject({
@@ -248,7 +328,8 @@ const createBankPayment = async (req, res) => {
     const booking = new Booking(bookingData);
     await booking.save();
 
-    // Gửi thông báo booking mới (cho cả admin và client)
+    await updateTourCapacity(tourId, guestCount, "increase");
+
     await sendBookingNotification(booking, tour, customerName);
 
     return res.status(200).json({
@@ -291,12 +372,10 @@ const momoCallback = async (req, res) => {
     } = req.body;
 
     if (resultCode === 0) {
-      // Payment successful
       if (extraData) {
         const booking = await Booking.findById(extraData).populate("tourId");
 
         if (booking) {
-          // Check if payment was already processed (to prevent duplicate notifications)
           const wasAlreadyPaid = booking.paymentStatus === "paid";
 
           booking.bookingStatus = "pending";
@@ -310,16 +389,6 @@ const momoCallback = async (req, res) => {
           });
 
           await booking.save();
-
-          // Gửi thông báo booking mới (cho cả admin và client)
-          if (!wasAlreadyPaid) {
-            const user = await User.findById(booking.userId);
-            await sendBookingNotification(
-              booking,
-              booking.tourId,
-              user?.fullName || booking.contactInfo.name
-            );
-          }
         }
       }
 
@@ -328,7 +397,6 @@ const momoCallback = async (req, res) => {
         message: "Thanh toán thành công",
       });
     } else {
-      // Payment failed - Keep pre_booking, will auto-expire
       if (extraData) {
         const booking = await Booking.findById(extraData);
         if (booking) {
@@ -351,12 +419,7 @@ const momoCallback = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("MoMo callback error:", {
-      message: error.message,
-      stack: error.stack,
-      requestId: req.body?.requestId,
-      extraData: req.body?.extraData,
-    });
+    console.error("Momo callback error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi máy chủ, vui lòng thử lại sau",
@@ -378,7 +441,6 @@ const getBooking = async (req, res) => {
       });
     }
 
-    // Calculate discount amount if coupon exists
     let discountAmount = 0;
     if (booking.couponId) {
       const coupon = booking.couponId;
@@ -478,18 +540,14 @@ const getAllBookings = async (req, res) => {
       ];
     }
 
-    // Count total
     const total = await Booking.countDocuments(filter);
 
-    // Get paginated bookings
     let query = Booking.find(filter)
       .populate("tourId", "name slug")
       .populate("userId", "fullName email")
       .populate("couponId", "code discountPercentage");
 
-    // Sắp xếp cho tab "Hoàn/Hủy": dùng refundInfo.approvedAt cho refunded, cancelledAt cho cancelled
     if (status === "refunded_cancelled") {
-      // Sử dụng aggregation pipeline để sắp xếp đúng
       const bookings = await Booking.aggregate([
         { $match: filter },
         {
@@ -508,7 +566,6 @@ const getAllBookings = async (req, res) => {
         { $limit: limit },
       ]);
 
-      // Populate data
       await Booking.populate(bookings, [
         { path: "tourId", select: "name slug" },
         { path: "userId", select: "fullName email" },
@@ -527,7 +584,6 @@ const getAllBookings = async (req, res) => {
       });
     }
 
-    // Sắp xếp mặc định cho các tab khác
     const bookings = await query
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -554,7 +610,7 @@ const getAllBookings = async (req, res) => {
   }
 };
 
-// [POST] /api/admin/bookings/confirm-payment - Xác nhận thanh toán tại quầy
+// [POST] /api/admin/bookings/confirm-payment
 const confirmPayment = async (req, res) => {
   try {
     const { bookingId } = req.body;
@@ -565,6 +621,14 @@ const confirmPayment = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
+    }
+
+    if (booking.paymentStatus !== "paid") {
+      await updateTourCapacity(
+        booking.tourId._id,
+        booking.numberOfPeople,
+        "increase"
+      );
     }
 
     booking.bookingStatus = "confirmed";
@@ -619,7 +683,7 @@ const confirmPayment = async (req, res) => {
   }
 };
 
-// [POST] /api/admin/bookings/confirm-booking - Xác nhận đơn đặt tour
+// [POST] /api/admin/bookings/confirm-booking
 const confirmBooking = async (req, res) => {
   try {
     const { bookingId } = req.body;
@@ -632,7 +696,6 @@ const confirmBooking = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
     }
 
-    // Chỉ có thể xác nhận đơn có trạng thái chờ xác nhận (paid/pending)
     if (booking.bookingStatus !== "pending") {
       return res.status(400).json({
         success: false,
@@ -641,7 +704,6 @@ const confirmBooking = async (req, res) => {
     }
 
     booking.bookingStatus = "confirmed";
-    // paymentStatus giữ nguyên "paid" (đã thanh toán rồi)
     booking.confirmedBy = adminId;
     booking.confirmedAt = new Date();
     await booking.save();
@@ -661,7 +723,6 @@ const confirmBooking = async (req, res) => {
       console.error("Error sending notification:", notifError);
     }
 
-    // Emit socket event for admin panel real-time update
     if (global.io) {
       global.io.emit("booking:confirmed", {
         bookingId: booking._id,
@@ -696,7 +757,6 @@ const completeBooking = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
     }
 
-    // Chỉ có thể hoàn thành đơn có trạng thái đã xác nhận
     if (booking.bookingStatus !== "confirmed") {
       return res.status(400).json({
         success: false,
@@ -779,16 +839,12 @@ const requestRefund = async (req, res) => {
       reason,
       requestedAt: new Date(),
       daysUntilDeparture: refundCalc.daysUntilDeparture,
-      refundPercentage: refundCalc.percentage, // Suggestion
+      refundPercentage: refundCalc.percentage,
     };
     await booking.save();
 
-    // Gửi email yêu cầu hoàn tiền được chấp nhận
-    const emailSent = await EmailService.sendRefundRequestApprovedEmail(
-      booking
-    );
+    await EmailService.sendRefundRequestApprovedEmail(booking);
 
-    // Gửi notification cho client
     const notification = await notifyRefundRequested({
       userId: booking.userId,
       bookingId: booking._id,
@@ -796,7 +852,6 @@ const requestRefund = async (req, res) => {
       tourName: booking.tourId?.name || "Tour",
     });
 
-    // Emit socket event for admin panel real-time update
     if (global.io) {
       global.io.emit("booking:refund-requested", {
         bookingId: booking._id,
@@ -875,6 +930,12 @@ const approveRefund = async (req, res) => {
       });
     }
 
+    await updateTourCapacity(
+      booking.tourId._id,
+      booking.numberOfPeople,
+      "decrease"
+    );
+
     booking.bookingStatus = "refunded";
     booking.refundInfo = booking.refundInfo || {};
     booking.refundInfo.refundAmount = parsedRefundAmount;
@@ -886,10 +947,8 @@ const approveRefund = async (req, res) => {
     booking.paymentStatus = "refunded";
     await booking.save();
 
-    // Gửi email hoàn tiền được duyệt
     await EmailService.sendRefundApprovedEmail(booking, parsedRefundAmount);
 
-    // Gửi notification cho client
     try {
       await notifyRefundConfirmed({
         userId: booking.userId,
@@ -901,7 +960,6 @@ const approveRefund = async (req, res) => {
       console.error("Error sending notification:", notifError);
     }
 
-    // Emit socket event for admin panel real-time update
     if (global.io) {
       global.io.emit("booking:refund-approved", {
         bookingId: booking._id,
@@ -943,12 +1001,10 @@ const rejectRefund = async (req, res) => {
       });
     }
 
-    // Cập nhật thông tin từ chối
     booking.refundInfo.rejectionReason = rejectionReason;
-    booking.bookingStatus = "confirmed"; // Quay lại trạng thái confirmed
+    booking.bookingStatus = "confirmed";
     await booking.save();
 
-    // Gửi email từ chối hoàn tiền
     await EmailService.sendRefundRejectedEmail(booking, rejectionReason);
 
     return res.status(200).json({
@@ -979,14 +1035,18 @@ const cancelBooking = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy đơn đặt tour" });
     }
 
-    // Cập nhật trạng thái hủy
+    await updateTourCapacity(
+      booking.tourId._id,
+      booking.numberOfPeople,
+      "decrease"
+    );
+
     booking.bookingStatus = "cancelled";
     booking.cancellationReason = reason;
     booking.cancelledBy = adminId;
     booking.cancelledAt = new Date();
     await booking.save();
 
-    // Gửi notification cho client
     try {
       await notifyCancellation({
         userId: booking.userId,
@@ -999,7 +1059,6 @@ const cancelBooking = async (req, res) => {
       console.error("Error sending notification:", notifError);
     }
 
-    // Emit socket event for admin panel real-time update
     if (global.io) {
       global.io.emit("booking:cancelled", {
         bookingId: booking._id,

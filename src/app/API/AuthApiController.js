@@ -170,7 +170,7 @@ const adminLogin = async (req, res) => {
   }
 };
 
-// [POST] auth/client-login
+// [POST] auth/client/login
 const clientLogin = async (req, res) => {
   try {
     const { username, password, rememberMe } = req.body;

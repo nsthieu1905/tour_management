@@ -3,6 +3,8 @@ const router = express.Router();
 const bookingApiController = require("../../app/API/BookingApiController");
 const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
+router.post("/momo-callback", bookingApiController.momoCallback);
+
 router.post(
   "/create-momo-payment",
   protectClientRoutes,
@@ -13,7 +15,6 @@ router.post(
   protectClientRoutes,
   bookingApiController.createBankPayment
 );
-router.post("/momo-callback", bookingApiController.momoCallback);
 router.get(
   "/user/bookings",
   protectClientRoutes,

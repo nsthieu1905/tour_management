@@ -521,7 +521,7 @@ function confirmBooking(bookingId) {
   Modal.confirm({
     title: "Xác nhận đơn đặt tour",
     message: "Xác nhận đơn đặt tour này?",
-    icon: "fa-check-double",
+    icon: "fa-check",
     iconColor: "green",
     confirmText: "Xác nhận",
     confirmColor: "green",
