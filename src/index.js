@@ -104,6 +104,7 @@ const hbs = engine({
     "./src/resources/admin/views/CRUD/qly-tours",
     "./src/resources/admin/views/CRUD/qly-coupons",
     "./src/resources/admin/views/CRUD/qly-nhanviens",
+    "./src/resources/admin/views/CRUD/qly-doitacs",
     "./src/resources/client/views/partials",
   ],
 });

@@ -1,44 +1,48 @@
 <div class="flex pt-16">
   <main class="flex-1 ml-64 p-6">
-    <!-- Staff Management Section -->
-    <div id="staff" class="section">
-      <!-- Header with Buttons -->
+    <!-- Partners Section -->
+    <div id="partners" class="section">
       <div class="flex justify-between items-center mb-6">
         <div>
-          <h2 class="text-3xl font-bold text-gray-900 mb-2">
-            Quản lý Nhân viên
-          </h2>
-          <p class="text-gray-600">Theo dõi và quản lý thông tin nhân viên</p>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">Quản lý Đối tác</h2>
+          <p class="text-gray-600">Theo dõi và quản lý đối tác hợp tác</p>
         </div>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          <button
-            id="exportBtn"
-            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <i class="fas fa-download mr-2"></i>Xuất Excel
-          </button>
-          <button
-            id="addStaffBtn"
-            class="gradient-bg text-white px-4 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center"
-          >
-            <i class="fas fa-user-plus mr-2"></i>Thêm nhân viên
-          </button>
-        </div>
+        <button
+          onclick="openAddPartnerModal()"
+          class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <i class="fas fa-plus mr-2"></i>Thêm đối tác mới
+        </button>
       </div>
 
-      <!-- Search and Filter Bar -->
-      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <!-- Filters Section -->
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Type Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Loại hình</label
+            >
+            <select
+              id="typeFilter"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Tất cả --</option>
+              <option value="Khách sạn">Khách sạn</option>
+              <option value="Lữ hành">Lữ hành</option>
+              <option value="Nhà hàng">Nhà hàng</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+
           <!-- Status Filter -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
               >Trạng thái</label
             >
             <select
-              id="staffStatusFilter"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              id="statusFilter"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Tất cả --</option>
               <option value="active">Hoạt động</option>
@@ -46,73 +50,69 @@
             </select>
           </div>
 
-          <!-- Search Bar -->
+          <!-- Search -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
               >Tìm kiếm</label
             >
             <input
               type="text"
-              id="staffSearchInput"
-              placeholder="Tìm kiếm nhân viên..."
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              id="searchInput"
+              placeholder="Tìm theo tên, email, SĐT..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
       </div>
 
-      <!-- Staff Table -->
+      <!-- Partners List -->
       <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="border-b border-gray-200">
               <tr>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Nhân viên
+                  Tên đối tác
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Giới tính
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Ngày sinh
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Email
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Số điện thoại
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Loại hình
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Trạng thái
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody
-              id="staffTableBody"
-              class="bg-white divide-y divide-gray-200"
-            >
-              <!-- Staff data will be rendered here by JavaScript -->
+            <tbody class="bg-white divide-y divide-gray-200" id="partnersList">
+              <!-- Data will be loaded by JavaScript -->
+              <tr>
+                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                  <i class="fas fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu...
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-
         <!-- Pagination -->
         <div
           class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200"
@@ -176,23 +176,7 @@
   </main>
 </div>
 
-<!-- Add Staff Modal -->
-{{> add-edit-nhanvien}}
+<!-- Add/Edit Partner Modal -->
+{{> add-edit-doi-tac}}
 
-<script type="module" src="/admin/js/qly-nhan-viens.js"></script>
-<script>
-  function toggleRegisterPassword() {
-    const passwordInput = document.getElementById("password");
-    const passwordToggle = document.getElementById("regPasswordToggle");
-
-    if (passwordInput.type === "password") {
-      passwordInput.type = "text";
-      passwordToggle.classList.remove("fa-eye");
-      passwordToggle.classList.add("fa-eye-slash");
-    } else {
-      passwordInput.type = "password";
-      passwordToggle.classList.remove("fa-eye-slash");
-      passwordToggle.classList.add("fa-eye");
-    }
-  }
-</script>
+<script type="module" src="/admin/js/doi-tacs.js"></script>

@@ -28,37 +28,32 @@
 
       <!-- Tour Filters -->
       <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <select
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          >
-            <option>Tất cả dòng tour</option>
-            <option>Tiết kiệm</option>
-            <option>Tiêu chuẩn</option>
-            <option>Giá tốt</option>
-            <option>Cao cấp</option>
-          </select>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Dòng tour</label
+            >
+            <select
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option>-- Tất cả --</option>
+              <option>Tiết kiệm</option>
+              <option>Tiêu chuẩn</option>
+              <option>Giá tốt</option>
+              <option>Cao cấp</option>
+            </select>
+          </div>
 
-          <select
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          >
-            <option>Tất cả điểm đến</option>
-            <option>Hà Nội</option>
-            <option>TP.HCM</option>
-            <option>Đà Nẵng</option>
-            <option>Phú Quốc</option>
-          </select>
-
-          <input
-            type="date"
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
-
-          <input
-            type="text"
-            placeholder="Tìm kiếm tour..."
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Tìm kiếm</label
+            >
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên tour"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
       </div>
 

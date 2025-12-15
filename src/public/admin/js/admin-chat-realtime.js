@@ -1,8 +1,3 @@
-/**
- * ADMIN-SIDE REALTIME MESSAGING
- * Quản lý tin nhắn realtime cho admin
- */
-
 class AdminRealtimeMessaging {
   constructor() {
     this.socket = null;

@@ -508,7 +508,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.adminNotificationManager = adminNotificationManager;
 });
 
-// Export để sử dụng với Socket.io
 if (typeof module !== "undefined" && module.exports) {
   module.exports = AdminNotificationManager;
 }

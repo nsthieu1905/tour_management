@@ -106,7 +106,7 @@ const customerDetail = (req, res) => {
 // [GET] /admin/doi-tac
 const doiTac = (req, res) => {
   try {
-    return res.render("components/doi-tac", {
+    return res.render("components/qly-doi-tac", {
       bodyClass: "bg-gray-50 transition-all duration-300",
     });
   } catch (error) {

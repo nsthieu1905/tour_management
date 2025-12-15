@@ -2,13 +2,15 @@ import { formatDate, formatPrice } from "../../utils/helpers.js";
 
 // Biến trạng thái
 let currentPage = 1;
+let pageSize = 10;
 let currentSegment = "all";
 let currentSearch = "";
 let currentDateFilter = "";
+let totalCustomers = 0;
 
-// ============================================
+// ===========================
 // HÀM TIỆN ÍCH
-// ============================================
+// ===========================
 
 const getInitials = (fullName) =>
   fullName
@@ -92,9 +94,9 @@ const setElementContent = (id, content, isHTML = false) => {
   }
 };
 
-// ============================================
+// ===========================
 // TRANG CHI TIẾT KHÁCH HÀNG
-// ============================================
+// ===========================
 
 const loadCustomerDetail = async () => {
   try {
@@ -156,7 +158,7 @@ const loadCustomerDetail = async () => {
     const addressStr = address
       ? [address.street, address.district, address.city, address.country]
           .filter(Boolean)
-          .join(" ")
+          .join(", ")
       : "Chưa cập nhật";
     setElementContent("infoAddress", addressStr);
 
@@ -175,7 +177,7 @@ const renderBookings = (bookings) => {
     bookingList.innerHTML = `
       <tr>
         <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-          <i class="fas fa-inbox text-3xl mb-2"></i>
+          <i class="fas fa-inbox text-3xl mb-2 block"></i>
           <p>Khách hàng chưa đặt tour nào</p>
         </td>
       </tr>`;
@@ -221,9 +223,9 @@ const renderBookings = (bookings) => {
     .join("");
 };
 
-// ============================================
+// ===========================
 // TRANG DANH SÁCH KHÁCH HÀNG
-// ============================================
+// ===========================
 
 const loadStats = async () => {
   try {
@@ -242,44 +244,20 @@ const loadStats = async () => {
   }
 };
 
-const loadCustomers = async (page = 1, segment = "all", search = "") => {
+const loadCustomers = async () => {
   try {
-    let url = `/api/users/qly-khach-hang?page=${page}&limit=10`;
-    if (segment !== "all") url += `&segment=${segment}`;
+    let url = `/api/users/qly-khach-hang?page=${currentPage}&limit=${pageSize}`;
+    if (currentSegment !== "all") url += `&segment=${currentSegment}`;
+    if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+    if (currentDateFilter) url += `&date=${currentDateFilter}`;
 
     const response = await fetch(url);
     const result = await response.json();
 
     if (result.success) {
-      let customers = result.data;
-
-      // Lọc theo tìm kiếm
-      if (search) {
-        customers = customers.filter(
-          (c) =>
-            c.fullName.toLowerCase().includes(search.toLowerCase()) ||
-            c.email.toLowerCase().includes(search.toLowerCase()) ||
-            (c.phone && c.phone.includes(search))
-        );
-      }
-
-      // Lọc theo ngày
-      if (currentDateFilter) {
-        const filterDate = new Date(currentDateFilter).setHours(0, 0, 0, 0);
-        customers = customers.filter((c) => {
-          if (!c.lastBookingDate) return false;
-          return (
-            new Date(c.lastBookingDate).setHours(0, 0, 0, 0) === filterDate
-          );
-        });
-      }
-
-      renderCustomers(customers);
-      renderPagination(
-        result.pagination.page,
-        result.pagination.pages,
-        result.pagination.total
-      );
+      renderCustomers(result.data);
+      totalCustomers = result.pagination.total;
+      updatePagination(result.pagination);
     }
   } catch (error) {
     console.error("Error loading customers:", error);
@@ -297,7 +275,7 @@ const renderCustomers = (customers) => {
     customerList.innerHTML = `
       <tr>
         <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-          <i class="fas fa-inbox text-3xl mb-2"></i>
+          <i class="fas fa-inbox text-3xl mb-2 block"></i>
           <p>Không có khách hàng nào</p>
         </td>
       </tr>`;
@@ -307,9 +285,9 @@ const renderCustomers = (customers) => {
   customerList.innerHTML = customers
     .map(
       (c, i) => `
-    <tr class="hover:bg-gray-50 cursor-pointer transition" data-customer-id="${
+    <tr class="hover:bg-gray-50 cursor-pointer transition" onclick="window.viewCustomerDetail('${
       c._id
-    }">
+    }')">
       <td class="px-6 py-4 whitespace-nowrap">
         <div class="flex items-center">
           <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
@@ -336,92 +314,150 @@ const renderCustomers = (customers) => {
       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(
         c.lastBookingDate
       )}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-        <button class="view-customer-btn text-blue-600 hover:text-blue-900" data-customer-id="${
-          c._id
-        }">
+      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <button 
+          class="text-blue-600 hover:text-blue-900" 
+          onclick="event.stopPropagation(); window.viewCustomerDetail('${
+            c._id
+          }')"
+        >
           Xem
         </button>
       </td>
     </tr>`
     )
     .join("");
-
-  // Gắn event listener cho các row
-  customerList.querySelectorAll("tr[data-customer-id]").forEach((row) => {
-    row.addEventListener("click", (e) => {
-      // Không chuyển trang nếu click vào button
-      if (e.target.classList.contains("view-customer-btn")) return;
-      const customerId = row.dataset.customerId;
-      viewCustomerDetail(customerId);
-    });
-  });
-
-  // Gắn event listener cho các nút Xem
-  customerList.querySelectorAll(".view-customer-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const customerId = btn.dataset.customerId;
-      viewCustomerDetail(customerId);
-    });
-  });
 };
 
-const renderPagination = (page, pages, total) => {
-  const pagination = document.getElementById("pagination");
-  pagination.innerHTML = "";
+// ===========================
+// PHÂN TRANG
+// ===========================
 
-  if (pages <= 1) return;
+window.goToPage = async function (page) {
+  const totalPages = Math.ceil(totalCustomers / pageSize);
 
-  const createBtn = (content, onClick, isCurrent = false) => {
-    const btn = document.createElement("button");
-    btn.className = isCurrent
-      ? "px-3 py-2 rounded-lg bg-blue-600 text-white"
-      : "px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50";
-    btn.innerHTML = content;
-    btn.onclick = onClick;
-    return btn;
-  };
+  if (page < 1 || page > totalPages) return;
 
-  // Previous
-  if (page > 1) {
-    pagination.appendChild(
-      createBtn('<i class="fas fa-chevron-left"></i>', () => {
-        currentPage = page - 1;
-        loadCustomers(currentPage, currentSegment, currentSearch);
-      })
-    );
-  }
+  currentPage = page;
+  await loadCustomers();
 
-  // Pages
-  for (let i = 1; i <= pages; i++) {
-    pagination.appendChild(
-      createBtn(
-        i,
-        () => {
-          currentPage = i;
-          loadCustomers(currentPage, currentSegment, currentSearch);
-          window.scrollTo(0, 0);
-        },
-        i === page
-      )
-    );
-  }
-
-  // Next
-  if (page < pages) {
-    pagination.appendChild(
-      createBtn('<i class="fas fa-chevron-right"></i>', () => {
-        currentPage = page + 1;
-        loadCustomers(currentPage, currentSegment, currentSearch);
-      })
-    );
-  }
+  // Scroll to top
+  document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-// ============================================
+window.viewCustomerDetail = viewCustomerDetail;
+
+function updatePagination(pagination) {
+  const start = Math.max((pagination.page - 1) * pagination.limit + 1, 0);
+  const end = Math.min(pagination.page * pagination.limit, pagination.total);
+
+  // Cập nhật text hiển thị
+  const recordStart = document.getElementById("recordStart");
+  const recordEnd = document.getElementById("recordEnd");
+  const recordTotal = document.getElementById("recordTotal");
+
+  if (recordStart) recordStart.textContent = pagination.total > 0 ? start : 0;
+  if (recordEnd) recordEnd.textContent = end;
+  if (recordTotal) recordTotal.textContent = pagination.total;
+
+  // Cập nhật pagination nav
+  const paginationNav = document.getElementById("paginationNav");
+  if (!paginationNav) return;
+
+  let html = "";
+
+  // Nút Previous
+  html += `
+    <button
+      class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === 1 ? "opacity-50 cursor-not-allowed" : ""
+      }"
+      onclick="goToPage(${pagination.page - 1})"
+      ${pagination.page === 1 ? "disabled" : ""}
+    >
+      ←
+    </button>
+  `;
+
+  // Các số trang (hiển thị tối đa 5 trang)
+  const maxPages = 5;
+  let startPage = Math.max(1, pagination.page - Math.floor(maxPages / 2));
+  let endPage = Math.min(pagination.pages, startPage + maxPages - 1);
+
+  if (endPage - startPage < maxPages - 1) {
+    startPage = Math.max(1, endPage - maxPages + 1);
+  }
+
+  if (startPage > 1) {
+    html += `
+      <button
+        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+        onclick="goToPage(1)"
+      >
+        1
+      </button>
+    `;
+    if (startPage > 2) {
+      html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>`;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    if (i === pagination.page) {
+      html += `
+        <button
+          class="relative inline-flex items-center px-4 py-2 border border-blue-300 bg-blue-50 text-sm font-medium text-blue-600"
+        >
+          ${i}
+        </button>
+      `;
+    } else {
+      html += `
+        <button
+          class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+          onclick="goToPage(${i})"
+        >
+          ${i}
+        </button>
+      `;
+    }
+  }
+
+  if (endPage < pagination.pages) {
+    if (endPage < pagination.pages - 1) {
+      html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>`;
+    }
+    html += `
+      <button
+        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+        onclick="goToPage(${pagination.pages})"
+      >
+        ${pagination.pages}
+      </button>
+    `;
+  }
+
+  // Nút Next
+  html += `
+    <button
+      class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+        pagination.page === pagination.pages
+          ? "opacity-50 cursor-not-allowed"
+          : ""
+      }"
+      onclick="goToPage(${pagination.page + 1})"
+      ${pagination.page === pagination.pages ? "disabled" : ""}
+    >
+      →
+    </button>
+  `;
+
+  paginationNav.innerHTML = html;
+}
+
+// ===========================
 // EVENT LISTENERS
-// ============================================
+// ===========================
 
 const addEventListenerSafe = (id, event, handler) => {
   const el = document.getElementById(id);
@@ -431,24 +467,24 @@ const addEventListenerSafe = (id, event, handler) => {
 addEventListenerSafe("segmentFilter", "change", (e) => {
   currentSegment = e.target.value;
   currentPage = 1;
-  loadCustomers(currentPage, currentSegment, currentSearch);
+  loadCustomers();
 });
 
 addEventListenerSafe("dateFilter", "change", (e) => {
   currentDateFilter = e.target.value;
   currentPage = 1;
-  loadCustomers(currentPage, currentSegment, currentSearch);
+  loadCustomers();
 });
 
 addEventListenerSafe("searchInput", "input", (e) => {
   currentSearch = e.target.value;
   currentPage = 1;
-  loadCustomers(currentPage, currentSegment, currentSearch);
+  loadCustomers();
 });
 
-// ============================================
+// ===========================
 // KHỞI TẠO
-// ============================================
+// ===========================
 
 const init = () => {
   const isDetailPage =
@@ -460,7 +496,7 @@ const init = () => {
     loadCustomerDetail();
   } else if (isListPage) {
     loadStats();
-    loadCustomers(currentPage, currentSegment, currentSearch);
+    loadCustomers();
   }
 };
 

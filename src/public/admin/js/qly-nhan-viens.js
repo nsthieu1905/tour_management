@@ -1,5 +1,6 @@
 import { Modal, Notification } from "../../utils/modal.js";
 import { validateRegisterInput } from "../../utils/validators.js";
+import { formatDate } from "../../utils/helpers.js";
 
 // Biến toàn cục
 let staffData = [];
@@ -9,21 +10,6 @@ let currentStatusFilter = "";
 let currentPage = 1;
 let pageSize = 10;
 let totalStaffs = 0;
-
-// ===========================
-// HELPER FUNCTIONS
-// ===========================
-
-function attachFormValidationListeners(form) {
-  if (!form) return;
-
-  // Use event delegation - attach listeners to form, not individual inputs
-  // This captures all blur/input events that bubble up from inputs
-
-  // Remove previous event listeners to avoid duplicates
-  // We need to recreate the form to truly remove all listeners
-  // Simpler approach: just attach listeners - they won't duplicate if we use proper delegation
-}
 
 // ===========================
 // KHỞI TẠO
@@ -38,55 +24,43 @@ document.addEventListener("DOMContentLoaded", async function () {
 function initializeEventListeners() {
   // Tìm kiếm
   const staffSearchInput = document.getElementById("staffSearchInput");
-  if (staffSearchInput) {
-    staffSearchInput.addEventListener("input", (e) =>
-      searchStaff(e.target.value)
-    );
-  }
+  staffSearchInput?.addEventListener("input", (e) =>
+    searchStaff(e.target.value)
+  );
 
   // Filter trạng thái
   const statusFilter = document.getElementById("staffStatusFilter");
-  if (statusFilter) {
-    statusFilter.addEventListener("change", (e) => {
-      currentStatusFilter = e.target.value;
-      currentPage = 1;
-      renderStaffTable();
-    });
-  }
+  statusFilter?.addEventListener("change", (e) => {
+    currentStatusFilter = e.target.value;
+    currentPage = 1;
+    renderStaffTable();
+  });
 
   // Dropdown pageSize
   const pageSizeSelect = document.getElementById("pageSizeSelect");
-  if (pageSizeSelect) {
-    pageSizeSelect.addEventListener("change", async (e) => {
-      pageSize = parseInt(e.target.value);
-      currentPage = 1;
-      await loadStaffList(1);
-      renderStaffTable();
-    });
-  }
+  pageSizeSelect?.addEventListener("change", async (e) => {
+    pageSize = parseInt(e.target.value);
+    currentPage = 1;
+    await loadStaffList(1);
+    renderStaffTable();
+  });
 
   // Form validation - use event delegation
   const addStaffForm = document.getElementById("addStaffForm");
   if (addStaffForm) {
     addStaffForm.addEventListener("submit", handleAddStaff);
 
-    // Event delegation for blur and input events
     addStaffForm.addEventListener(
       "blur",
-      function (e) {
-        console.log(
-          "Blur event triggered on:",
-          e.target.name,
-          e.target.tagName
-        );
+      (e) => {
         if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") {
           validateFormField(e.target);
         }
       },
       true
-    ); // Use capture phase to catch blur
+    );
 
-    addStaffForm.addEventListener("input", function (e) {
+    addStaffForm.addEventListener("input", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") {
         clearFieldError(e.target);
       }
@@ -95,21 +69,15 @@ function initializeEventListeners() {
 
   // Action buttons (event delegation)
   const staffTableBody = document.getElementById("staffTableBody");
-  if (staffTableBody) {
-    staffTableBody.addEventListener("click", handleTableActions);
-  }
+  staffTableBody?.addEventListener("click", handleTableActions);
 
   // Xuất Excel
   const exportBtn = document.getElementById("exportBtn");
-  if (exportBtn) {
-    exportBtn.addEventListener("click", exportStaffData);
-  }
+  exportBtn?.addEventListener("click", exportStaffData);
 
   // Thêm nhân viên
   const addStaffBtn = document.getElementById("addStaffBtn");
-  if (addStaffBtn) {
-    addStaffBtn.addEventListener("click", showAddStaffModal);
-  }
+  addStaffBtn?.addEventListener("click", showAddStaffModal);
 
   // ESC để đóng modal
   document.addEventListener("keydown", (e) => {
@@ -219,13 +187,9 @@ function renderStaffTable() {
   const tbody = document.getElementById("staffTableBody");
   if (!tbody) return;
 
-  let filteredData = [...staffData];
-
-  if (currentStatusFilter) {
-    filteredData = filteredData.filter(
-      (staff) => staff.status === currentStatusFilter
-    );
-  }
+  let filteredData = currentStatusFilter
+    ? staffData.filter((staff) => staff.status === currentStatusFilter)
+    : [...staffData];
 
   if (filteredData.length === 0) {
     tbody.innerHTML = `
@@ -243,7 +207,6 @@ function renderStaffTable() {
 
   tbody.innerHTML = filteredData.map((staff) => renderStaffRow(staff)).join("");
 
-  // Update pagination
   const totalPages = Math.ceil(totalStaffs / pageSize);
   updatePagination({
     page: currentPage,
@@ -259,9 +222,7 @@ function renderStaffRow(staff) {
   const statusClass = getStatusClass(status);
   const isActive = status === "active";
 
-  const dateOfBirth = staff.dateOfBirth
-    ? new Date(staff.dateOfBirth).toLocaleDateString("vi-VN")
-    : "";
+  const dateOfBirth = staff.dateOfBirth ? formatDate(staff.dateOfBirth) : "";
 
   const avatarLetter = staff.fullName.split(" ").pop()[0].toUpperCase();
 
@@ -306,7 +267,7 @@ function renderStaffRow(staff) {
           data-staff-id="${staff._id}"
           title="Chỉnh sửa"
         >
-          <i class="fas fa-edit"></i> Sửa
+           Sửa
         </button>
         ${
           isActive
@@ -315,14 +276,14 @@ function renderStaffRow(staff) {
           data-staff-id="${staff._id}"
           title="Tạm dừng"
         >
-          <i class="fas fa-pause-circle"></i> Tạm dừng
+           Tạm dừng
         </button>`
             : `<button 
           class="staff-activate-btn text-green-600 hover:text-green-900 transition" 
           data-staff-id="${staff._id}"
           title="Kích hoạt"
         >
-          <i class="fas fa-check-circle"></i> Kích hoạt
+           Kích hoạt
         </button>`
         }
         <button 
@@ -330,7 +291,7 @@ function renderStaffRow(staff) {
           data-staff-id="${staff._id}"
           title="Xóa"
         >
-          <i class="fas fa-trash"></i> Xóa
+           Xóa
         </button>
       </td>
     </tr>
@@ -383,14 +344,10 @@ async function handleAddStaff(e) {
   const form = e.target;
   clearAllErrors(form);
 
-  // Lấy dữ liệu từ form
   const formData = getFormData(form);
-
-  // Validation
   let errors = {};
 
   if (modalMode === "create") {
-    // Dùng validateRegisterInput cho create mode
     const validation = validateRegisterInput(
       formData.fullName,
       formData.email,
@@ -403,16 +360,14 @@ async function handleAddStaff(e) {
       errors = validation.errors;
     }
   } else if (modalMode === "edit") {
-    // Validation riêng cho edit mode
     const validation = validateRegisterInput(
       formData.fullName,
       formData.email,
       formData.phone,
-      formData.password || "123456", // Dummy password để pass validation
+      formData.password || "123456",
       formData.passwordConfirm || "123456"
     );
 
-    // Lọc lỗi - chỉ giữ lỗi của fullName, email, phone
     if (!validation.isValid) {
       const { fullName, email, phone } = validation.errors;
       if (fullName) errors.fullName = fullName;
@@ -420,7 +375,6 @@ async function handleAddStaff(e) {
       if (phone) errors.phone = phone;
     }
 
-    // Validation password riêng cho edit mode
     if (formData.password || formData.passwordConfirm) {
       if (formData.password && formData.password.length < 6) {
         errors.password = "Mật khẩu phải tối thiểu 6 ký tự";
@@ -431,13 +385,11 @@ async function handleAddStaff(e) {
     }
   }
 
-  // Hiển thị lỗi nếu có
   if (Object.keys(errors).length > 0) {
     displayFormErrors(form, errors);
     return;
   }
 
-  // Chuẩn bị dữ liệu gửi API
   const staffDataToSend = {
     fullName: formData.fullName,
     email: formData.email,
@@ -446,19 +398,16 @@ async function handleAddStaff(e) {
     dateOfBirth: formData.dateOfBirth || null,
   };
 
-  // Chỉ thêm password nếu có giá trị
   if (formData.password) {
     staffDataToSend.password = formData.password;
     staffDataToSend.passwordConfirm = formData.passwordConfirm;
   }
 
-  // Gọi API
   const result =
     modalMode === "create"
       ? await addStaffViaAPI(staffDataToSend)
       : await updateStaffViaAPI(currentStaffId, staffDataToSend);
 
-  // Xử lý kết quả
   if (result.success) {
     const successMsg =
       modalMode === "create"
@@ -520,18 +469,6 @@ window.showAddStaffModal = function () {
     form.reset();
     clearAllErrors(form);
 
-    // Attach blur listeners directly to inputs
-    const inputs = form.querySelectorAll("input, select");
-    inputs.forEach((input) => {
-      input.addEventListener("blur", function () {
-        console.log("Direct blur on:", this.name);
-        validateFormField(this);
-      });
-      input.addEventListener("input", function () {
-        clearFieldError(this);
-      });
-    });
-
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
   }
@@ -575,7 +512,6 @@ async function editStaff(staffId) {
     modalTitle.textContent = "Chỉnh sửa nhân viên";
     if (submitBtn) submitBtn.textContent = "Cập nhật nhân viên";
 
-    // Điền dữ liệu
     form.querySelector('input[name="staffName"]').value = staff.fullName || "";
     form.querySelector('input[name="staffEmail"]').value = staff.email || "";
     form.querySelector('input[name="staffPhone"]').value = staff.phone || "";
@@ -586,7 +522,6 @@ async function editStaff(staffId) {
       dateInput.value = new Date(staff.dateOfBirth).toISOString().split("T")[0];
     }
 
-    // Clear password fields
     const passwordInput = form.querySelector('input[name="password"]');
     const passwordConfirmInput = form.querySelector(
       'input[name="passwordConfirm"]'
@@ -601,18 +536,6 @@ async function editStaff(staffId) {
     }
 
     clearAllErrors(form);
-
-    // Attach blur listeners directly to inputs
-    const inputs = form.querySelectorAll("input, select");
-    inputs.forEach((input) => {
-      input.addEventListener("blur", function () {
-        console.log("Direct blur on:", this.name);
-        validateFormField(this);
-      });
-      input.addEventListener("input", function () {
-        clearFieldError(this);
-      });
-    });
 
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
@@ -783,11 +706,9 @@ window.goToPage = async function (page) {
   await loadStaffList(page);
   renderStaffTable();
 
-  // Scroll to top
   document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-// Update pagination
 function updatePagination(pagination) {
   const start = Math.max((pagination.page - 1) * pagination.limit + 1, 0);
   const end = Math.min(pagination.page * pagination.limit, pagination.total);
@@ -797,11 +718,9 @@ function updatePagination(pagination) {
   document.getElementById("recordEnd").textContent = end;
   document.getElementById("recordTotal").textContent = pagination.total;
 
-  // Update pagination nav
   const paginationNav = document.getElementById("paginationNav");
   let html = "";
 
-  // Previous button
   html += `
     <button
       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
@@ -814,7 +733,6 @@ function updatePagination(pagination) {
     </button>
   `;
 
-  // Page numbers (show max 5 pages)
   const maxPages = 5;
   let startPage = Math.max(1, pagination.page - Math.floor(maxPages / 2));
   let endPage = Math.min(pagination.pages, startPage + maxPages - 1);
@@ -872,7 +790,6 @@ function updatePagination(pagination) {
     `;
   }
 
-  // Next button
   html += `
     <button
       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
@@ -889,7 +806,6 @@ function updatePagination(pagination) {
 
   paginationNav.innerHTML = html;
 
-  // Update mobile buttons
   const prevBtnMobile = document.getElementById("prevBtnMobile");
   const nextBtnMobile = document.getElementById("nextBtnMobile");
 
@@ -948,9 +864,6 @@ function validateFormField(input) {
   const fieldName = input.name;
   let errorMessage = "";
 
-  console.log("Validating field:", fieldName, "Value:", fieldValue);
-
-  // Validation logic for each field
   if (fieldName === "staffName") {
     if (!fieldValue) {
       errorMessage = "Vui lòng nhập tên nhân viên";
@@ -990,11 +903,7 @@ function validateFormField(input) {
     }
   }
 
-  // Display or clear error
-  console.log("Error message:", errorMessage);
-
   if (errorMessage) {
-    // Add error
     input.classList.add("border-red-500", "focus:ring-red-500");
     let errorContainer = input.parentElement.querySelector(".error-message");
     if (!errorContainer) {
@@ -1003,9 +912,7 @@ function validateFormField(input) {
       input.parentElement.appendChild(errorContainer);
     }
     errorContainer.textContent = errorMessage;
-    console.log("Error displayed for:", fieldName);
   } else {
-    // Clear error
     clearFieldError(input);
   }
 }
@@ -1024,19 +931,6 @@ function getStatusText(status) {
   return status === "active" ? "Hoạt động" : "Tạm dừng";
 }
 
-function formatDate(dateString) {
-  try {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  } catch {
-    return "N/A";
-  }
-}
-
 function viewStaffDetail(staffId) {
-  // TODO: Implement view detail
   console.log("View staff detail:", staffId);
 }

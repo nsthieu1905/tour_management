@@ -77,31 +77,46 @@
 
       <!-- Customer Filters -->
       <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <select
-            id="segmentFilter"
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">Tất cả phân khúc</option>
-            <option value="Kim cương">Kim Cương</option>
-            <option value="Vàng">Vàng</option>
-            <option value="Bạc">Bạc</option>
-            <option value="Khách mới">Khách mới</option>
-          </select>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Phân khúc khách hàng</label
+            >
+            <select
+              id="segmentFilter"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">-- Tất cả --</option>
+              <option value="Kim cương">Kim Cương</option>
+              <option value="Vàng">Vàng</option>
+              <option value="Bạc">Bạc</option>
+              <option value="Khách mới">Khách mới</option>
+            </select>
+          </div>
 
-          <input
-            type="date"
-            id="dateFilter"
-            placeholder="Lọc theo lần cuối đặt"
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Lần cuối đặt</label
+            >
+            <input
+              type="date"
+              id="dateFilter"
+              placeholder="Lọc theo lần cuối đặt"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Tìm theo tên, email, SĐT..."
-            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Tìm kiếm</label
+            >
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Tìm theo tên, email, SĐT..."
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
       </div>
 
@@ -151,8 +166,62 @@
       </div>
 
       <!-- Pagination -->
-      <div class="mt-6 flex justify-center gap-2" id="pagination">
-        <!-- Pagination buttons will be populated here -->
+      <div
+        class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200"
+      >
+        <div class="flex-1 flex justify-between sm:hidden">
+          <button
+            id="prevBtnMobile"
+            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+          >
+            Trước
+          </button>
+          <button
+            id="nextBtnMobile"
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+          >
+            Sau
+          </button>
+        </div>
+        <div
+          class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
+        >
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+              <label class="text-sm text-gray-700">Hiển thị:</label>
+              <select
+                id="pageSizeSelect"
+                class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span class="text-sm text-gray-700">hàng</span>
+            </div>
+            <p class="text-sm text-gray-700">
+              |
+              <span class="ml-2">
+                Hiển thị
+                <span class="font-medium" id="recordStart">0</span>
+                đến
+                <span class="font-medium" id="recordEnd">0</span>
+                trong
+                <span class="font-medium" id="recordTotal">0</span>
+                kết quả
+              </span>
+            </p>
+          </div>
+          <div>
+            <nav
+              class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+              id="paginationNav"
+            >
+              <!-- Pagination buttons will be generated here -->
+            </nav>
+          </div>
+        </div>
       </div>
     </div>
   </main>
