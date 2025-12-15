@@ -1,6 +1,5 @@
 const { Tour, Booking, User } = require("../../models/index");
 
-// Format doanh thu
 const formatRevenue = (value) => {
   const num = Number(value) || 0;
   if (num >= 1000000000) {
@@ -19,7 +18,6 @@ const dashboard = async (req, res) => {
     const currentYear = currentDate.getFullYear();
     const startOfMonth = new Date(currentYear, currentMonth, 1);
 
-    // Tổng doanh thu tháng
     const monthlyRevenueData = await Booking.aggregate([
       {
         $match: {
@@ -37,13 +35,11 @@ const dashboard = async (req, res) => {
     ]);
     const monthlyRevenue = monthlyRevenueData[0]?.total || 0;
 
-    // Tổng số đơn đặt
     const totalBookings = await Booking.countDocuments({
       createdAt: { $gte: startOfMonth },
       bookingStatus: { $in: ["confirmed", "completed"] },
     });
 
-    // Tỷ lệ lấp đầy trung bình
     const avgCapacityData = await Tour.aggregate([
       {
         $match: { deleted: false },
@@ -70,13 +66,11 @@ const dashboard = async (req, res) => {
     ]);
     const avgCapacity = avgCapacityData[0]?.avgFilled?.toFixed(1) || 0;
 
-    // Khách hàng mới
     const newCustomers = await User.countDocuments({
       role: "customer",
       createdAt: { $gte: startOfMonth },
     });
 
-    // Top 10 tour - Sắp xếp theo số booking, nếu bằng nhau thì theo doanh thu
     const topTours = await Booking.aggregate([
       {
         $match: {
@@ -93,8 +87,8 @@ const dashboard = async (req, res) => {
       },
       {
         $sort: {
-          bookingCount: -1, // Sắp xếp theo số booking giảm dần
-          totalRevenue: -1, // Nếu booking bằng nhau, sắp xếp theo doanh thu giảm dần
+          bookingCount: -1,
+          totalRevenue: -1,
         },
       },
       {
@@ -122,7 +116,6 @@ const dashboard = async (req, res) => {
       },
     ]);
 
-    // Lấy dữ liệu doanh thu theo tháng để vẽ biểu đồ
     const monthlyRevenueByMonth = await Booking.aggregate([
       {
         $match: {
@@ -164,10 +157,8 @@ const dashboard = async (req, res) => {
       revenues[item._id - 1] = item.total;
     });
 
-    // Lấy top 5 tours phổ biến để vẽ biểu đồ
     const topToursForChart = topTours.slice(0, 5);
 
-    // Lấy top 10 khách hàng VIP (sắp xếp theo tổng chi tiêu)
     const topVIPCustomers = await Booking.aggregate([
       {
         $match: {
@@ -227,7 +218,6 @@ const dashboard = async (req, res) => {
             ? "blue"
             : "gray",
       })),
-      // Dữ liệu cho biểu đồ (embed trong page)
       revenueChartData: JSON.stringify({
         labels: monthLabels,
         revenues: revenues,
@@ -426,10 +416,6 @@ const thongKe = async (req, res) => {
     const trendEndDate = new Date(currentDate);
     trendEndDate.setDate(trendEndDate.getDate() - days);
 
-    // ===========================
-    // 1. TÍNH CÁC CHỈ SỐ HÀNG ĐẦU
-    // ===========================
-
     // Tổng doanh thu và số đơn trong khoảng thời gian
     const revenueData = await Booking.aggregate([
       {
@@ -481,9 +467,6 @@ const thongKe = async (req, res) => {
     const repeatRate =
       totalCustomers > 0 ? (repeatCustomers / totalCustomers) * 100 : 0;
 
-    // ===========================
-    // 2. XU HƯỚNG THEO MÙA
-    // ===========================
     const seasonalData = await Booking.aggregate([
       {
         $match: {
@@ -499,7 +482,6 @@ const thongKe = async (req, res) => {
       },
     ]);
 
-    // Nhóm theo mùa: Xuân (1-3), Hạ (4-6), Thu (7-9), Đông (10-12)
     const seasons = { spring: 0, summer: 0, autumn: 0, winter: 0 };
 
     seasonalData.forEach((item) => {
@@ -522,6 +504,13 @@ const thongKe = async (req, res) => {
             ((seasons.winter / totalSeasonalBookings) * 100).toFixed(1),
           ]
         : [0, 0, 0, 0];
+
+    const seasonalTourCounts = [
+      seasons.spring,
+      seasons.summer,
+      seasons.autumn,
+      seasons.winter,
+    ];
 
     // ===========================
     // 3. PHÂN LOẠI TOUR
@@ -690,7 +679,7 @@ const thongKe = async (req, res) => {
           trendDirection = "up";
         }
 
-        // Tính tỷ lệ lấp đầy: số chỗ đã đặt / (tổng số chỗ * số lần tour được đặt)
+        // Tính tỷ lệ lấp đầy
         const totalCapacity = tour.maxCapacity * tour.bookingCount;
         const capacityRate =
           totalCapacity > 0
@@ -708,9 +697,6 @@ const thongKe = async (req, res) => {
       })
     );
 
-    // ===========================
-    // RENDER VIEW
-    // ===========================
     return res.render("components/thong-ke", {
       bodyClass: "bg-gray-50 transition-all duration-300",
       selectedDays: days,
@@ -724,6 +710,7 @@ const thongKe = async (req, res) => {
         seasonalTrends: {
           labels: ["Xuân", "Hạ", "Thu", "Đông"],
           percentages: seasonalPercentages.map((p) => parseFloat(p)),
+          tourCounts: seasonalTourCounts,
         },
         tourTypes: tourTypesWithPercent,
         bookingStatus: bookingStatusWithPercent,

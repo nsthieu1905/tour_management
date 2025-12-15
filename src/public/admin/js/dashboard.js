@@ -1,10 +1,20 @@
-// ===========================
-// DASHBOARD CHARTS INITIALIZATION
-// ===========================
+const CHART_COLORS = {
+  primary: [
+    "#8B5CF6",
+    "#EC4899",
+    "#F59E0B",
+    "#10B981",
+    "#06B6D4",
+    "#3B82F6",
+    "#EF4444",
+    "#6366F1",
+  ],
+  revenue: "#8B5CF6",
+  revenueLight: "rgba(139, 92, 246, 0.1)",
+};
 
 async function initDashboardCharts() {
   try {
-    // Check if data is embedded in page (from server)
     const embeddedRevenueData = window.dashboardData?.revenueData;
     const embeddedPopularTours = window.dashboardData?.popularTours;
 
@@ -13,7 +23,6 @@ async function initDashboardCharts() {
       return;
     }
 
-    // Initialize Revenue Chart
     const revenueCtx = document.getElementById("revenueChart");
     if (revenueCtx) {
       new Chart(revenueCtx, {
@@ -24,13 +33,13 @@ async function initDashboardCharts() {
             {
               label: "Doanh thu (VNĐ)",
               data: embeddedRevenueData.revenues,
-              borderColor: "#3B82F6",
-              backgroundColor: "rgba(59, 130, 246, 0.1)",
+              borderColor: CHART_COLORS.revenue,
+              backgroundColor: CHART_COLORS.revenueLight,
               borderWidth: 2,
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: "#3B82F6",
+              pointBackgroundColor: CHART_COLORS.revenue,
               pointBorderColor: "#fff",
               pointBorderWidth: 2,
             },
@@ -59,7 +68,6 @@ async function initDashboardCharts() {
       });
     }
 
-    // Initialize Popular Tours Chart
     const popularCtx = document.getElementById("popularToursChart");
     if (popularCtx && embeddedPopularTours.length > 0) {
       const topTours = embeddedPopularTours.slice(0, 5);
@@ -72,13 +80,7 @@ async function initDashboardCharts() {
             {
               label: "Số lượng đặt tour",
               data: topTours.map((tour) => tour.bookingCount),
-              backgroundColor: [
-                "#FCD34D",
-                "#C084FC",
-                "#60A5FA",
-                "#34D399",
-                "#F87171",
-              ],
+              backgroundColor: CHART_COLORS.primary.slice(0, topTours.length),
               borderRadius: 8,
             },
           ],
@@ -110,6 +112,9 @@ async function initDashboardCharts() {
             },
             y: {
               beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+              },
             },
           },
         },
@@ -120,5 +125,4 @@ async function initDashboardCharts() {
   }
 }
 
-// Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", initDashboardCharts);

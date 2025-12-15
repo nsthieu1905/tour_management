@@ -1,6 +1,20 @@
-// ===========================
-// THỐNG KÊ CHARTS INITIALIZATION
-// ===========================
+const CHART_COLORS = {
+  primary: [
+    "#8B5CF6",
+    "#EC4899",
+    "#F59E0B",
+    "#15c739ff",
+    "#06B6D4",
+    "#3B82F6",
+    "#EF4444",
+    "#6366F1",
+  ],
+  status: {
+    cancelled: "#EF4444",
+    refunded: "#f0e516f8",
+    completed: "#2138ceff",
+  },
+};
 
 async function initStatisticsCharts() {
   try {
@@ -11,26 +25,16 @@ async function initStatisticsCharts() {
       return;
     }
 
-    // Hiển thị các KPI
     displayKPIs(data.kpis);
-
-    // Khởi tạo biểu đồ xu hướng theo mùa (Bar Chart)
     initSeasonalTrendsChart(data.seasonalTrends);
-
-    // Khởi tạo biểu đồ phân loại tour (Doughnut)
     initTourTypeChart(data.tourTypes);
-
-    // Khởi tạo biểu đồ trạng thái đơn (Pie)
     initBookingStatusChart(data.bookingStatus);
-
-    // Hiển thị bảng hiệu suất tour
     populatePerformanceTable(data.topTours);
   } catch (error) {
     console.error("Lỗi khởi tạo biểu đồ thống kê:", error);
   }
 }
 
-// Hiển thị các KPI
 function displayKPIs(kpis) {
   try {
     const avgDailyEl = document.getElementById("avgDailyRevenue");
@@ -63,10 +67,11 @@ function displayKPIs(kpis) {
   }
 }
 
-// Biểu đồ xu hướng theo mùa (Bar Chart)
 function initSeasonalTrendsChart(seasonalData) {
   const ctx = document.getElementById("bookingTrendsChart");
   if (!ctx) return;
+
+  const seasonColors = CHART_COLORS.primary.slice(0, 4);
 
   new Chart(ctx, {
     type: "bar",
@@ -76,19 +81,13 @@ function initSeasonalTrendsChart(seasonalData) {
         {
           label: "Phần trăm (%)",
           data: seasonalData.percentages,
-          backgroundColor: [
-            "rgba(59, 130, 246, 0.8)", // Xuân - Xanh dương
-            "rgba(249, 115, 22, 0.8)", // Hạ - Cam
-            "rgba(234, 179, 8, 0.8)", // Thu - Vàng
-            "rgba(147, 197, 253, 0.8)", // Đông - Xanh nhạt
-          ],
-          borderColor: [
-            "rgb(59, 130, 246)",
-            "rgb(249, 115, 22)",
-            "rgb(234, 179, 8)",
-            "rgb(147, 197, 253)",
-          ],
-          borderWidth: 2,
+          backgroundColor: seasonColors,
+          borderColor: seasonColors,
+          borderWidth: 0,
+          borderRadius: {
+            topLeft: 6,
+            topRight: 6,
+          },
         },
       ],
     },
@@ -102,7 +101,11 @@ function initSeasonalTrendsChart(seasonalData) {
         tooltip: {
           callbacks: {
             label: function (context) {
-              return context.parsed.y.toFixed(1) + "%";
+              const percentage = context.parsed.y.toFixed(1);
+              const tourCount = seasonalData.tourCounts
+                ? seasonalData.tourCounts[context.dataIndex]
+                : 0;
+              return [`${percentage}%`, `${tourCount} tour`];
             },
           },
         },
@@ -111,6 +114,9 @@ function initSeasonalTrendsChart(seasonalData) {
         y: {
           beginAtZero: true,
           max: 100,
+          grid: {
+            display: false,
+          },
           ticks: {
             callback: function (value) {
               return value + "%";
@@ -121,26 +127,19 @@ function initSeasonalTrendsChart(seasonalData) {
             text: "Tỷ lệ (%)",
           },
         },
+        x: {
+          grid: {
+            display: false,
+          },
+        },
       },
     },
   });
 }
 
-// Biểu đồ phân loại tour (Doughnut)
 function initTourTypeChart(tourTypes) {
   const ctx = document.getElementById("tourTypeChart");
   if (!ctx || !tourTypes || tourTypes.length === 0) return;
-
-  const colors = [
-    "#3B82F6",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#8B5CF6",
-    "#EC4899",
-    "#06B6D4",
-    "#6366F1",
-  ];
 
   new Chart(ctx, {
     type: "doughnut",
@@ -149,7 +148,7 @@ function initTourTypeChart(tourTypes) {
       datasets: [
         {
           data: tourTypes.map((item) => item.count),
-          backgroundColor: colors.slice(0, tourTypes.length),
+          backgroundColor: CHART_COLORS.primary.slice(0, tourTypes.length),
           borderColor: "#fff",
           borderWidth: 2,
         },
@@ -178,16 +177,9 @@ function initTourTypeChart(tourTypes) {
   });
 }
 
-// Biểu đồ trạng thái đơn (Pie)
 function initBookingStatusChart(bookingStatus) {
   const ctx = document.getElementById("bookingStatusChart");
   if (!ctx || !bookingStatus || bookingStatus.length === 0) return;
-
-  const statusColors = {
-    cancelled: "#F87171",
-    refunded: "#FCD34D",
-    completed: "#34D399",
-  };
 
   const statusLabels = {
     cancelled: "Đã hủy",
@@ -196,7 +188,7 @@ function initBookingStatusChart(bookingStatus) {
   };
 
   new Chart(ctx, {
-    type: "pie",
+    type: "doughnut",
     data: {
       labels: bookingStatus.map(
         (item) => statusLabels[item.label] || item.label
@@ -205,7 +197,7 @@ function initBookingStatusChart(bookingStatus) {
         {
           data: bookingStatus.map((item) => item.count),
           backgroundColor: bookingStatus.map(
-            (item) => statusColors[item.label] || "#9CA3AF"
+            (item) => CHART_COLORS.status[item.label] || "#9CA3AF"
           ),
           borderColor: "#fff",
           borderWidth: 2,
@@ -235,7 +227,6 @@ function initBookingStatusChart(bookingStatus) {
   });
 }
 
-// Hiển thị bảng hiệu suất tour
 function populatePerformanceTable(tours) {
   try {
     const tableBody = document.getElementById("tourPerformanceTable");
@@ -271,7 +262,6 @@ function populatePerformanceTable(tours) {
   }
 }
 
-// Xử lý thay đổi khoảng thời gian
 function handleTimeRangeChange() {
   const selectElement = document.querySelector('select[name="timeRange"]');
   if (selectElement) {
@@ -282,7 +272,6 @@ function handleTimeRangeChange() {
   }
 }
 
-// Khởi tạo khi DOM ready
 document.addEventListener("DOMContentLoaded", function () {
   initStatisticsCharts();
   handleTimeRangeChange();
