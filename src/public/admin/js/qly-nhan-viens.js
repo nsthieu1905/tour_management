@@ -206,22 +206,33 @@ function renderStaffTable() {
       <tr>
         <td colspan="7" class="px-6 py-8 text-center">
           <div class="text-gray-500">
-            <i class="fas fa-inbox text-3xl mb-3 block"></i>
+            <i class="fas fa-search text-3xl mb-3 block"></i>
             <p>Không có dữ liệu nhân viên</p>
           </div>
         </td>
       </tr>
     `;
+
+    updatePagination({
+      page: 1,
+      limit: pageSize,
+      total: 0,
+      pages: 0,
+    });
     return;
   }
 
   tbody.innerHTML = filteredData.map((staff) => renderStaffRow(staff)).join("");
 
-  const totalPages = Math.ceil(totalStaffs / pageSize);
+  // Tính tổng số trang dựa trên dữ liệu hiển thị (đã lọc status)
+  // Nếu có filter status thì dùng filteredData.length, nếu không dùng totalStaffs từ server
+  const displayTotal = currentStatusFilter ? filteredData.length : totalStaffs;
+  const totalPages = Math.ceil(displayTotal / pageSize);
+
   updatePagination({
     page: currentPage,
     limit: pageSize,
-    total: totalStaffs,
+    total: displayTotal,
     pages: totalPages,
   });
 }
@@ -329,6 +340,13 @@ function searchStaff(query) {
     return matchesSearch && matchesStatus;
   });
 
+  // Reset currentPage về 1 khi search
+  currentPage = 1;
+
+  // Cập nhật totalStaffs theo kết quả lọc
+  const filteredTotal = filteredData.length;
+  const filteredPages = Math.ceil(filteredTotal / pageSize);
+
   tbody.innerHTML =
     filteredData.length > 0
       ? filteredData.map((staff) => renderStaffRow(staff)).join("")
@@ -342,6 +360,12 @@ function searchStaff(query) {
       </td>
     </tr>
   `;
+  updatePagination({
+    page: currentPage,
+    limit: pageSize,
+    total: filteredTotal,
+    pages: filteredPages,
+  });
 }
 
 // ===========================
