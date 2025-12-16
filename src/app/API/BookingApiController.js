@@ -510,29 +510,43 @@ const getAllBookings = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const status = req.query.status || "";
-    const paymentStatus = req.query.paymentStatus || "";
     const search = req.query.search || "";
+    const startDate = req.query.startDate || "";
+    const endDate = req.query.endDate || "";
 
     // Build filter
     const filter = {};
 
     if (status === "pre_pending") {
-      // Tab "Chờ thanh toán": pending/pending
       filter.bookingStatus = "pending";
       filter.paymentStatus = "pending";
     } else if (status === "pending") {
-      // Tab "Chờ xác nhận": paid/pending
       filter.bookingStatus = "pending";
       filter.paymentStatus = "paid";
     } else if (status === "refunded_cancelled") {
-      // Tab "Hoàn/Hủy": refunded HOẶC cancelled
       filter.bookingStatus = { $in: ["refunded", "cancelled"] };
     } else {
-      // Các tab khác: lọc bình thường
       if (status) filter.bookingStatus = status;
-      if (paymentStatus) filter.paymentStatus = paymentStatus;
     }
 
+    // Filter by date range - Lọc theo ngày khởi hành
+    if (startDate || endDate) {
+      filter.departureDate = {};
+
+      if (startDate) {
+        const startDateTime = new Date(startDate);
+        startDateTime.setHours(0, 0, 0, 0);
+        filter.departureDate.$gte = startDateTime;
+      }
+
+      if (endDate) {
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        filter.departureDate.$lte = endDateTime;
+      }
+    }
+
+    // Filter by search
     if (search) {
       filter.$or = [
         { bookingCode: { $regex: search, $options: "i" } },

@@ -105,7 +105,7 @@ function renderPartners(partners) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-          <i class="fas fa-inbox text-3xl mb-2 block"></i>
+          <i class="fas fa-search text-3xl mb-3 block"></i>
           <p>Không có đối tác nào</p>
         </td>
       </tr>`;

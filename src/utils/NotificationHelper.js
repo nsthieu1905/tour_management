@@ -159,16 +159,17 @@ const notifyTourUpdate = async (tourData) => {
 };
 
 /**
- * Emit promotion notification
+ * Emit promotion notification - LƯU VÀO DB + BROADCAST CHO CLIENT
  */
 const notifyPromotion = async (promotionData) => {
   try {
-    await NotificationService.broadcastToAllClients({
+    await NotificationService.createAndBroadcastPromotion({
       type: "promotion",
       title: promotionData.title,
       message: promotionData.description,
       icon: "fa-tag",
-      link: promotionData.link,
+      iconBg: "bg-blue-100",
+      link: promotionData.link || "/",
       data: { promotionId: promotionData.promotionId },
       priority: "high",
     });

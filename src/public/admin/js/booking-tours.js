@@ -1,4 +1,5 @@
 import { Notification, Modal } from "../../utils/modal.js";
+
 // ============================================
 // STATE MANAGEMENT
 // ============================================
@@ -9,7 +10,6 @@ let currentStatus = "pre_pending";
 let currentFilters = {
   startDate: "",
   endDate: "",
-  tour: "",
   search: "",
 };
 
@@ -22,7 +22,6 @@ function initBookingSocket() {
   if (bookingSocket) return;
   bookingSocket = io();
 
-  // Listen for booking status changes
   bookingSocket.on("booking:payment-confirmed", (data) => {
     if (document.getElementById("bookingsTableBody")) {
       fetchBookings(currentPage, currentStatus);
@@ -70,26 +69,21 @@ function initBookingSocket() {
 // UTILITY FUNCTIONS
 // ============================================
 
-// Format date
 function formatDate(dateStr) {
   if (!dateStr) return "N/A";
   const options = { year: "numeric", month: "2-digit", day: "2-digit" };
   return new Date(dateStr).toLocaleDateString("vi-VN", options);
 }
 
-// Format price
 function formatPrice(price) {
   if (!price) return "0 VNĐ";
   return new Intl.NumberFormat("vi-VN").format(Math.round(price)) + " VNĐ";
 }
 
-// Get status badge - Kết hợp cả bookingStatus và paymentStatus
 function getStatusBadge(bookingStatus, paymentStatus) {
   if (bookingStatus === "pending" && paymentStatus === "pending") {
-    // Chờ thanh toán (cash chưa thanh toán)
     return '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">Chờ thanh toán</span>';
   } else if (bookingStatus === "pending" && paymentStatus === "paid") {
-    // Chờ xác nhận (đã thanh toán, chờ admin xác nhận)
     return '<span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">Chờ xác nhận</span>';
   } else if (bookingStatus === "confirmed") {
     return '<span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Đã xác nhận</span>';
@@ -102,11 +96,9 @@ function getStatusBadge(bookingStatus, paymentStatus) {
   } else if (bookingStatus === "cancelled") {
     return '<span class="bg-red-100 text-red-800 px-2 py-1 text-xs font-medium rounded-full">Đã hủy</span>';
   }
-
   return `<span class="bg-gray-100 text-gray-800 px-2 py-1 text-xs font-medium rounded-full">${bookingStatus}</span>`;
 }
 
-// Calculate refund amount based on days until departure
 function calculateRefundInfo(departureDate, totalAmount) {
   if (!departureDate || !totalAmount) {
     return {
@@ -163,7 +155,6 @@ function calculateRefundInfo(departureDate, totalAmount) {
   };
 }
 
-// Show loading state
 function showLoading() {
   const tbody = document.getElementById("bookingsTableBody");
   tbody.innerHTML = `
@@ -185,19 +176,16 @@ function showLoading() {
 // API FUNCTIONS
 // ============================================
 
-// Fetch bookings with filters
 async function fetchBookings(page = 1, status = currentStatus) {
   try {
     showLoading();
 
-    // Build query params
     const params = new URLSearchParams({
       page: page,
       limit: pageSize,
       status: status,
     });
 
-    // Add filters if they exist
     if (currentFilters.search) {
       params.append("search", currentFilters.search);
     }
@@ -206,9 +194,6 @@ async function fetchBookings(page = 1, status = currentStatus) {
     }
     if (currentFilters.endDate) {
       params.append("endDate", currentFilters.endDate);
-    }
-    if (currentFilters.tour) {
-      params.append("tour", currentFilters.tour);
     }
 
     const response = await fetch(`/api/bookings/all?${params}`);
@@ -234,7 +219,6 @@ async function fetchBookings(page = 1, status = currentStatus) {
   }
 }
 
-// Fetch all counts for badge updates
 async function fetchAllCounts() {
   try {
     const statuses = [
@@ -261,14 +245,12 @@ async function fetchAllCounts() {
   }
 }
 
-// Update badge count
 function updateBadgeCount(status, count) {
   const tab = document.querySelector(`[data-status="${status}"]`);
   if (tab) {
     const badge = tab.querySelector("span");
     if (badge) {
       badge.textContent = count;
-      // Highlight refund_requested if count > 0
       if (status === "refund_requested" && count > 0) {
         badge.classList.remove("bg-gray-200", "text-gray-700");
         badge.classList.add("bg-red-200", "text-red-700", "font-bold");
@@ -281,7 +263,6 @@ function updateBadgeCount(status, count) {
 // RENDER FUNCTIONS
 // ============================================
 
-// Render bookings table
 function renderBookings(bookings) {
   const tbody = document.getElementById("bookingsTableBody");
 
@@ -289,6 +270,7 @@ function renderBookings(bookings) {
     tbody.innerHTML = `
       <tr>
         <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+        <i class="fas fa-search text-3xl mb-3 block"></i>
           Không có đơn đặt tour nào
         </td>
       </tr>
@@ -337,7 +319,6 @@ function renderBookings(bookings) {
     .join("");
 }
 
-// Render action buttons based on status
 function renderActions(booking) {
   const id = booking._id;
   const bookingStatus = booking.bookingStatus;
@@ -345,28 +326,22 @@ function renderActions(booking) {
   let actions = "";
 
   if (bookingStatus === "pending" && paymentStatus === "pending") {
-    // Tab "Chờ thanh toán" (pending/pending): Thanh toán, Hủy
     actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmPayment('${id}')">Thanh toán</button>`;
     actions += `<button class="text-red-600 hover:text-red-900 text-xs ml-2" onclick="cancelBooking('${id}')">Hủy</button>`;
   } else if (bookingStatus === "pending" && paymentStatus === "paid") {
-    // Tab "Chờ xác nhận" (paid/pending): Xác nhận, Hoàn tiền, Xem
     actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="confirmBooking('${id}')">Xác nhận</button>`;
     actions += `<button class="text-orange-600 hover:text-orange-900 text-xs ml-2" onclick="requestRefund('${id}')">Hoàn tiền</button>`;
     actions += `<button class="text-blue-600 hover:text-blue-900 text-xs ml-2" onclick="viewBooking('${id}')">Xem</button>`;
   } else if (bookingStatus === "confirmed") {
-    // Tab "Đã xác nhận": Hoàn thành, Hoàn tiền, Xem
     actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="completeBooking('${id}')">Hoàn thành</button>`;
     actions += `<button class="text-orange-600 hover:text-orange-900 text-xs ml-2" onclick="requestRefund('${id}')">Hoàn tiền</button>`;
     actions += `<button class="text-blue-600 hover:text-blue-900 text-xs ml-2" onclick="viewBooking('${id}')">Xem</button>`;
   } else if (bookingStatus === "completed") {
-    // Tab "Hoàn thành": Xem
     actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="viewBooking('${id}')">Xem</button>`;
   } else if (bookingStatus === "refund_requested") {
-    // Tab "Chờ hoàn tiền": Xác nhận hoàn tiền, Xem
     actions += `<button class="text-green-600 hover:text-green-900 text-xs" onclick="approveRefund('${id}', ${booking.totalAmount}, '${booking.departureDate}')">Xác nhận hoàn tiền</button>`;
     actions += `<button class="text-blue-600 hover:text-blue-900 text-xs ml-2" onclick="viewBooking('${id}')">Xem</button>`;
   } else if (bookingStatus === "refunded" || bookingStatus === "cancelled") {
-    // Tab "Hoàn/Hủy": Xem
     actions += `<button class="text-blue-600 hover:text-blue-900 text-xs" onclick="viewBooking('${id}')">Xem</button>`;
   } else {
     actions += `<span class="text-gray-600 text-xs">-</span>`;
@@ -375,7 +350,6 @@ function renderActions(booking) {
   return actions;
 }
 
-// Update pagination
 function updatePagination(pagination) {
   const start = Math.max((pagination.page - 1) * pagination.limit + 1, 0);
   const end = Math.min(pagination.page * pagination.limit, pagination.total);
@@ -385,11 +359,9 @@ function updatePagination(pagination) {
   document.getElementById("recordEnd").textContent = end;
   document.getElementById("recordTotal").textContent = pagination.total;
 
-  // Update pagination nav
   const paginationNav = document.getElementById("paginationNav");
   let html = "";
 
-  // Previous button
   html += `
     <button
       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
@@ -402,7 +374,6 @@ function updatePagination(pagination) {
     </button>
   `;
 
-  // Page numbers (show max 5 pages)
   const maxPages = 5;
   let startPage = Math.max(1, pagination.page - Math.floor(maxPages / 2));
   let endPage = Math.min(pagination.pages, startPage + maxPages - 1);
@@ -460,7 +431,6 @@ function updatePagination(pagination) {
     `;
   }
 
-  // Next button
   html += `
     <button
       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
@@ -477,7 +447,6 @@ function updatePagination(pagination) {
 
   paginationNav.innerHTML = html;
 
-  // Update mobile buttons
   const prevBtnMobile = document.getElementById("prevBtnMobile");
   const nextBtnMobile = document.getElementById("nextBtnMobile");
 
@@ -605,7 +574,6 @@ function requestRefund(bookingId) {
 }
 
 function approveRefund(bookingId, totalAmount, departureDate) {
-  // Calculate refund info
   const refundInfo = calculateRefundInfo(departureDate, totalAmount);
 
   if (isNaN(refundInfo.refundAmount) || isNaN(refundInfo.cancellationFee)) {
@@ -618,7 +586,7 @@ function approveRefund(bookingId, totalAmount, departureDate) {
 
   const message = `
 <div class="text-left">
-  <p class="font-semibold mb-2">Động ýquay ýcuốp</p>
+  <p class="font-semibold mb-2">Thông tin hoàn tiền</p>
   <p>Số ngày còn lại: <strong>${refundInfo.daysUntilDeparture}</strong> ngày</p>
   <p>Phí hủy: <strong>${
     refundInfo.cancellationFeePercent
@@ -686,6 +654,10 @@ function cancelBooking(bookingId) {
   });
 }
 
+function viewBooking(bookingId) {
+  window.location.href = `/admin/bookings/${bookingId}`;
+}
+
 // ============================================
 // NAVIGATION FUNCTIONS
 // ============================================
@@ -700,7 +672,6 @@ function switchTab(status) {
   currentStatus = status;
   currentPage = 1;
 
-  // Update tab styles
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     if (btn.getAttribute("data-status") === status) {
       btn.classList.add("border-blue-600", "text-blue-600");
@@ -720,9 +691,9 @@ function applyFilters() {
     document.getElementById("filterStartDate")?.value || "";
   currentFilters.endDate =
     document.getElementById("filterEndDate")?.value || "";
-  currentFilters.tour = document.getElementById("filterTour")?.value || "";
   currentFilters.search = document.getElementById("filterSearch")?.value || "";
 
+  console.log("🔧 Applying filters:", currentFilters);
   fetchBookings(1, currentStatus);
 }
 
@@ -730,14 +701,12 @@ function applyFilters() {
 // EVENT LISTENERS
 // ============================================
 
-// Page size change
 document.getElementById("pageSizeSelect")?.addEventListener("change", (e) => {
   pageSize = parseInt(e.target.value);
   currentPage = 1;
   fetchBookings(1, currentStatus);
 });
 
-// Tab clicks
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     const status = btn.getAttribute("data-status");
@@ -745,7 +714,6 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
   });
 });
 
-// Mobile pagination
 document.getElementById("prevBtnMobile")?.addEventListener("click", () => {
   if (currentPage > 1) goToPage(currentPage - 1);
 });
@@ -754,36 +722,32 @@ document.getElementById("nextBtnMobile")?.addEventListener("click", () => {
   if (currentPage < totalPages) goToPage(currentPage + 1);
 });
 
-// Filter inputs - search with direct application
 document.getElementById("filterSearch")?.addEventListener("input", (e) => {
   applyFilters();
 });
 
-// Date filters
 document
   .getElementById("filterStartDate")
   ?.addEventListener("change", applyFilters);
 document
   .getElementById("filterEndDate")
   ?.addEventListener("change", applyFilters);
-document.getElementById("filterTour")?.addEventListener("change", applyFilters);
 
 // ============================================
 // INITIALIZATION
 // ============================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize Socket.io for real-time updates
+  console.log("🚀 Booking Tours page initialized");
+
   initBookingSocket();
 
-  // Set initial active tab
   const initialTab = document.querySelector('[data-status="pre_pending"]');
   if (initialTab) {
     initialTab.classList.add("border-blue-600", "text-blue-600");
     initialTab.classList.remove("text-gray-600", "border-transparent");
   }
 
-  // Initial data load
   fetchBookings(1, currentStatus);
   fetchAllCounts();
 });
@@ -791,10 +755,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================
 // EXPOSE FUNCTIONS TO GLOBAL SCOPE
 // ============================================
-// ES6 module functions need to be exposed to window for HTML onclick handlers
 window.confirmPayment = confirmPayment;
 window.confirmBooking = confirmBooking;
 window.completeBooking = completeBooking;
 window.requestRefund = requestRefund;
 window.approveRefund = approveRefund;
 window.cancelBooking = cancelBooking;
+window.viewBooking = viewBooking;
+window.goToPage = goToPage;

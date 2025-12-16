@@ -337,7 +337,7 @@ function searchStaff(query) {
       <td colspan="7" class="px-6 py-8 text-center">
         <div class="text-gray-500">
           <i class="fas fa-search text-3xl mb-3 block"></i>
-          <p>Không tìm thấy nhân viên phù hợp</p>
+          <p>Không có nhân viên nào</p>
         </div>
       </td>
     </tr>

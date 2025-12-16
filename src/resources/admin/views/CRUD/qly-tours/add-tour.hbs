@@ -1,4 +1,3 @@
-<!-- Add Tour Modal -->
 <div
   id="addTourModal"
   class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center"
@@ -9,6 +8,7 @@
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-xl font-semibold text-gray-900">Thêm tour mới</h3>
       <button
+        type="button"
         onclick="hideAddTourModal()"
         class="text-gray-400 hover:text-gray-600"
       >
@@ -16,7 +16,12 @@
       </button>
     </div>
 
-    <form id="addTourForm" class="space-y-4" enctype="multipart/form-data">
+    <form
+      id="addTourForm"
+      class="space-y-4"
+      enctype="multipart/form-data"
+      novalidate
+    >
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
           >Mã tour <span class="text-red-500">*</span></label
@@ -26,9 +31,9 @@
           name="tourCode"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           placeholder="Nhập mã tour"
-          required
         />
       </div>
+
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
           >Tên tour <span class="text-red-500">*</span></label
@@ -38,9 +43,9 @@
           name="name"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           placeholder="Nhập tên tour"
-          required
         />
       </div>
+
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2"
           >Điểm đến <span class="text-red-500">*</span></label
@@ -63,6 +68,7 @@
             name="duration[days]"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             placeholder="4"
+            min="1"
           />
         </div>
         <div>
@@ -74,6 +80,7 @@
             name="duration[nights]"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             placeholder="3"
+            min="0"
           />
         </div>
         <div>
@@ -85,6 +92,7 @@
             name="price"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             placeholder="4500000"
+            min="1"
           />
         </div>
       </div>
@@ -102,7 +110,7 @@
       </div>
 
       <!-- Lịch trình chi tiết -->
-      <div id="itineraryContainer">
+      <div id="itineraryContainer" style="display: none">
         <label class="block text-sm font-medium text-gray-700 mb-4"
           >Lịch trình chi tiết</label
         >
@@ -119,10 +127,10 @@
           <input
             type="date"
             id="departureInput"
-            class="departure-input"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             placeholder="dd/mm/yyyy"
           />
-          <div id="departureList" class="departure-list"></div>
+          <div id="departureList" class="mt-2"></div>
           <input type="hidden" name="departureDates" id="departuresData" />
         </div>
         <div>
@@ -134,6 +142,7 @@
             name="capacity[max]"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             placeholder="20"
+            min="1"
           />
         </div>
       </div>
@@ -144,12 +153,15 @@
         >
 
         <div
-          class="upload-container"
+          class="upload-container border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
           id="uploadContainer"
           onclick="document.getElementById('tourImages').click()"
         >
-          <i class="fas fa-cloud-upload-alt"></i>
-          <span>Nhấn để chọn ảnh hoặc kéo thả vào đây</span>
+          <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+          <p class="text-gray-600">Nhấn để chọn ảnh hoặc kéo thả vào đây</p>
+          <p class="text-sm text-gray-500 mt-1">
+            Ảnh đầu tiên sẽ là ảnh đại diện
+          </p>
           <input
             type="file"
             name="images"
@@ -160,20 +172,20 @@
           />
         </div>
 
-        <div id="imagePreview" class="image-preview"></div>
+        <div id="imagePreview" class="mt-3"></div>
       </div>
 
-      <div class="flex justify-end space-x-3 pt-4">
+      <div class="flex justify-end space-x-3 pt-4 border-t">
         <button
           type="button"
           onclick="hideAddTourModal()"
-          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
         >
           Hủy
         </button>
         <button
           type="submit"
-          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
           Thêm tour
         </button>

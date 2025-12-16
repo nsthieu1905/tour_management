@@ -30,6 +30,7 @@ const getCurrentUser = async (req, res) => {
     });
   }
 };
+
 // [GET] /api/customers
 const findAll = async (req, res) => {
   try {
@@ -37,12 +38,17 @@ const findAll = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const segment = req.query.segment || "all";
+    const search = req.query.search || "";
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
 
+    // Lấy tất cả khách hàng
     let customers = await User.find({ role: "customer" })
       .select("-password")
       .lean()
       .exec();
 
+    // Tính toán thống kê và phân loại cho từng khách hàng
     const customersWithStats = await Promise.all(
       customers.map(async (customer) => {
         const bookings = await Booking.find({
@@ -89,12 +95,50 @@ const findAll = async (req, res) => {
       })
     );
 
-    // Lọc theo segment
+    // Áp dụng các bộ lọc
     let filteredCustomers = customersWithStats;
+
+    // Filter theo segment (phân khúc)
     if (segment !== "all") {
-      filteredCustomers = customersWithStats.filter(
+      filteredCustomers = filteredCustomers.filter(
         (c) => c.customerType === segment
       );
+    }
+
+    // Filter theo ngày (ngày cuối cùng đặt tour trong khoảng startDate - endDate)
+    if (startDate || endDate) {
+      filteredCustomers = filteredCustomers.filter((c) => {
+        if (!c.lastBookingDate) return false;
+
+        const lastBooking = new Date(c.lastBookingDate);
+
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999); // Bao gồm cả ngày end
+          return lastBooking >= start && lastBooking <= end;
+        } else if (startDate) {
+          const start = new Date(startDate);
+          return lastBooking >= start;
+        } else if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          return lastBooking <= end;
+        }
+
+        return true;
+      });
+    }
+
+    // Filter theo tìm kiếm (tên, email, số điện thoại)
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredCustomers = filteredCustomers.filter((c) => {
+        const fullNameMatch = c.fullName?.toLowerCase().includes(searchLower);
+        const emailMatch = c.email?.toLowerCase().includes(searchLower);
+        const phoneMatch = c.phone?.toLowerCase().includes(searchLower);
+        return fullNameMatch || emailMatch || phoneMatch;
+      });
     }
 
     // Sắp xếp theo chi tiêu giảm dần

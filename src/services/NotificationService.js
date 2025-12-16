@@ -56,7 +56,10 @@ class NotificationService {
         queryUserId = new mongoose.Types.ObjectId(userId);
       }
 
-      const query = { userId: queryUserId };
+      // Lấy cả user notifications + promotion notifications
+      const query = {
+        $or: [{ userId: queryUserId }, { recipientType: "promotion" }],
+      };
       const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
         .limit(limit);
@@ -125,6 +128,55 @@ class NotificationService {
   static broadcastToUser(userId, notification) {
     if (global.io) {
       global.io.to(`user:${userId}`).emit("notification:new", notification);
+    }
+  }
+
+  static async createAndBroadcastPromotion(notificationData) {
+    try {
+      // Lưu vào DB (không có userId - broadcast cho tất cả)
+      const notification = new Notification({
+        recipientType: "promotion",
+        type: notificationData.type || "promotion",
+        title: notificationData.title,
+        message: notificationData.message,
+        icon: notificationData.icon || "fa-tag",
+        link: notificationData.link || "/",
+        data: notificationData.data || {},
+        priority: notificationData.priority || "high",
+      });
+      await notification.save();
+      console.log("[NotificationService] Promotion saved:", notification._id);
+
+      // Broadcast qua socket realtime (gồm cả iconBg)
+      const broadcastData = {
+        id: notification._id,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        icon: notification.icon,
+        iconBg: notificationData.iconBg || "bg-blue-100",
+        link: notification.link,
+        data: notification.data,
+        priority: notification.priority,
+        read: false,
+      };
+
+      if (global.io) {
+        global.io
+          .to("client-notifications")
+          .emit("notification:new", broadcastData);
+        console.log("[NotificationService] Promotion broadcasted to clients");
+      } else {
+        console.warn("[NotificationService] global.io not available");
+      }
+
+      return notification;
+    } catch (error) {
+      console.error(
+        "[NotificationService] Error creating promotion notification:",
+        error
+      );
+      throw error;
     }
   }
 

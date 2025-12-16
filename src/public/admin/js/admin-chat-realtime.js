@@ -268,8 +268,8 @@ class AdminRealtimeMessaging {
     if (this.conversations.length === 0) {
       this.conversationsList.innerHTML = `
         <div class="p-4 text-center text-gray-400">
-          <i class="fas fa-inbox text-2xl mb-2"></i>
-          <p>Không có cuộc hội thoại</p>
+          <i class="fas fa-search text-3xl mb-3 block"></i>
+          <p>Không có cuộc hội thoại nào</p>
         </div>
       `;
       return;

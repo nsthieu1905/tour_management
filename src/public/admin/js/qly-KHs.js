@@ -5,7 +5,8 @@ let currentPage = 1;
 let pageSize = 10;
 let currentSegment = "all";
 let currentSearch = "";
-let currentDateFilter = "";
+let startDate = "";
+let endDate = "";
 let totalCustomers = 0;
 
 // ===========================
@@ -247,9 +248,11 @@ const loadStats = async () => {
 const loadCustomers = async () => {
   try {
     let url = `/api/users/qly-khach-hang?page=${currentPage}&limit=${pageSize}`;
-    if (currentSegment !== "all") url += `&segment=${currentSegment}`;
+    if (currentSegment !== "all")
+      url += `&segment=${encodeURIComponent(currentSegment)}`;
     if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
-    if (currentDateFilter) url += `&date=${currentDateFilter}`;
+    if (startDate) url += `&startDate=${encodeURIComponent(startDate)}`;
+    if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`;
 
     const response = await fetch(url);
     const result = await response.json();
@@ -275,7 +278,7 @@ const renderCustomers = (customers) => {
     customerList.innerHTML = `
       <tr>
         <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-          <i class="fas fa-inbox text-3xl mb-2 block"></i>
+          <i class="fas fa-search text-3xl mb-3 block"></i>
           <p>Không có khách hàng nào</p>
         </td>
       </tr>`;
@@ -285,9 +288,7 @@ const renderCustomers = (customers) => {
   customerList.innerHTML = customers
     .map(
       (c, i) => `
-    <tr class="hover:bg-gray-50 cursor-pointer transition" onclick="window.viewCustomerDetail('${
-      c._id
-    }')">
+    <tr class="hover:bg-gray-50 cursor-pointer transition">
       <td class="px-6 py-4 whitespace-nowrap">
         <div class="flex items-center">
           <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
@@ -311,9 +312,9 @@ const renderCustomers = (customers) => {
       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${formatPrice(
         c.totalSpent
       )} đ</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(
-        c.lastBookingDate
-      )}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+        c.lastBookingDate ? formatDate(c.lastBookingDate) : "Chưa có"
+      }</td>
       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <button 
           class="text-blue-600 hover:text-blue-900" 
@@ -341,7 +342,6 @@ window.goToPage = async function (page) {
   currentPage = page;
   await loadCustomers();
 
-  // Scroll to top
   document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
 };
 
@@ -351,7 +351,6 @@ function updatePagination(pagination) {
   const start = Math.max((pagination.page - 1) * pagination.limit + 1, 0);
   const end = Math.min(pagination.page * pagination.limit, pagination.total);
 
-  // Cập nhật text hiển thị
   const recordStart = document.getElementById("recordStart");
   const recordEnd = document.getElementById("recordEnd");
   const recordTotal = document.getElementById("recordTotal");
@@ -360,13 +359,11 @@ function updatePagination(pagination) {
   if (recordEnd) recordEnd.textContent = end;
   if (recordTotal) recordTotal.textContent = pagination.total;
 
-  // Cập nhật pagination nav
   const paginationNav = document.getElementById("paginationNav");
   if (!paginationNav) return;
 
   let html = "";
 
-  // Nút Previous
   html += `
     <button
       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
@@ -379,7 +376,6 @@ function updatePagination(pagination) {
     </button>
   `;
 
-  // Các số trang (hiển thị tối đa 5 trang)
   const maxPages = 5;
   let startPage = Math.max(1, pagination.page - Math.floor(maxPages / 2));
   let endPage = Math.min(pagination.pages, startPage + maxPages - 1);
@@ -437,7 +433,6 @@ function updatePagination(pagination) {
     `;
   }
 
-  // Nút Next
   html += `
     <button
       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
@@ -464,20 +459,37 @@ const addEventListenerSafe = (id, event, handler) => {
   if (el) el.addEventListener(event, handler);
 };
 
+// Filter theo phân khúc
 addEventListenerSafe("segmentFilter", "change", (e) => {
   currentSegment = e.target.value;
   currentPage = 1;
   loadCustomers();
 });
 
-addEventListenerSafe("dateFilter", "change", (e) => {
-  currentDateFilter = e.target.value;
+// Filter theo ngày bắt đầu
+addEventListenerSafe("filterStartDate", "change", (e) => {
+  startDate = e.target.value;
   currentPage = 1;
   loadCustomers();
 });
 
+// Filter theo ngày kết thúc
+addEventListenerSafe("filterEndDate", "change", (e) => {
+  endDate = e.target.value;
+  currentPage = 1;
+  loadCustomers();
+});
+
+// Search
 addEventListenerSafe("searchInput", "input", (e) => {
-  currentSearch = e.target.value;
+  currentSearch = e.target.value.trim();
+  currentPage = 1;
+  loadCustomers();
+});
+
+// Page size selector
+addEventListenerSafe("pageSizeSelect", "change", (e) => {
+  pageSize = parseInt(e.target.value);
   currentPage = 1;
   loadCustomers();
 });

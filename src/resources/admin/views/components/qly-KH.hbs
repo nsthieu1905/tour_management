@@ -7,7 +7,6 @@
           <h2 class="text-3xl font-bold text-gray-900 mb-2">
             Quản lý Khách hàng
           </h2>
-          <p class="text-gray-600">Theo dõi thông tin và hành vi khách hàng</p>
         </div>
         <button
           class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
@@ -77,7 +76,7 @@
 
       <!-- Customer Filters -->
       <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
               >Phân khúc khách hàng</label
@@ -96,13 +95,24 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Lần cuối đặt</label
+              >Từ ngày</label
             >
             <input
               type="date"
-              id="dateFilter"
-              placeholder="Lọc theo lần cuối đặt"
+              id="filterStartDate"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              placeholder="Từ ngày"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Đến ngày</label
+            >
+            <input
+              type="date"
+              id="filterEndDate"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              placeholder="Đến ngày"
             />
           </div>
 
