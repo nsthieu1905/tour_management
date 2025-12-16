@@ -8,6 +8,7 @@ const Notification = require("./Notification");
 const Session = require("./Session");
 const Tour = require("./Tour");
 const User = require("./User");
+const Feedback = require("./Feedback");
 
 module.exports = {
   Booking,
@@ -20,4 +21,5 @@ module.exports = {
   Session,
   Tour,
   User,
+  Feedback,
 };

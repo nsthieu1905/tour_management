@@ -1,9 +1,13 @@
+import { apiGet, apiPost } from "../../utils/api.js";
+import { Notification } from "../../utils/modal.js";
+
 let bookings = [];
 let filteredBookings = [];
+let currentFeedback = { bookingId: null, rating: 0 };
 
 async function loadBookings() {
   try {
-    const response = await fetch("/api/bookings/user/bookings");
+    const response = await apiGet("/api/bookings/user/bookings");
     const result = await response.json();
 
     if (!result.success) {
@@ -42,12 +46,21 @@ function displayBookings() {
       window.location.href = `/booking-details/${bookingId}`;
     });
   });
+  // Review buttons
+  document.querySelectorAll("[data-review-id]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const id = e.currentTarget.getAttribute("data-review-id");
+      openFeedbackModal(id);
+    });
+  });
 }
 
 function createBookingCard(booking) {
   const tour = booking.tourId;
   const statusBadge = getStatusBadge(booking.bookingStatus);
   const paymentBadge = getPaymentStatusBadge(booking.paymentStatus);
+  const canReview = booking.bookingStatus === "completed" && !booking.reviewId;
+  const canViewReview = Boolean(booking.reviewId && tour.slug);
 
   return `
         <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -107,6 +120,17 @@ function createBookingCard(booking) {
               >
                 <i class="bi bi-arrow-repeat mr-2"></i>Đặt lại
               </a>
+              ${
+                canReview
+                  ? `<button class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors" data-review-id="${booking._id}">
+                      <i class="fas fa-star mr-2"></i>Đánh giá
+                     </button>`
+                  : canViewReview
+                  ? `<a class="flex-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 rounded-lg text-center transition-colors" href="/tours/${tour.slug}/feedbacks">
+                       <i class=\"fas fa-comment-dots mr-2\"></i>Xem nhận xét
+                     </a>`
+                  : ""
+              }
             </div>
           </div>
         </div>
@@ -184,4 +208,73 @@ window.addEventListener("DOMContentLoaded", () => {
   loadBookings();
   document.getElementById("loading").classList.add("hidden");
   document.getElementById("content").classList.remove("hidden");
+});
+
+// ==========================
+// Feedback modal handlers
+// ==========================
+function openFeedbackModal(bookingId) {
+  currentFeedback = { bookingId, rating: 0 };
+  const modal = document.getElementById("feedbackModal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  // reset
+  setStarVisual(0);
+  document.getElementById("fb-comment").value = "";
+}
+
+function closeFeedbackModal() {
+  const modal = document.getElementById("feedbackModal");
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+
+function setStarVisual(n) {
+  const stars = document.querySelectorAll("#fb-stars [data-star]");
+  stars.forEach((i) => {
+    const idx = Number(i.getAttribute("data-star"));
+    i.classList.toggle("text-yellow-400", idx <= n);
+    i.classList.toggle("text-gray-300", idx > n);
+  });
+  document.getElementById("fb-stars-text").textContent = n > 0 ? `${n}/5` : "Chọn số sao";
+}
+
+document.getElementById("fb-stars").addEventListener("mousemove", (e) => {
+  const t = e.target.closest("[data-star]");
+  if (!t) return;
+  setStarVisual(Number(t.getAttribute("data-star")));
+});
+document.getElementById("fb-stars").addEventListener("click", (e) => {
+  const t = e.target.closest("[data-star]");
+  if (!t) return;
+  currentFeedback.rating = Number(t.getAttribute("data-star"));
+  setStarVisual(currentFeedback.rating);
+});
+document.getElementById("fb-close").addEventListener("click", closeFeedbackModal);
+document.getElementById("fb-cancel").addEventListener("click", closeFeedbackModal);
+
+document.getElementById("fb-submit").addEventListener("click", async () => {
+  if (!currentFeedback.bookingId || !currentFeedback.rating) {
+    Notification.error("Vui lòng chọn số sao");
+    return;
+  }
+  const body = JSON.stringify({
+    bookingId: currentFeedback.bookingId,
+    rating: currentFeedback.rating,
+    comment: document.getElementById("fb-comment").value.trim(),
+  });
+  try {
+    const res = await apiPost("/api/feedbacks", body);
+    const result = await res.json();
+    if (!res.ok) {
+      Notification.error(result.message || "Gửi đánh giá thất bại");
+      return;
+    }
+    Notification.success("Cảm ơn bạn đã đánh giá!");
+    closeFeedbackModal();
+    loadBookings();
+  } catch (err) {
+    console.error(err);
+    Notification.error("Có lỗi xảy ra");
+  }
 });

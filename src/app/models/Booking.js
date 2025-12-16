@@ -95,6 +95,8 @@ const bookingSchema = new mongoose.Schema(
         paidAt: Date,
       },
     ],
+    // Feedback link
+    reviewId: { type: mongoose.Schema.Types.ObjectId, ref: "Feedback" },
   },
   { timestamps: true }
 );

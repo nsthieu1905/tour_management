@@ -1,3 +1,36 @@
+// Proportional star strip inside booking card
+.stars-wrap {
+  position: relative;
+  width: 100px;
+  height: 20px;
+}
+.stars-row {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 0;
+  line-height: 1;
+  font-size: 20px;
+  pointer-events: none;
+}
+.stars-row--base {
+  position: absolute;
+  color: #d1d5db; // tailwind gray-300
+}
+.stars-row--fill {
+  position: absolute;
+  overflow: hidden;
+  width: calc((var(--ratio, 0) / 5) * 100%);
+  color: #fbbf24; // tailwind yellow-400
+}
+
+// fix micro-gaps between icons
+.stars-row i {
+  width: 20px;
+  display: block;
+  text-align: center;
+  line-height: 20px;
+}
 body {
   box-sizing: border-box;
   font-family: "Inter", sans-serif;

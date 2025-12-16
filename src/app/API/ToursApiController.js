@@ -22,6 +22,23 @@ const findAll = async (req, res) => {
   }
 };
 
+// [GET] /tours/:slug/feedbacks
+const tourFeedbacks = async (req, res) => {
+  try {
+    const tour = await Tour.findOne({ slug: req.params.slug }).lean();
+    if (!tour) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy tour" });
+    }
+    return res.render("tour-feedbacks", {
+      tour,
+      bodyClass: "bg-gray-50",
+    });
+  } catch (error) {
+    console.error("Lỗi render feedbacks:", error);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
 // [GET] api/tours/trash
 const findTrash = async (req, res) => {
   try {
@@ -576,4 +593,5 @@ module.exports = {
   deleteOne,
   restore,
   tourDetail,
+  tourFeedbacks,
 };

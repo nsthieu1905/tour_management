@@ -16,6 +16,7 @@ const homeRoutes = require("./client/home");
 const clientAuthRoutes = require("./client/auth");
 const favoriteRoutes = require("./client/favorites");
 const bookingRoutes = require("./client/bookings");
+const feedbackRoutes = require("./client/feedbacks");
 
 // Real-time
 const notificationRoutes = require("./realtime/notifications");
@@ -41,6 +42,7 @@ function route(app) {
   app.use("/client/auth", clientAuthRoutes);
   app.use("/api/favorites", favoriteRoutes);
   app.use("/api/bookings", bookingRoutes);
+  app.use("/api/feedbacks", feedbackRoutes);
   app.use("/", homeRoutes);
 }
 
