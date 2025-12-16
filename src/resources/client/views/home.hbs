@@ -78,7 +78,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {{#each tours}}
           <div
-            class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover"
+            class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover tour-card"
           >
             <div class="relative">
               <!-- Tour Image -->
@@ -110,28 +110,30 @@
                 <h3 class="text-xl font-semibold text-gray-900">{{name}}</h3>
               </div>
 
-              <p class="text-gray-600 mb-4 text-sm">
-                {{duration.days}} ngày {{duration.nights}} đêm
-              </p>
+              <div class="tour-card__footer">
+                <p class="text-gray-600 mb-4 text-sm">
+                  {{duration.days}} ngày {{duration.nights}} đêm
+                </p>
 
-              <div class="flex items-center justify-between mb-4">
-                <div class="text-2xl font-bold text-indigo-600">
-                  {{formatPrice price}} VND
+                <div class="flex items-end justify-between mb-4 meta-row">
+                  <div class="text-2xl font-bold text-indigo-600">
+                    {{formatPrice price}} VND
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-star text-yellow-400"></i>
+                    <span class="ml-1 text-sm text-gray-600"
+                      >{{rating.average}} ({{rating.count}})</span
+                    >
+                  </div>
                 </div>
-                <div class="flex items-center">
-                  <i class="fas fa-star text-yellow-400"></i>
-                  <span class="ml-1 text-sm text-gray-600"
-                    >{{rating.average}} ({{rating.count}})</span
-                  >
-                </div>
+
+                <button
+                  class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+                  onclick="window.location.href='/tours/{{slug}}'"
+                >
+                  Xem chi tiết
+                </button>
               </div>
-
-              <button
-                class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
-                onclick="window.location.href='/tours/{{slug}}'"
-              >
-                Xem chi tiết
-              </button>
             </div>
           </div>
           {{/each}}

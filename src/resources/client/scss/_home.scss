@@ -121,3 +121,50 @@
   right: 2rem;
   z-index: 100;
 }
+
+// =============================
+// TOUR CARD LAYOUT (CLIENT)
+// =============================
+.tour-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tour-card .p-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+}
+
+// Khối footer (thời gian, giá, đánh giá, nút) bám đáy
+.tour-card .tour-card__footer {
+  margin-top: auto;
+}
+
+// Ảnh nhất quán
+.tour-card .h-48 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Hàng meta (giá, thời lượng, đánh giá)
+.tour-card .meta-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  color: #4b5563; // text-gray-600
+  font-size: 0.875rem; // text-sm
+}
+
+// Loại bỏ khoảng cách gây lệch hàng
+.tour-card .meta-row > * {
+  margin: 0;
+}
+
+// Đồng bộ chiều cao dòng để căn đáy đẹp hơn
+.tour-card .meta-row .text-2xl {
+  line-height: 1.1;
+}

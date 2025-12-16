@@ -185,54 +185,53 @@ function renderTours(tours) {
         <div class="p-6">
           <div class="mb-3">
             <h3 class="text-xl font-bold text-gray-900">${tour.name}</h3>
+          </div>
+          <div class="tour-card__footer">
             <p class="text-sm text-gray-600">
               ${tour.duration.days} ngày ${tour.duration.nights} đêm
             </p>
-          </div>
-          <div class="flex justify-between items-center mb-4">
-            <span class="text-2xl font-bold text-blue-600">
-              ${formatPrice(tour.price)} VND
-            </span>
-            <div class="text-right">
-              <p class="text-sm text-gray-600">Còn lại</p>
-              <p class="text-lg font-semibold text-orange-600">
-                ${sub(tour.capacity.max, tour.capacity.current)}/${
-        tour.capacity.max
-      } chỗ
-              </p>
+            <div class="flex justify-between items-end mb-4 meta-price-row">
+              <span class="text-2xl font-bold text-blue-600">
+                ${formatPrice(tour.price)} VND
+              </span>
+              <div class="text-right">
+                <p class="text-sm text-gray-600">Còn lại</p>
+                <p class="text-lg font-semibold text-orange-600">
+                  ${sub(tour.capacity.max, tour.capacity.current)}/${tour.capacity.max} chỗ
+                </p>
+              </div>
             </div>
-          </div>
-          <div
-            class="flex items-center justify-between text-sm text-gray-600 mb-4"
-          >
-            <span>
-              <i class="fas fa-calendar mr-1"></i>${formatDate(
-                tour.departureDates
-              )}
-            </span>
-            <span>
-              <i class="fas fa-users mr-1 text-blue-600"></i
-              >${tour.capacity.current}
-            </span>
-            <span>
-              <i class="fas fa-star mr-1 text-yellow-400"></i
-              >${tour.rating.average} (${tour.rating.count})
-            </span>
-          </div>
-
-          <div class="flex space-x-2">
-            <button
-              data-edit-id="${tour._id}"
-              class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            <div
+              class="flex items-center justify-between text-sm text-gray-600 mb-4"
             >
-              <i class="fas fa-edit mr-1"></i>Chỉnh sửa
-            </button>
-            <button
-              class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
-              onclick="window.open('/tours/${tour.slug}', '_blank')"
-            >
-              <i class="fas fa-eye mr-1"></i>Xem chi tiết
-            </button>
+              <span>
+                <i class="fas fa-calendar mr-1"></i>${formatDate(
+                  tour.departureDates
+                )}
+              </span>
+              <span>
+                <i class="fas fa-users mr-1 text-blue-600"></i
+                >${tour.capacity.current}
+              </span>
+              <span>
+                <i class="fas fa-star mr-1 text-yellow-400"></i
+                >${tour.rating.average} (${tour.rating.count})
+              </span>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                data-edit-id="${tour._id}"
+                class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <i class="fas fa-edit mr-1"></i>Chỉnh sửa
+              </button>
+              <button
+                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                onclick="window.open('/tours/${tour.slug}', '_blank')"
+              >
+                <i class="fas fa-eye mr-1"></i>Xem chi tiết
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -849,52 +848,54 @@ async function getToursTrash() {
           <div class="p-6">
             <div class="mb-3">
               <h3 class="text-xl font-bold text-gray-900">${tour.name}</h3>
+            </div>
+            <div class="tour-card__footer">
               <p class="text-sm text-gray-600">
                 ${tour.duration.days} ngày ${tour.duration.nights} đêm
               </p>
-            </div>
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-2xl font-bold text-blue-600">
-                ${formatPrice(tour.price)} VND
-              </span>
-              <div class="text-right">
-                <p class="text-sm text-gray-600">ngày xoá</p>
-                <p class="text-lg font-semibold text-gray-600">
-                  <span>
-                <i class="fas fa-calendar mr-1"></i>${formatDate(
-                  tour.deletedAt
-                )}
-              </span>
-                </p>
+              <div class="flex justify-between items-end mb-4 meta-price-row">
+                <span class="text-2xl font-bold text-blue-600">
+                  ${formatPrice(tour.price)} VND
+                </span>
+                <div class="text-right">
+                  <p class="text-sm text-gray-600">ngày xoá</p>
+                  <p class="text-lg font-semibold text-gray-600">
+                    <span>
+                  <i class="fas fa-calendar mr-1"></i>${formatDate(
+                    tour.deletedAt
+                  )}
+                </span>
+                  </p>
+                </div>
               </div>
-            </div>
-            <div
-              class="flex items-center justify-between text-sm text-gray-600 mb-4"
-            >
-              <span></span>
-              <span>
-                <i class="fas fa-users mr-1 text-blue-600"></i
-                >${tour.capacity.current}
-              </span>
-              <span>
-                <i class="fas fa-star mr-1 text-yellow-400"></i
-                >${tour.rating.average} (${tour.rating.count})
-              </span>
-            </div>
+              <div
+                class="flex items-center justify-between text-sm text-gray-600 mb-4"
+              >
+                <span></span>
+                <span>
+                  <i class="fas fa-users mr-1 text-blue-600"></i
+                  >${tour.capacity.current}
+                </span>
+                <span>
+                  <i class="fas fa-star mr-1 text-yellow-400"></i
+                  >${tour.rating.average} (${tour.rating.count})
+                </span>
+              </div>
 
-            <div class="flex space-x-2">
-              <button
-                data-restore-id="${tour._id}"
-                class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center"
-              >
-                <i class="fa-solid fa-rotate-left mr-1"></i>Khôi phục
-              </button>
-              <button
-                data-trash-id="${tour._id}"
-                class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
-              >
-                <i class="fa-solid fa-trash-can mr-1"></i>Xoá vĩnh viễn
-              </button>
+              <div class="flex space-x-2">
+                <button
+                  data-restore-id="${tour._id}"
+                  class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-rotate-left mr-1"></i>Khôi phục
+                </button>
+                <button
+                  data-trash-id="${tour._id}"
+                  class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-trash-can mr-1"></i>Xoá vĩnh viễn
+                </button>
+              </div>
             </div>
           </div>
         </div>
