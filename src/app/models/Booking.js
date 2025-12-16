@@ -21,17 +21,7 @@ const bookingSchema = new mongoose.Schema(
       name: String,
       email: String,
       phone: String,
-      address: String,
     },
-    participants: [
-      {
-        name: String,
-        age: Number,
-        gender: { type: String, enum: ["male", "female", "other"] },
-        idNumber: String,
-        specialRequirements: String,
-      },
-    ],
     numberOfPeople: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
     couponId: {
@@ -39,8 +29,6 @@ const bookingSchema = new mongoose.Schema(
       ref: "Khuyen_mai",
       required: false,
     },
-    depositAmount: { type: Number, default: 0 },
-    remainingAmount: Number,
     paymentStatus: {
       type: String,
       enum: ["pending", "partial", "paid", "refunded"],
@@ -68,7 +56,6 @@ const bookingSchema = new mongoose.Schema(
       type: Date,
       index: { expires: 0 },
     },
-    specialRequests: String,
 
     // Hoàn tiền fields
     refundInfo: {
@@ -98,6 +85,7 @@ const bookingSchema = new mongoose.Schema(
     cancelledAt: Date,
     confirmedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     confirmedAt: Date,
+    completedAt: Date,
     payments: [
       {
         amount: Number,
@@ -107,7 +95,6 @@ const bookingSchema = new mongoose.Schema(
         paidAt: Date,
       },
     ],
-    notes: String,
   },
   { timestamps: true }
 );

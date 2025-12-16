@@ -34,7 +34,6 @@ const conversationSchema = new mongoose.Schema(
       default: "active",
     },
     subject: String,
-    tags: [String],
     priority: {
       type: String,
       enum: ["low", "medium", "high", "urgent"],
@@ -45,7 +44,6 @@ const conversationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    notes: String,
   },
   { timestamps: true }
 );

@@ -1,3 +1,6 @@
+import { Modal, Notification } from "../../utils/modal.js";
+import { apiGet } from "../../utils/api.js";
+
 // ============================================
 // BIẾN TOÀN CỤC
 // ============================================
@@ -15,7 +18,7 @@ function toggleCompare(button, tourId) {
   const isSelected = checkbox.checked;
 
   if (!isSelected && selectedTours.length >= 3) {
-    alert("Chỉ có thể so sánh tối đa 3 tours");
+    Notification.error("Chỉ có thể so sánh tối đa 3 tours");
     return;
   }
 
@@ -57,65 +60,85 @@ function updateCompareButton() {
 /**
  * Hiển thị modal so sánh tour
  */
-function showComparison() {
+async function showComparison() {
   const modal = document.getElementById("comparisonModal");
   const content = document.getElementById("comparisonContent");
 
   if (!modal || !content) return;
 
-  // Dữ liệu mẫu cho các tour
-  const tourData = {
-    sapa: {
-      name: "Tour Sapa 3N2Đ",
-      price: "2.890.000đ",
-      rating: "4.8",
-      carbon: "2.1 tấn",
-    },
-    phuquoc: {
-      name: "Phú Quốc 4N3Đ",
-      price: "4.590.000đ",
-      rating: "4.9",
-      carbon: "3.5 tấn",
-    },
-    japan: {
-      name: "Nhật Bản 6N5Đ",
-      price: "28.900.000đ",
-      rating: "4.7",
-      carbon: "8.2 tấn",
-    },
-  };
+  // Load dữ liệu tours từ API
+  try {
+    const responses = await Promise.all(
+      selectedTours.map((id) => apiGet(`/api/tours/${id}`))
+    );
+    const payloads = await Promise.all(responses.map((r) => r.json()));
+    const tours = payloads
+      .map((p) => (p && p.success ? p.data : null))
+      .filter(Boolean);
 
-  content.innerHTML = "";
+    if (tours.length < 2) {
+      Notification.error("Vui lòng chọn ít nhất 2 tour hợp lệ để so sánh.");
+      return;
+    }
 
-  selectedTours.forEach((tourId) => {
-    const tour = tourData[tourId];
-    if (tour) {
-      content.innerHTML += `
-        <div class="border rounded-lg p-4">
-          <h3 class="font-bold text-lg mb-2">${tour.name}</h3>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span>Giá:</span>
-              <span class="font-semibold text-indigo-600">${tour.price}</span>
+    content.innerHTML = tours
+      .map((t) => {
+        const priceDisplay =
+          typeof t.price === "number"
+            ? t.price.toLocaleString("vi-VN") + " VND"
+            : "-";
+        const img = t.thumbnail || (t.images && t.images[0]) || "/images/no-image.png";
+        const ratingAvg = t?.rating?.average ?? 0;
+        const ratingCount = t?.rating?.count ?? 0;
+        const duration = t?.duration
+          ? `${t.duration.days || 0} ngày ${t.duration.nights || 0} đêm`
+          : "-";
+        const destination = t?.destination || "-";
+        const tourType = t?.tourType || "-";
+
+        return `
+          <div class="border rounded-xl overflow-hidden bg-white shadow-sm">
+            <div class="h-40 bg-gray-100 overflow-hidden">
+              <img src="${img}" alt="${t.name}" class="w-full h-full object-cover" />
             </div>
-            <div class="flex justify-between">
-              <span>Đánh giá:</span>
-              <span class="font-semibold">${tour.rating}/5</span>
-            </div>
-            <div class="flex justify-between">
-              <span>Carbon:</span>
-              <span class="font-semibold">${tour.carbon}</span>
+            <div class="p-4">
+              <h3 class="font-bold text-lg mb-2 line-clamp-2">${t.name}</h3>
+              <div class="space-y-2 text-sm text-gray-700">
+                <div class="flex justify-between">
+                  <span>Giá</span>
+                  <span class="font-semibold text-indigo-600">${priceDisplay}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Thời lượng</span>
+                  <span>${duration}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Điểm đến</span>
+                  <span>${destination}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Hạng tour</span>
+                  <span>${tourType}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Đánh giá</span>
+                  <span><i class="fas fa-star text-yellow-400"></i> ${ratingAvg} (${ratingCount})</span>
+                </div>
+              </div>
+              <button class="w-full mt-4 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors" onclick="window.location.href='/tours/${t.slug}'">
+                Xem chi tiết
+              </button>
             </div>
           </div>
-          <button class="w-full mt-4 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-            Chọn tour này
-          </button>
-        </div>
-      `;
-    }
-  });
+        `;
+      })
+      .join("");
 
-  modal.classList.add("active");
+    modal.classList.add("active");
+  } catch (err) {
+    console.error("Lỗi tải dữ liệu so sánh:", err);
+    Notification.error("Không thể tải dữ liệu tour để so sánh. Vui lòng thử lại.");
+  }
 }
 
 /**
@@ -178,7 +201,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (compareBtn) {
     compareBtn.addEventListener("click", function () {
       if (selectedTours.length < 2) {
-        alert("Vui lòng chọn ít nhất 2 tours để so sánh");
+        Notification.error("Vui lòng chọn ít nhất 2 tours để so sánh");
         return;
       }
       showComparison();
@@ -191,3 +214,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // KHÔNG XỬ LÝ FLOATING BUTTONS Ở ĐÂY
   // Đã được xử lý trong floating-buttons.js
 });
+
+// Expose functions for inline onclick handlers
+window.toggleCompare = toggleCompare;
+window.showComparison = showComparison;
+window.closeComparison = closeComparison;

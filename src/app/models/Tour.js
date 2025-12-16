@@ -29,7 +29,6 @@ const tourSchema = new Schema(
       type: String,
       required: true,
     },
-    detailedDescription: String,
     duration: {
       days: {
         type: Number,
@@ -48,19 +47,12 @@ const tourSchema = new Schema(
       type: String,
       enum: ["Tiết kiệm", "Tiêu chuẩn", "Giá tốt", "Cao cấp"],
     },
-    discountPrice: Number,
-    promotionPrice: {
-      type: Number,
-      description: "Giá sau khi áp dụng promotion theo thời gian (nếu có)",
-    },
+    // discountPrice, promotionPrice: đã bỏ vì không dùng
     images: {
       type: [String],
       required: true,
     },
-    category: {
-      type: String,
-      enum: ["beach", "mountain", "city", "cultural", "adventure", "relax"],
-    },
+    // category: đã bỏ vì không dùng
     schedule: [
       {
         day: Number,
@@ -99,8 +91,8 @@ const tourSchema = new Schema(
         },
       },
     ],
-    included: [String],
-    excluded: [String],
+    includes: [String],
+    excludes: [String],
     capacity: {
       max: {
         type: Number,
@@ -112,11 +104,7 @@ const tourSchema = new Schema(
       },
       available: Number,
     },
-    // departureDate: {
-    //   type: Date,
-    //   required: true,
-    // },
-    returnDate: Date,
+    // returnDate: đã bỏ vì không dùng
     departureDates: [
       {
         date: {
@@ -145,40 +133,13 @@ const tourSchema = new Schema(
       },
     },
     highlights: [String],
-    requirements: {
-      minAge: {
-        type: Number,
-        default: 0,
-      },
-      maxAge: Number,
-      fitnessLevel: {
-        type: String,
-        enum: ["easy", "moderate", "challenging", "difficult"],
-        default: "easy",
-      },
-      specialRequirements: [String],
-    },
-    partnerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Partner",
-    },
-    guideId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    // requirements, partnerId, guideId, viewCount: đã bỏ vì không dùng
     tags: [String],
-    viewCount: {
-      type: Number,
-      default: 0,
-    },
     bookingCount: {
       type: Number,
       default: 0,
     },
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    // createdBy: đã bỏ vì không dùng
   },
   { timestamps: true }
 );

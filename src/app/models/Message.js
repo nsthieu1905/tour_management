@@ -27,13 +27,6 @@ const messageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    attachments: [
-      {
-        fileName: String,
-        fileUrl: String,
-        fileType: String,
-      },
-    ],
     read: {
       type: Boolean,
       default: false,

@@ -1,4 +1,4 @@
-class AdminRealtimeMessaging {
+class RealtimeMessaging {
   constructor() {
     this.socket = null;
     this.adminId = null;
@@ -753,5 +753,5 @@ class AdminRealtimeMessaging {
 
 // Khởi tạo khi DOM đã sẵn sàng
 document.addEventListener("DOMContentLoaded", () => {
-  window.adminChat = new AdminRealtimeMessaging();
+  window.adminChat = new RealtimeMessaging();
 });
