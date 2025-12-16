@@ -1,21 +1,9 @@
-// ===========================
-// GLOBAL CHART CONFIG
-// ===========================
-
-Chart.defaults.animation = false;
-Chart.defaults.animations = false;
-Chart.defaults.transitions.active.animation.duration = 0;
-
-// ===========================
-// COLOR PALETTE
-// ===========================
-
 const CHART_COLORS = {
   primary: [
     "#8B5CF6",
     "#EC4899",
     "#F59E0B",
-    "#15C739",
+    "#10B981",
     "#06B6D4",
     "#3B82F6",
     "#EF4444",
@@ -26,21 +14,15 @@ const CHART_COLORS = {
     refunded: "#FACC15",
     completed: "#1D4ED8",
   },
+  revenue: "#8B5CF6",
+  revenueLight: "rgba(139, 92, 246, 0.1)",
 };
-
-// ===========================
-// CHART INSTANCES
-// ===========================
 
 const chartInstances = {
   seasonalTrends: null,
   tourType: null,
   bookingStatus: null,
 };
-
-// ===========================
-// MAIN INIT
-// ===========================
 
 function initStatisticsCharts() {
   const data = window.statisticsData;
@@ -56,10 +38,6 @@ function initStatisticsCharts() {
   setupResizeListener();
   handleTimeRangeChange();
 }
-
-// ===========================
-// KPI DISPLAY
-// ===========================
 
 function displayKPIs(kpis) {
   if (!kpis) return;
@@ -81,10 +59,6 @@ function displayKPIs(kpis) {
   setText("repeatRate", `${kpis.repeatRate}%`);
 }
 
-// ===========================
-// CHART: SEASONAL TRENDS (BAR)
-// ===========================
-
 function initSeasonalTrendsChart(seasonalData) {
   const ctx = document.getElementById("bookingTrendsChart");
   if (!ctx || !seasonalData) return;
@@ -97,7 +71,8 @@ function initSeasonalTrendsChart(seasonalData) {
       labels: seasonalData.labels,
       datasets: [
         {
-          data: seasonalData.percentages,
+          label: "Phần trăm đặt tour",
+          data: seasonalData.labels.map(() => 0),
           backgroundColor: CHART_COLORS.primary.slice(0, 4),
           borderRadius: 8,
         },
@@ -106,12 +81,29 @@ function initSeasonalTrendsChart(seasonalData) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false,
+      animation: {
+        delay: (context) => {
+          let delay = 0;
+          if (context.type === "data" && context.mode === "default") {
+            delay = context.dataIndex * 150;
+          }
+          return delay;
+        },
+        duration: 800,
+        easing: "easeInOutQuart",
+      },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: "top",
+        },
         tooltip: {
+          enabled: true,
           callbacks: {
-            label(ctx) {
+            title: (context) => {
+              return context[0].label;
+            },
+            label: (ctx) => {
               const value = ctx.parsed.y;
               const count = seasonalData.tourCounts?.[ctx.dataIndex] ?? 0;
               return [`${value}%`, `${count} tour`];
@@ -134,11 +126,11 @@ function initSeasonalTrendsChart(seasonalData) {
       },
     },
   });
-}
 
-// ===========================
-// CHART: TOUR TYPE (DOUGHNUT)
-// ===========================
+  chartInstances.seasonalTrends.data.datasets[0].data =
+    seasonalData.percentages;
+  chartInstances.seasonalTrends.update();
+}
 
 function initTourTypeChart(tourTypes) {
   const ctx = document.getElementById("tourTypeChart");
@@ -152,36 +144,49 @@ function initTourTypeChart(tourTypes) {
       labels: tourTypes.map((t) => t.label || "Chưa phân loại"),
       datasets: [
         {
-          data: tourTypes.map((t) => t.count),
+          data: tourTypes.map(() => 0),
           backgroundColor: CHART_COLORS.primary,
           borderWidth: 4,
+          borderColor: "#fff",
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false,
+      animation: {
+        animateRotate: true,
+        animateScale: true,
+        duration: 1500,
+        easing: "easeInOutQuart",
+      },
       plugins: {
         legend: {
           position: "bottom",
         },
         tooltip: {
+          enabled: true,
           callbacks: {
-            label(ctx) {
+            title: (context) => {
+              return context[0].label;
+            },
+            label: (ctx) => {
               const t = tourTypes[ctx.dataIndex];
-              return `${ctx.label}: ${t.count} (${t.percentage}%)`;
+              return `Số lượng: ${t.count} (${t.percentage}%)`;
             },
           },
         },
       },
     },
   });
-}
 
-// ===========================
-// CHART: BOOKING STATUS (DOUGHNUT)
-// ===========================
+  setTimeout(() => {
+    chartInstances.tourType.data.datasets[0].data = tourTypes.map(
+      (t) => t.count
+    );
+    chartInstances.tourType.update();
+  }, 100);
+}
 
 function initBookingStatusChart(bookingStatus) {
   const ctx = document.getElementById("bookingStatusChart");
@@ -201,38 +206,49 @@ function initBookingStatusChart(bookingStatus) {
       labels: bookingStatus.map((b) => statusLabels[b.label] || b.label),
       datasets: [
         {
-          data: bookingStatus.map((b) => b.count),
+          data: bookingStatus.map(() => 0),
           backgroundColor: bookingStatus.map(
             (b) => CHART_COLORS.status[b.label] || "#9CA3AF"
           ),
           borderWidth: 4,
+          borderColor: "#fff",
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false,
+      animation: {
+        animateRotate: true,
+        animateScale: true,
+        duration: 1500,
+        easing: "easeInOutQuart",
+      },
       plugins: {
         legend: {
           position: "bottom",
         },
         tooltip: {
+          enabled: true,
           callbacks: {
-            label(ctx) {
+            title: (context) => {
+              return context[0].label;
+            },
+            label: (ctx) => {
               const b = bookingStatus[ctx.dataIndex];
-              return `${ctx.label}: ${b.count} (${b.percentage}%)`;
+              return `Số lượng: ${b.count} (${b.percentage}%)`;
             },
           },
         },
       },
     },
   });
-}
 
-// ===========================
-// PERFORMANCE TABLE
-// ===========================
+  chartInstances.bookingStatus.data.datasets[0].data = bookingStatus.map(
+    (b) => b.count
+  );
+  chartInstances.bookingStatus.update();
+}
 
 function populatePerformanceTable(tours) {
   const tbody = document.getElementById("tourPerformanceTable");
@@ -265,19 +281,11 @@ function populatePerformanceTable(tours) {
   });
 }
 
-// ===========================
-// RESIZE HANDLER
-// ===========================
-
 function setupResizeListener() {
   window.addEventListener("resize", () => {
     Object.values(chartInstances).forEach((chart) => chart?.resize());
   });
 }
-
-// ===========================
-// TIME RANGE HANDLER
-// ===========================
 
 function handleTimeRangeChange() {
   const select = document.querySelector('select[name="timeRange"]');
@@ -287,9 +295,5 @@ function handleTimeRangeChange() {
     window.location.href = `/admin/thong-ke?days=${this.value}`;
   });
 }
-
-// ===========================
-// DOM READY
-// ===========================
 
 document.addEventListener("DOMContentLoaded", initStatisticsCharts);
