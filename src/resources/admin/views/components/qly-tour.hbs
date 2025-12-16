@@ -34,13 +34,14 @@
               >Dòng tour</label
             >
             <select
+              id="tourTypeFilter"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             >
-              <option>-- Tất cả --</option>
-              <option>Tiết kiệm</option>
-              <option>Tiêu chuẩn</option>
-              <option>Giá tốt</option>
-              <option>Cao cấp</option>
+              <option value="">-- Tất cả --</option>
+              <option value="Tiết kiệm">Tiết kiệm</option>
+              <option value="Tiêu chuẩn">Tiêu chuẩn</option>
+              <option value="Giá tốt">Giá tốt</option>
+              <option value="Cao cấp">Cao cấp</option>
             </select>
           </div>
 
@@ -49,6 +50,7 @@
               >Tìm kiếm</label
             >
             <input
+              id="tourSearchInput"
               type="text"
               placeholder="Tìm kiếm theo tên tour"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"

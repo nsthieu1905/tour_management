@@ -201,6 +201,180 @@ const create = async (req, res) => {
   }
 };
 
+// [PATCH] /api/tours/:id
+const update = async (req, res) => {
+  const getTourType = (price) => {
+    if (price <= 2000000) return "Tiết kiệm";
+    if (price > 2000000 && price <= 4000000) return "Tiêu chuẩn";
+    if (price > 4000000 && price <= 7000000) return "Giá tốt";
+    return "Cao cấp";
+  };
+
+  try {
+    const tourId = req.params.id;
+    const existingTour = await Tour.findById(tourId);
+
+    if (!existingTour) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy tour",
+      });
+    }
+
+    let { price, departureDates, itinerary } = req.body;
+    const newImagePaths = req.files?.map((f) => `/uploads/${f.filename}`) ?? [];
+
+    // Xử lý itinerary từ form fields
+    let parsedItinerary = [];
+    if (itinerary) {
+      if (Array.isArray(itinerary)) {
+        parsedItinerary = itinerary
+          .filter((item) => typeof item === "object" && item !== null)
+          .map((item, index) => ({
+            day: index + 1,
+            destinations: item.destinations || "",
+            description: item.description || "",
+          }));
+      } else if (typeof itinerary === "string") {
+        try {
+          parsedItinerary = JSON.parse(itinerary);
+        } catch (e) {
+          console.error("Failed to parse itinerary:", e.message);
+          parsedItinerary = existingTour.itinerary || [];
+        }
+      }
+    } else {
+      parsedItinerary = existingTour.itinerary || [];
+    }
+
+    // Xử lý departureDates
+    let parsedDepartureDates = [];
+    if (departureDates) {
+      if (typeof departureDates === "string") {
+        try {
+          departureDates = JSON.parse(departureDates);
+        } catch (e) {
+          departureDates = [departureDates];
+        }
+      }
+
+      if (Array.isArray(departureDates)) {
+        parsedDepartureDates = departureDates.map((item) => {
+          if (typeof item === "object" && item.date && item.price) {
+            return {
+              date: new Date(item.date),
+              price: Number(item.price),
+            };
+          }
+          return {
+            date: new Date(item),
+            price: Number(price || existingTour.price),
+          };
+        });
+      }
+    } else {
+      parsedDepartureDates = existingTour.departureDates;
+    }
+
+    // Xử lý ảnh: giữ ảnh cũ nếu không có ảnh mới
+    const finalImages =
+      newImagePaths.length > 0 ? newImagePaths : existingTour.images;
+
+    // Chuẩn bị dữ liệu cập nhật
+    const updateData = {
+      tourCode: req.body.tourCode || existingTour.tourCode,
+      name: req.body.name || existingTour.name,
+      description: req.body.description || existingTour.description,
+      destination: req.body.destination || existingTour.destination,
+      duration: {
+        days: req.body["duration[days]"] || existingTour.duration.days,
+        nights: req.body["duration[nights]"] || existingTour.duration.nights,
+      },
+      capacity: {
+        max: req.body["capacity[max]"] || existingTour.capacity.max,
+        current: existingTour.capacity.current, // Keep current bookings
+      },
+      price: Number(price || existingTour.price),
+      departureDates: parsedDepartureDates,
+      itinerary: parsedItinerary,
+      images: finalImages,
+      thumbnail: finalImages[0] || existingTour.thumbnail,
+      tourType: getTourType(Number(price || existingTour.price)),
+    };
+
+    // Cập nhật tour
+    const updatedTour = await Tour.findByIdAndUpdate(tourId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedTour) {
+      return res.status(404).json({
+        success: false,
+        message: "Cập nhật tour thất bại",
+      });
+    }
+
+    // Xóa ảnh cũ nếu có ảnh mới được upload
+    if (newImagePaths.length > 0 && existingTour.images?.length > 0) {
+      try {
+        deleteImages(existingTour.images);
+      } catch (error) {
+        console.log("Error deleting old images:", error);
+      }
+    }
+
+    // Gửi notification
+    try {
+      await notifyTourUpdate({
+        name: updatedTour.name,
+        description: updatedTour.description,
+        tourId: updatedTour._id,
+      });
+    } catch (err) {
+      console.error("Error sending tour update notification:", err.message);
+    }
+
+    // Emit socket event
+    if (global.io) {
+      global.io.emit("tour:updated", {
+        tourId: updatedTour._id,
+        name: updatedTour.name,
+        tourType: updatedTour.tourType,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật tour thành công",
+      data: updatedTour,
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật tour:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server, vui lòng thử lại sau",
+    });
+  }
+};
+
+// Helper function (đã có sẵn)
+function deleteImages(images) {
+  if (!images || images.length === 0) return;
+  images.forEach((imagePath) => {
+    const fullPath = path.join(__dirname, "../../public", imagePath);
+    if (fs.existsSync(fullPath)) {
+      try {
+        fs.unlinkSync(fullPath);
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      console.log(`Không tìm thấy tệp: ${fullPath}`);
+    }
+  });
+}
+
 // [DELETE] /api/tours/:id
 const softDelete = async (req, res) => {
   try {
@@ -397,6 +571,7 @@ module.exports = {
   findTrash,
   findOne,
   create,
+  update,
   softDelete,
   deleteOne,
   restore,

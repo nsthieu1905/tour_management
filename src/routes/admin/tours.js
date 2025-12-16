@@ -8,6 +8,7 @@ router.delete("/trash/:id", tourApiController.deleteOne);
 router.patch("/trash/restore/:id", tourApiController.restore);
 router.get("/trash", tourApiController.findTrash);
 router.post("/add", upload.array("images"), tourApiController.create);
+router.patch("/:id", upload.array("images"), tourApiController.update);
 router.delete("/:id", tourApiController.softDelete);
 router.get("/:id", tourApiController.findOne);
 

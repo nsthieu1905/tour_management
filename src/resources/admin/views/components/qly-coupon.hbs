@@ -14,22 +14,318 @@
         <div class="flex space-x-3">
           <button
             onclick="showAddCouponModal()"
-            class="gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+            class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity shadow-lg"
           >
             <i class="fas fa-plus mr-2"></i>Thêm mã mới
           </button>
         </div>
       </div>
 
+      <!-- Coupon Filters -->
+      <div
+        class="bg-white p-6 rounded-xl shadow-sm mb-6 border border-gray-100"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <!-- Status Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Trạng thái</label
+            >
+            <select
+              id="filterCouponStatus"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            >
+              <option value="">-- Tất cả --</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
+            </select>
+          </div>
+
+          <!-- Type Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Loại giảm giá</label
+            >
+            <select
+              id="filterCouponType"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            >
+              <option value="">-- Tất cả --</option>
+              <option value="percentage">Phần trăm</option>
+              <option value="fixed_amount">Số tiền cố định</option>
+            </select>
+          </div>
+
+          <!-- Start Date Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Từ ngày</label
+            >
+            <input
+              type="date"
+              id="filterStartDate"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            />
+          </div>
+
+          <!-- End Date Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Đến ngày</label
+            >
+            <input
+              type="date"
+              id="filterEndDate"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            />
+          </div>
+
+          <!-- Search Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Tìm kiếm</label
+            >
+            <input
+              type="text"
+              id="filterSearch"
+              placeholder="Tìm mã, tên..."
+              class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- Coupons List -->
-      <div class="bg-white rounded-lg shadow-sm">
-        <div id="coupons-list" class="divide-y">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div id="coupons-list" class="divide-y divide-gray-100">
           <!-- Coupon items will be rendered here -->
         </div>
         <div id="empty-coupons-list"></div>
       </div>
     </div>
   </main>
+</div>
+
+<!-- Add/Edit Coupon Modal -->
+<div
+  id="addCouponModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+  >
+    <!-- Modal Header -->
+    <div
+      class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center"
+    >
+      <h3 id="modalTitle" class="text-xl font-semibold text-gray-900">
+        Thêm mã giảm giá
+      </h3>
+      <button
+        onclick="hideAddCouponModal()"
+        class="text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <form id="couponForm" novalidate class="px-6 py-6">
+      <div class="space-y-4">
+        <!-- Mã code -->
+        <div>
+          <label class="block text-sm font-medium text-gray-900 mb-2">
+            Mã code <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="code"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="VD: SUMMER2025, SAVE50"
+          />
+        </div>
+
+        <!-- Tên mã -->
+        <div>
+          <label class="block text-sm font-medium text-gray-900 mb-2">
+            Tên mã <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="name"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="VD: Mùa hè 2025, Giảm 50%"
+          />
+        </div>
+
+        <!-- Mô tả -->
+        <div>
+          <label class="block text-sm font-medium text-gray-900 mb-2"
+            >Mô tả</label
+          >
+          <textarea
+            name="description"
+            rows="3"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            placeholder="Mô tả chi tiết về mã khuyến mãi"
+          ></textarea>
+        </div>
+
+        <!-- Loại giảm giá -->
+        <div>
+          <label class="block text-sm font-medium text-gray-900 mb-2">
+            Loại giảm giá <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="couponType"
+            name="type"
+            onchange="updateValueLabel()"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Chọn loại</option>
+            <option value="percentage">Phần trăm</option>
+            <option value="fixed_amount">Số tiền cố định</option>
+          </select>
+        </div>
+
+        <!-- Giá trị -->
+        <div>
+          <label
+            id="valueLabel"
+            class="block text-sm font-medium text-gray-900 mb-2"
+          >
+            Giá trị <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="couponValue"
+            type="number"
+            name="value"
+            min="0"
+            step="0.01"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Nhập giá trị"
+          />
+        </div>
+
+        <!-- Đơn tối thiểu -->
+        <div>
+          <label class="block text-sm font-medium text-gray-900 mb-2">
+            Đơn tối thiểu (VNĐ) <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            name="minPurchase"
+            min="0"
+            required
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="VD: 100000, 500000"
+          />
+        </div>
+
+        <!-- Giảm tối đa -->
+        <div id="maxDiscountField" style="display: none">
+          <label class="block text-sm font-medium text-gray-900 mb-2">
+            Giảm tối đa (VNĐ) <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            name="maxDiscount"
+            min="0"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="VD: 1000000"
+          />
+        </div>
+
+        <!-- Dates Row -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-900 mb-2">
+              Ngày bắt đầu <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              name="startDate"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-900 mb-2">
+              Ngày kết thúc <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              name="endDate"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <!-- Usage Limits Row -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-900 mb-2">
+              Giới hạn sử dụng <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="usageLimit"
+              min="0"
+              value="0"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="0 = không giới hạn"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-900 mb-2">
+              Giới hạn mỗi người <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="perUserLimit"
+              min="1"
+              value="1"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="1"
+            />
+          </div>
+        </div>
+
+        <!-- Trạng thái -->
+        <div>
+          <label class="block text-sm font-medium text-gray-900 mb-2">
+            Trạng thái <span class="text-red-500">*</span>
+          </label>
+          <select
+            name="status"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Không hoạt động</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+        <button
+          type="button"
+          onclick="hideAddCouponModal()"
+          class="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Hủy
+        </button>
+        <button
+          type="submit"
+          id="submitBtn"
+          class="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+        >
+          Thêm mã
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 {{> add-edit-coupon}}

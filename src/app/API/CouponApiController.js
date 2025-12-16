@@ -1,9 +1,14 @@
 const { Khuyen_mai } = require("../models/index");
 const { notifyPromotion } = require("../../utils/NotificationHelper");
+const {
+  validateCouponInput,
+  validateApplyCoupon,
+} = require("../../public/utils/validators");
 
 // [GET] /api/coupons
 const findAll = async (req, res) => {
   try {
+    // Middleware sẽ tự động update status khi query
     const coupons = await Khuyen_mai.find().lean();
 
     if (!coupons || coupons.length === 0) {
@@ -30,7 +35,8 @@ const findAll = async (req, res) => {
 // [GET] /api/coupons/:id
 const findOne = async (req, res) => {
   try {
-    const coupon = await Khuyen_mai.findById(req.params.id).lean();
+    // Middleware sẽ tự động update status
+    const coupon = await Khuyen_mai.findById(req.params.id);
 
     if (!coupon) {
       return res.status(404).json({
@@ -71,7 +77,16 @@ const create = async (req, res) => {
       status,
     } = req.body;
 
-    // Kiểm tra mã code có tồn tại
+    // Validate input
+    const validation = validateCouponInput(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Dữ liệu không hợp lệ",
+        errors: validation.errors,
+      });
+    }
+
     const existingCoupon = await Khuyen_mai.findOne({
       code: code.toUpperCase(),
     });
@@ -82,7 +97,6 @@ const create = async (req, res) => {
       });
     }
 
-    // Tạo mã giảm giá mới
     const newCoupon = new Khuyen_mai({
       code: code.toUpperCase(),
       name,
@@ -96,12 +110,12 @@ const create = async (req, res) => {
       usageLimit: Number(usageLimit) || 0,
       perUserLimit: Number(perUserLimit) || 1,
       status: status || "active",
+      usageCount: 0,
       createdBy: req.user?._id,
     });
 
     await newCoupon.save();
 
-    // Gửi notification đến tất cả clients về mã giảm giá mới
     try {
       await notifyPromotion({
         title: `Mã giảm giá mới: ${newCoupon.code}`,
@@ -117,15 +131,6 @@ const create = async (req, res) => {
       });
     } catch (err) {
       console.error("Error sending promotion notification:", err.message);
-    }
-
-    // Emit socket event for admin panel real-time update
-    if (global.io) {
-      global.io.emit("coupon:created", {
-        couponId: newCoupon._id,
-        code: newCoupon.code,
-      });
-      console.log("📢 [Socket] Emitted coupon:created for admin panels");
     }
 
     return res.status(201).json({
@@ -160,7 +165,16 @@ const update = async (req, res) => {
       status,
     } = req.body;
 
-    // Kiểm tra nếu code thay đổi
+    // Validate input
+    const validation = validateCouponInput(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Dữ liệu không hợp lệ",
+        errors: validation.errors,
+      });
+    }
+
     if (code) {
       const existingCoupon = await Khuyen_mai.findOne({
         code: code.toUpperCase(),
@@ -203,12 +217,6 @@ const update = async (req, res) => {
       });
     }
 
-    // Emit socket event for real-time update
-    if (global.io) {
-      global.io.emit("coupon:updated", { couponId: req.params.id });
-      console.log("📢 [Socket] Emitted coupon:updated for id:", req.params.id);
-    }
-
     return res.status(200).json({
       success: true,
       message: "Cập nhật mã giảm giá thành công",
@@ -235,12 +243,6 @@ const deleteOne = async (req, res) => {
       });
     }
 
-    // Emit socket event for real-time update
-    if (global.io) {
-      global.io.emit("coupon:deleted", { couponId: req.params.id });
-      console.log("📢 [Socket] Emitted coupon:deleted for id:", req.params.id);
-    }
-
     return res.status(200).json({
       success: true,
       message: "Xóa mã giảm giá thành công",
@@ -258,20 +260,22 @@ const deleteOne = async (req, res) => {
 // [POST] /api/coupons/applyCoupon
 const applyCoupon = async (req, res) => {
   try {
-    const { couponCode, tourId, originalPrice, departureDate } = req.body;
+    const { couponCode, tourId, originalPrice, departureDate, userId } =
+      req.body;
 
-    // Kiểm tra input
-    if (!couponCode || !tourId || !originalPrice) {
+    // Validate input
+    const validation = validateApplyCoupon(couponCode, tourId, originalPrice);
+    if (!validation.isValid) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu thông tin cần thiết",
+        message: "Dữ liệu không hợp lệ",
+        errors: validation.errors,
       });
     }
 
-    // Tìm coupon
     const coupon = await Khuyen_mai.findOne({
       code: couponCode.toUpperCase(),
-    }).lean();
+    });
 
     if (!coupon) {
       return res.status(404).json({
@@ -280,7 +284,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Kiểm tra trạng thái coupon
     const now = new Date();
     if (coupon.status !== "active") {
       return res.status(400).json({
@@ -289,7 +292,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Kiểm tra thời gian hợp lệ
     if (now < new Date(coupon.startDate) || now > new Date(coupon.endDate)) {
       return res.status(400).json({
         success: false,
@@ -297,7 +299,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Kiểm tra giá mua tối thiểu
     if (originalPrice < coupon.minPurchase) {
       return res.status(400).json({
         success: false,
@@ -307,7 +308,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Kiểm tra coupon áp dụng cho tour này (nếu có giới hạn)
     if (
       coupon.applicableTours &&
       coupon.applicableTours.length > 0 &&
@@ -319,7 +319,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Kiểm tra số lần sử dụng
     if (coupon.usageLimit > 0 && coupon.usageCount >= coupon.usageLimit) {
       return res.status(400).json({
         success: false,
@@ -331,7 +330,6 @@ const applyCoupon = async (req, res) => {
     let discountAmount = 0;
     if (coupon.type === "percentage") {
       discountAmount = originalPrice * (coupon.value / 100);
-      // Kiểm tra giới hạn giảm tối đa
       if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
         discountAmount = coupon.maxDiscount;
       }
@@ -340,6 +338,14 @@ const applyCoupon = async (req, res) => {
     }
 
     const finalPrice = Math.max(0, originalPrice - discountAmount);
+
+    // Tăng usageCount
+    coupon.usageCount += 1;
+    await coupon.save();
+
+    console.log(
+      `✅ Coupon ${coupon.code} used. Count: ${coupon.usageCount}/${coupon.usageLimit}`
+    );
 
     return res.status(200).json({
       success: true,
@@ -353,6 +359,8 @@ const applyCoupon = async (req, res) => {
         originalPrice,
         finalPrice: Math.round(finalPrice),
         savings: Math.round(discountAmount),
+        usageCount: coupon.usageCount,
+        usageLimit: coupon.usageLimit,
       },
     });
   } catch (error) {
