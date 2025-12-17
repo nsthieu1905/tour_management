@@ -105,6 +105,7 @@ const validateAndParseBookingData = (body) => {
     guestCount,
     departureDate,
     total,
+    extraServices,
   } = body;
 
   if (
@@ -132,6 +133,15 @@ const validateAndParseBookingData = (body) => {
     guestCount,
     departureDate: departureDateObj,
     total,
+    extraServices: Array.isArray(extraServices)
+      ? extraServices
+          .filter((x) => x && x.serviceId)
+          .map((x) => ({
+            serviceId: x.serviceId,
+            quantity: Number(x.quantity) || 1,
+            unitPrice: Number(x.unitPrice) || 0,
+          }))
+      : [],
   };
 };
 
@@ -145,6 +155,7 @@ const createBookingDataObject = async (params) => {
     guestCount,
     departureDate,
     total,
+    extraServices,
     couponCode,
     paymentMethod,
     bookingStatus,
@@ -174,6 +185,7 @@ const createBookingDataObject = async (params) => {
     },
     numberOfPeople: guestCount,
     totalAmount: total,
+    extraServices: Array.isArray(extraServices) ? extraServices : [],
     departureDate,
     paymentMethod: paymentMethod || "momo",
     bookingStatus: bookingStatus || "pre_booking",

@@ -117,6 +117,85 @@
         <div id="itineraryFields"></div>
       </div>
 
+      <div class="border border-gray-200 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-lg font-semibold text-gray-900">Dịch vụ đối tác</h4>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Đối tác</label
+            >
+            <select
+              id="partnerSelect"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Chọn đối tác --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Dịch vụ</label
+            >
+            <select
+              id="partnerServiceSelect"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Chọn dịch vụ --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+          <div id="partnerServiceQuantityWrap">
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Số lượng</label
+            >
+            <input
+              type="number"
+              id="partnerServiceQuantity"
+              value="1"
+              min="1"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Ghi chú</label
+            >
+            <input
+              type="text"
+              id="partnerServiceNote"
+              placeholder="VD: Bao gồm trong giá tour"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div class="flex items-end gap-3">
+            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input id="partnerServiceIncluded" type="checkbox" checked />
+              Bao gồm
+            </label>
+            <button
+              type="button"
+              id="addPartnerServiceBtn"
+              class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Thêm
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div id="selectedPartnerServicesList"></div>
+        </div>
+
+        <input type="hidden" name="partnerServices" id="partnerServicesData" />
+      </div>
+
       <div class="gap-4"></div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

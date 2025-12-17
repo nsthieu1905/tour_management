@@ -1,4 +1,6 @@
-const Doi_tac = require("../models/Doi_tac");
+const { Doi_tac, PartnerService, Tour } = require("../models/index");
+
+const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // [GET] /api/doi-tac
 const findAll = async (req, res) => {
@@ -9,6 +11,7 @@ const findAll = async (req, res) => {
       search = "",
       type = "",
       status = "",
+      destination = "",
     } = req.query;
 
     // Build filter
@@ -19,11 +22,16 @@ const findAll = async (req, res) => {
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { phone: { $regex: search, $options: "i" } },
+        { destination: { $regex: search, $options: "i" } },
       ];
     }
 
+    if (destination) {
+      filter.destination = { $regex: destination, $options: "i" };
+    }
+
     if (type && type !== "all") {
-      filter.type = type;
+      filter.type = { $regex: `^${escapeRegex(type)}$`, $options: "i" };
     }
 
     if (status && status !== "all") {
@@ -47,6 +55,7 @@ const findAll = async (req, res) => {
     const formattedPartners = partners.map((partner) => ({
       _id: partner._id,
       name: partner.name,
+      destination: partner.destination || "",
       email: partner.email,
       phone: partner.phone || "Chưa cập nhật",
       type: partner.type,
@@ -71,6 +80,186 @@ const findAll = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Lỗi khi tải danh sách đối tác",
+      error: error.message,
+    });
+  }
+};
+
+// [GET] /api/doi-tac/types
+const getTypes = async (req, res) => {
+  try {
+    const types = await Doi_tac.distinct("type", { type: { $ne: "" } });
+
+    const normalized = (types || [])
+      .map((t) => String(t || "").trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "vi"));
+
+    return res.status(200).json({
+      success: true,
+      data: normalized,
+    });
+  } catch (error) {
+    console.error("Error fetching partner types:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi tải loại hình đối tác",
+      error: error.message,
+    });
+  }
+};
+
+// ===========================
+// PARTNER SERVICES
+// ===========================
+
+// [GET] /api/doi-tac/:id/services
+const getServicesByPartner = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const partner = await Doi_tac.findById(id).lean();
+    if (!partner) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy đối tác",
+      });
+    }
+
+    const services = await PartnerService.find({ partnerId: id })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: services,
+    });
+  } catch (error) {
+    console.error("Error fetching partner services:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi tải danh sách dịch vụ",
+      error: error.message,
+    });
+  }
+};
+
+// [POST] /api/doi-tac/:id/services
+const createPartnerService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      category = "other",
+      unit = "per_booking",
+      price = 0,
+    } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng nhập tên dịch vụ",
+      });
+    }
+
+    const partnerExists = await Doi_tac.exists({ _id: id });
+    if (!partnerExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy đối tác",
+      });
+    }
+
+    const service = await PartnerService.create({
+      partnerId: id,
+      name: name.trim(),
+      category,
+      unit,
+      price: Number(price) || 0,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Tạo dịch vụ thành công",
+      data: service,
+    });
+  } catch (error) {
+    console.error("Error creating partner service:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi tạo dịch vụ",
+      error: error.message,
+    });
+  }
+};
+
+// [PUT] /api/doi-tac/services/:serviceId
+const updatePartnerService = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+    const { name, category, unit, price, status } = req.body;
+
+    const service = await PartnerService.findById(serviceId);
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy dịch vụ",
+      });
+    }
+
+    if (typeof name === "string" && name.trim()) service.name = name.trim();
+    if (typeof category === "string") service.category = category;
+    if (typeof unit === "string") service.unit = unit;
+    if (price !== undefined) service.price = Number(price) || 0;
+    if (typeof status === "string") service.status = status;
+
+    await service.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật dịch vụ thành công",
+      data: service,
+    });
+  } catch (error) {
+    console.error("Error updating partner service:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi cập nhật dịch vụ",
+      error: error.message,
+    });
+  }
+};
+
+// [DELETE] /api/doi-tac/services/:serviceId
+const deletePartnerService = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+
+    const service = await PartnerService.findById(serviceId);
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy dịch vụ",
+      });
+    }
+
+    await Promise.all([
+      PartnerService.deleteOne({ _id: serviceId }),
+      Tour.updateMany(
+        { "partnerServices.serviceId": serviceId },
+        { $pull: { partnerServices: { serviceId } } }
+      ),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Xoá dịch vụ thành công",
+    });
+  } catch (error) {
+    console.error("Error deleting partner service:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi xoá dịch vụ",
       error: error.message,
     });
   }
@@ -106,10 +295,10 @@ const getById = async (req, res) => {
 // [POST] /api/doi-tac
 const create = async (req, res) => {
   try {
-    const { name, email, phone, type } = req.body;
+    const { name, email, phone, type, destination = "" } = req.body;
 
     // Validation
-    if (!name || !email || !type) {
+    if (!name || !email || !type || !String(destination || "").trim()) {
       return res.status(400).json({
         success: false,
         message: "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -128,6 +317,7 @@ const create = async (req, res) => {
     // Create new partner
     const newPartner = new Doi_tac({
       name,
+      destination,
       email,
       phone,
       type,
@@ -155,7 +345,14 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, type } = req.body;
+    const { name, email, phone, type, destination } = req.body;
+
+    if (destination !== undefined && !String(destination || "").trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng nhập điểm đến",
+      });
+    }
 
     // Check if partner exists
     const partner = await Doi_tac.findById(id);
@@ -179,6 +376,7 @@ const update = async (req, res) => {
 
     // Update partner
     if (name) partner.name = name;
+    if (destination !== undefined) partner.destination = destination;
     if (email) partner.email = email;
     if (phone) partner.phone = phone;
     if (type) partner.type = type;
@@ -256,8 +454,22 @@ const deleteOne = async (req, res) => {
       });
     }
 
-    // Delete partner
-    await Doi_tac.findByIdAndDelete(id);
+    const serviceIds = await PartnerService.find({ partnerId: id })
+      .select("_id")
+      .lean();
+    const ids = serviceIds.map((s) => s._id);
+
+    // Delete partner + cascade delete its services + remove from all tours
+    await Promise.all([
+      Doi_tac.findByIdAndDelete(id),
+      PartnerService.deleteMany({ partnerId: id }),
+      ids.length > 0
+        ? Tour.updateMany(
+            { "partnerServices.serviceId": { $in: ids } },
+            { $pull: { partnerServices: { serviceId: { $in: ids } } } }
+          )
+        : Promise.resolve(),
+    ]);
 
     return res.status(200).json({
       success: true,
@@ -275,9 +487,14 @@ const deleteOne = async (req, res) => {
 
 module.exports = {
   findAll,
+  getTypes,
   getById,
   create,
   update,
   updateStatus,
   deleteOne,
+  getServicesByPartner,
+  createPartnerService,
+  updatePartnerService,
+  deletePartnerService,
 };

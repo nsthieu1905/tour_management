@@ -3,7 +3,7 @@ const { Tour, Favorite } = require("../../models/index");
 // [GET] /
 const home = async (req, res) => {
   try {
-    const tours = await Tour.find({}).lean();
+    const tours = await Tour.find({}).sort({ createdAt: -1 }).lean();
 
     return res.render("home", {
       bodyClass: "bg-gray-50",

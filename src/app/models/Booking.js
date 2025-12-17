@@ -24,6 +24,23 @@ const bookingSchema = new mongoose.Schema(
     },
     numberOfPeople: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
+    extraServices: [
+      {
+        serviceId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "PartnerService",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        unitPrice: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
     couponId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Khuyen_mai",

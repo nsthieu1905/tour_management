@@ -64,6 +64,13 @@ function initTourSocket() {
 let allTours = [];
 let currentEditingTourId = null;
 
+let partnersLoaded = false;
+let partnersCache = [];
+let servicesCacheByPartnerId = new Map();
+let selectedPartnerServices = [];
+
+let lastDestinationFilter = "";
+
 document.addEventListener("DOMContentLoaded", function () {
   initTourManagement();
   initTourSocket();
@@ -81,12 +88,318 @@ function initTourManagement() {
   initDepartureDates();
   initTourImagePreview();
   initItineraryGenerator();
+  initPartnerServicesAssignment();
   modalHandlers(() => {
     departureDates = [];
     imagesArray = [];
     currentEditingTourId = null;
+    selectedPartnerServices = [];
+    servicesCacheByPartnerId = new Map();
+    lastDestinationFilter = "";
+    resetPartnerServicesUI();
+    applyPartnerDestinationFilter("");
     renderDepartures();
   });
+}
+
+function initPartnerServicesAssignment() {
+  const partnerSelect = document.getElementById("partnerSelect");
+  const serviceSelect = document.getElementById("partnerServiceSelect");
+  const addBtn = document.getElementById("addPartnerServiceBtn");
+  const destinationInput = document.querySelector('input[name="destination"]');
+  const qtyWrap = document.getElementById("partnerServiceQuantityWrap");
+  const qtyInput = document.getElementById("partnerServiceQuantity");
+  const includedCb = document.getElementById("partnerServiceIncluded");
+
+  if (!partnerSelect || !serviceSelect || !addBtn) return;
+
+  const syncQtyVisibility = () => {
+    if (!qtyWrap || !qtyInput || !includedCb) return;
+    if (includedCb.checked) {
+      qtyWrap.classList.add("hidden");
+      qtyInput.value = 1;
+    } else {
+      qtyWrap.classList.remove("hidden");
+    }
+  };
+
+  if (includedCb) {
+    includedCb.addEventListener("change", syncQtyVisibility);
+  }
+
+  syncQtyVisibility();
+
+  if (destinationInput) {
+    destinationInput.addEventListener("input", async () => {
+      await ensurePartnersLoaded();
+      applyPartnerDestinationFilter(destinationInput.value);
+    });
+  }
+
+  partnerSelect.addEventListener("change", async () => {
+    const partnerId = partnerSelect.value;
+    await loadServicesForPartner(partnerId);
+  });
+
+  addBtn.addEventListener("click", () => {
+    const partnerId = partnerSelect.value;
+    const serviceId = serviceSelect.value;
+    if (!partnerId) {
+      Notification.error("Vui lòng chọn đối tác");
+      return;
+    }
+    if (!serviceId) {
+      Notification.error("Vui lòng chọn dịch vụ");
+      return;
+    }
+
+    const qty = Number(
+      document.getElementById("partnerServiceQuantity")?.value || 1
+    );
+    const note = document.getElementById("partnerServiceNote")?.value || "";
+    const included =
+      document.getElementById("partnerServiceIncluded")?.checked ?? true;
+
+    const serviceMeta = servicesCacheByPartnerId
+      .get(partnerId)
+      ?.find((s) => String(s._id) === String(serviceId));
+
+    const partnerMeta = partnersCache.find(
+      (p) => String(p._id) === String(partnerId)
+    );
+
+    const existedIndex = selectedPartnerServices.findIndex(
+      (x) => String(x.serviceId) === String(serviceId)
+    );
+
+    const payload = {
+      serviceId,
+      quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
+      includedInTourPrice: Boolean(included),
+      note,
+      _meta: {
+        partnerName: partnerMeta?.name || "",
+        serviceName: serviceMeta?.name || "",
+        price: serviceMeta?.price,
+        unit: serviceMeta?.unit,
+      },
+    };
+
+    if (existedIndex >= 0) {
+      selectedPartnerServices[existedIndex] = payload;
+    } else {
+      selectedPartnerServices.push(payload);
+    }
+
+    renderSelectedPartnerServices();
+    syncPartnerServicesToHiddenInput();
+  });
+
+  window.removeSelectedPartnerService = function (index) {
+    selectedPartnerServices.splice(index, 1);
+    renderSelectedPartnerServices();
+    syncPartnerServicesToHiddenInput();
+  };
+}
+
+async function ensurePartnersLoaded() {
+  if (partnersLoaded) return;
+  try {
+    const res = await apiGet("/api/doi-tac?page=1&limit=1000&status=active");
+    if (!res) return;
+    const result = await res.json();
+    if (!result?.success) {
+      Notification.error(result?.message || "Không thể tải danh sách đối tác");
+      return;
+    }
+
+    partnersCache = result.data || [];
+    partnersLoaded = true;
+
+    applyPartnerDestinationFilter(lastDestinationFilter);
+  } catch (err) {
+    console.error(err);
+    Notification.error("Lỗi khi tải danh sách đối tác");
+  }
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+function applyPartnerDestinationFilter(destination) {
+  const partnerSelect = document.getElementById("partnerSelect");
+  if (!partnerSelect) return;
+
+  const dest = normalizeText(destination);
+  lastDestinationFilter = destination;
+
+  const filtered = !dest
+    ? partnersCache
+    : partnersCache.filter((p) => {
+        const pd = normalizeText(p.destination);
+        if (!pd) return false;
+        return pd.includes(dest) || dest.includes(pd);
+      });
+
+  if (filtered.length === 0) {
+    partnerSelect.innerHTML =
+      '<option value="">(Chưa có đối tác ở địa điểm này)</option>';
+    partnerSelect.value = "";
+
+    const serviceSelect = document.getElementById("partnerServiceSelect");
+    if (serviceSelect) {
+      serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>`;
+    }
+    return;
+  }
+
+  const options = filtered
+    .map((p) => `<option value="${p._id}">${escapeHtml(p.name || "")}</option>`)
+    .join("");
+  partnerSelect.innerHTML = `<option value="">-- Chọn đối tác --</option>${options}`;
+}
+
+async function loadServicesForPartner(partnerId) {
+  const serviceSelect = document.getElementById("partnerServiceSelect");
+  if (!serviceSelect) return;
+
+  serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>`;
+  if (!partnerId) return;
+
+  try {
+    if (!servicesCacheByPartnerId.has(partnerId)) {
+      const res = await apiGet(`/api/doi-tac/${partnerId}/services`);
+      if (!res) return;
+      const result = await res.json();
+      if (!result?.success) {
+        Notification.error(result?.message || "Không thể tải dịch vụ");
+        return;
+      }
+      servicesCacheByPartnerId.set(partnerId, result.data || []);
+    }
+
+    const services = servicesCacheByPartnerId.get(partnerId) || [];
+    const activeServices = services.filter((s) => s.status !== "inactive");
+
+    if (activeServices.length === 0) {
+      serviceSelect.innerHTML =
+        '<option value="">-- Chọn dịch vụ --</option><option value="" disabled>(Chưa có dịch vụ)</option>';
+      return;
+    }
+
+    const servicesToRender =
+      (servicesCacheByPartnerId.get(partnerId) || []).filter(
+        (s) => s.status !== "inactive"
+      ) || [];
+
+    const options = servicesToRender
+      .map(
+        (s) => `<option value="${s._id}">${escapeHtml(s.name || "")}</option>`
+      )
+      .join("");
+    serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>${options}`;
+  } catch (err) {
+    console.error(err);
+    Notification.error("Lỗi khi tải dịch vụ");
+  }
+}
+
+function renderSelectedPartnerServices() {
+  const container = document.getElementById("selectedPartnerServicesList");
+  if (!container) return;
+
+  if (
+    !Array.isArray(selectedPartnerServices) ||
+    selectedPartnerServices.length === 0
+  ) {
+    container.innerHTML =
+      '<div class="text-sm text-gray-500">Chưa chọn dịch vụ nào</div>';
+    return;
+  }
+
+  const fmt = (n) => (Number(n) || 0).toLocaleString("vi-VN");
+  container.innerHTML = selectedPartnerServices
+    .map((item, index) => {
+      const name = item?._meta?.serviceName || item.serviceId;
+      const partnerName = item?._meta?.partnerName || "";
+      const price = item?._meta?.price;
+      const included = item.includedInTourPrice ? "Có" : "Không";
+      const qtyText = item.includedInTourPrice
+        ? ""
+        : `SL: ${item.quantity || 1} | `;
+
+      return `
+        <div class="flex items-start justify-between gap-3 p-3 mb-2 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="flex-1">
+            <div class="font-semibold text-gray-900">${escapeHtml(
+              String(name || "")
+            )}</div>
+            <div class="text-xs text-gray-600 mt-1">${escapeHtml(
+              String(partnerName || "")
+            )}</div>
+            <div class="text-xs text-gray-600 mt-1">
+              ${qtyText}Bao gồm: ${included}${
+        price !== undefined ? ` | Giá: ${fmt(price)}` : ""
+      }
+            </div>
+            ${
+              item.note
+                ? `<div class="text-xs text-gray-600 mt-1">Ghi chú: ${escapeHtml(
+                    String(item.note)
+                  )}</div>`
+                : ""
+            }
+          </div>
+          <button
+            type="button"
+            class="text-red-600 hover:text-red-800 font-medium"
+            onclick="window.removeSelectedPartnerService(${index})"
+          >
+            Xoá
+          </button>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function syncPartnerServicesToHiddenInput() {
+  const input = document.getElementById("partnerServicesData");
+  if (!input) return;
+  const payload = (selectedPartnerServices || []).map((x) => ({
+    serviceId: x.serviceId,
+    quantity: x.quantity,
+    includedInTourPrice: x.includedInTourPrice,
+    note: x.note,
+  }));
+  input.value = JSON.stringify(payload);
+}
+
+function resetPartnerServicesUI() {
+  const partnerSelect = document.getElementById("partnerSelect");
+  const serviceSelect = document.getElementById("partnerServiceSelect");
+  const qty = document.getElementById("partnerServiceQuantity");
+  const note = document.getElementById("partnerServiceNote");
+  const included = document.getElementById("partnerServiceIncluded");
+  const input = document.getElementById("partnerServicesData");
+  const qtyWrap = document.getElementById("partnerServiceQuantityWrap");
+
+  if (partnerSelect) partnerSelect.value = "";
+  if (serviceSelect)
+    serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>`;
+  if (qty) qty.value = 1;
+  if (note) note.value = "";
+  if (included) included.checked = true;
+  if (input) input.value = "";
+
+  if (qtyWrap) qtyWrap.classList.add("hidden");
+
+  renderSelectedPartnerServices();
 }
 
 // ===========================
@@ -104,6 +417,16 @@ function initFilterAndSearch() {
 
   tourTypeFilter.addEventListener("change", filterTours);
   searchInput.addEventListener("input", filterTours);
+}
+
+function escapeHtml(str) {
+  if (typeof str !== "string") return "";
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function filterTours() {
@@ -197,7 +520,9 @@ function renderTours(tours) {
               <div class="text-right">
                 <p class="text-sm text-gray-600">Còn lại</p>
                 <p class="text-lg font-semibold text-orange-600">
-                  ${sub(tour.capacity.max, tour.capacity.current)}/${tour.capacity.max} chỗ
+                  ${sub(tour.capacity.max, tour.capacity.current)}/${
+        tour.capacity.max
+      } chỗ
                 </p>
               </div>
             </div>
@@ -556,6 +881,8 @@ function modalHandlers(onCloseCallback = null) {
 
   window.showAddTourModal = function () {
     currentEditingTourId = null;
+    selectedPartnerServices = [];
+    lastDestinationFilter = "";
     const modalTitle = modal.querySelector("h3");
     const submitBtn = modal.querySelector('button[type="submit"]');
 
@@ -570,6 +897,10 @@ function modalHandlers(onCloseCallback = null) {
     const form = modal.querySelector("form");
     if (form) form.reset();
     clearFormErrors(form);
+
+    ensurePartnersLoaded();
+    resetPartnerServicesUI();
+    applyPartnerDestinationFilter("");
   };
 
   window.hideAddTourModal = function () {
@@ -1043,6 +1374,8 @@ function editTour() {
         form.querySelector('[name="capacity[max]"]').value =
           tour.capacity?.max || "";
 
+        applyPartnerDestinationFilter(tour.destination || "");
+
         // Fill departure dates
         departureDates = [];
         if (tour.departureDates && tour.departureDates.length > 0) {
@@ -1082,6 +1415,36 @@ function editTour() {
           });
           renderImagePreview();
         }
+
+        // Fill partner services
+        await ensurePartnersLoaded();
+        selectedPartnerServices = Array.isArray(tour.partnerServices)
+          ? tour.partnerServices
+              .filter((ps) => ps && ps.serviceId)
+              .map((ps) => {
+                const serviceDoc =
+                  typeof ps.serviceId === "object" ? ps.serviceId : null;
+                const partnerId = serviceDoc?.partnerId;
+                const partnerName = partnersCache.find(
+                  (p) => String(p._id) === String(partnerId)
+                )?.name;
+
+                return {
+                  serviceId: serviceDoc?._id || ps.serviceId,
+                  quantity: ps.quantity,
+                  includedInTourPrice: ps.includedInTourPrice,
+                  note: ps.note,
+                  _meta: {
+                    partnerName: partnerName || "",
+                    serviceName: serviceDoc?.name || "",
+                    price: serviceDoc?.price,
+                    unit: serviceDoc?.unit,
+                  },
+                };
+              })
+          : [];
+        renderSelectedPartnerServices();
+        syncPartnerServicesToHiddenInput();
 
         // Show modal
         modal.classList.remove("hidden");

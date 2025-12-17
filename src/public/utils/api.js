@@ -74,6 +74,9 @@ const apiPost = async (url, body) => {
       options.headers = {};
     }
     options.headers["Content-Type"] = "application/json";
+    if (body !== undefined && body !== null && typeof body !== "string") {
+      options.body = JSON.stringify(body);
+    }
   }
 
   return apiCall(url, options);
@@ -96,6 +99,9 @@ const apiPatch = async (url, body) => {
         options.headers = {};
       }
       options.headers["Content-Type"] = "application/json";
+      if (typeof body !== "string") {
+        options.body = JSON.stringify(body);
+      }
     }
   }
 
@@ -113,6 +119,9 @@ const apiPut = async (url, body) => {
       options.headers = {};
     }
     options.headers["Content-Type"] = "application/json";
+    if (body !== undefined && body !== null && typeof body !== "string") {
+      options.body = JSON.stringify(body);
+    }
   }
 
   return apiCall(url, options);

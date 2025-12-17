@@ -1,7 +1,18 @@
 import { Modal, Notification } from "../../utils/modal.js";
 import { validateEmail, validatePhoneNumber } from "../../utils/validators.js";
+import {
+  apiDelete,
+  apiGet,
+  apiPatch,
+  apiPost,
+  apiPut,
+} from "../../utils/api.js";
 
 const API_BASE = "/api/doi-tac";
+
+// Partner services state
+let currentServicePartnerId = null;
+let currentEditingServiceId = null;
 
 // Biến trạng thái
 let currentPage = 1;
@@ -17,8 +28,30 @@ let totalPartners = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
   loadPartners();
+  loadPartnerTypes();
   setupEventListeners();
+  setupPartnerServicesEventListeners();
 });
+
+async function loadPartnerTypes() {
+  const typeFilter = document.getElementById("typeFilter");
+  if (!typeFilter) return;
+
+  try {
+    const res = await apiGet(`${API_BASE}/types`);
+    if (!res) return;
+    const result = await res.json();
+    if (!result?.success) return;
+
+    const types = Array.isArray(result.data) ? result.data : [];
+    const opts = types
+      .map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`)
+      .join("");
+    typeFilter.innerHTML = `<option value="">-- Tất cả --</option>${opts}`;
+  } catch (err) {
+    console.error("Error loading partner types:", err);
+  }
+}
 
 function setupEventListeners() {
   const searchInput = document.getElementById("searchInput");
@@ -63,7 +96,26 @@ function setupEventListeners() {
     if (e.key === "Escape" && modal && !modal.classList.contains("hidden")) {
       closePartnerModal();
     }
+
+    const servicesModal = document.getElementById("partnerServicesModal");
+    if (
+      e.key === "Escape" &&
+      servicesModal &&
+      !servicesModal.classList.contains("hidden")
+    ) {
+      closePartnerServicesModal();
+    }
   });
+}
+
+function setupPartnerServicesEventListeners() {
+  const form = document.getElementById("partnerServiceForm");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await handlePartnerServiceSubmit();
+    });
+  }
 }
 
 // ===========================
@@ -77,7 +129,8 @@ async function loadPartners() {
     if (currentType) url += `&type=${encodeURIComponent(currentType)}`;
     if (currentStatus) url += `&status=${currentStatus}`;
 
-    const response = await fetch(url);
+    const response = await apiGet(url);
+    if (!response) return;
     const result = await response.json();
 
     if (result.success) {
@@ -104,7 +157,7 @@ function renderPartners(partners) {
   if (partners.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
           <i class="fas fa-search text-3xl mb-3 block"></i>
           <p>Không có đối tác nào</p>
         </td>
@@ -120,27 +173,53 @@ function renderPartners(partners) {
 
     const statusBtn =
       partner.status === "active"
-        ? `<button class="text-orange-600 hover:text-orange-900" onclick="window.toggleStatus('${partner._id}')">Tạm dừng</button>`
-        : `<button class="text-green-600 hover:text-green-900" onclick="window.toggleStatus('${partner._id}')">Kích hoạt</button>`;
+        ? `<button class="text-orange-600 hover:text-orange-900" onclick="window.toggleStatus(event, '${partner._id}')">Tạm dừng</button>`
+        : `<button class="text-green-600 hover:text-green-900" onclick="window.toggleStatus(event, '${partner._id}')">Kích hoạt</button>`;
 
     const row = `
       <tr class="hover:bg-gray-50">
         <td class="px-6 py-4 whitespace-nowrap">
           <div class="text-sm font-medium text-gray-900">${partner.name}</div>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${partner.email}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${partner.phone}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${partner.type}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(
+          partner.destination || ""
+        )}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${
+          partner.email
+        }</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${
+          partner.phone
+        }</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+          partner.type
+        }</td>
         <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-          <button class="text-blue-600 hover:text-blue-900" onclick="window.editPartner('${partner._id}')">Sửa</button>
+          <button class="text-blue-600 hover:text-blue-900" onclick="window.editPartner('${
+            partner._id
+          }')">Sửa</button>
+          <button class="text-indigo-600 hover:text-indigo-900" onclick="window.openPartnerServicesModal('${
+            partner._id
+          }', '${escapeHtml(partner.name)}')">Dịch vụ</button>
           ${statusBtn}
-          <button class="text-red-600 hover:text-red-900" onclick="window.deletePartner('${partner._id}')">Xoá</button>
+          <button class="text-red-600 hover:text-red-900" onclick="window.deletePartner('${
+            partner._id
+          }')">Xoá</button>
         </td>
       </tr>
     `;
     tbody.innerHTML += row;
   });
+}
+
+function escapeHtml(str) {
+  if (typeof str !== "string") return "";
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 // ===========================
@@ -292,7 +371,7 @@ function showValidationError(fieldId, message) {
   field.parentElement.appendChild(errorDiv);
 }
 
-function validatePartnerForm(name, email, phone, type) {
+function validatePartnerForm(name, destination, email, phone, type) {
   clearValidationErrors();
   const errors = {};
 
@@ -310,6 +389,11 @@ function validatePartnerForm(name, email, phone, type) {
   } else if (!validateEmail(email)) {
     errors.email = "Email không hợp lệ";
     showValidationError("partnerEmail", errors.email);
+  }
+
+  if (!destination || destination.trim().length === 0) {
+    errors.destination = "Vui lòng nhập điểm đến";
+    showValidationError("partnerDestination", errors.destination);
   }
 
   if (!phone || phone.trim().length === 0) {
@@ -362,7 +446,8 @@ function closePartnerModal() {
 
 async function editPartner(id) {
   try {
-    const response = await fetch(`${API_BASE}/${id}`);
+    const response = await apiGet(`${API_BASE}/${id}`);
+    if (!response) return;
     const result = await response.json();
 
     if (result.success) {
@@ -374,6 +459,8 @@ async function editPartner(id) {
       if (title && form && modal) {
         title.textContent = "Chỉnh sửa đối tác";
         document.getElementById("partnerName").value = partner.name;
+        document.getElementById("partnerDestination").value =
+          partner.destination || "";
         document.getElementById("partnerEmail").value = partner.email;
         document.getElementById("partnerPhone").value = partner.phone || "";
         document.getElementById("partnerType").value = partner.type;
@@ -394,32 +481,32 @@ async function editPartner(id) {
 async function handlePartnerFormSubmit() {
   const partnerForm = document.getElementById("partnerForm");
   const name = document.getElementById("partnerName").value.trim();
+  const destination = document
+    .getElementById("partnerDestination")
+    .value.trim();
   const email = document.getElementById("partnerEmail").value.trim();
   const phone = document.getElementById("partnerPhone").value.trim();
-  const type = document.getElementById("partnerType").value;
+  const type = document.getElementById("partnerType").value.trim();
   const mode = partnerForm.dataset.mode;
   const id = partnerForm.dataset.id;
 
   // Validate form
-  const validation = validatePartnerForm(name, email, phone, type);
+  const validation = validatePartnerForm(name, destination, email, phone, type);
   if (!validation.isValid) return;
 
   try {
     let url = API_BASE;
     let method = "POST";
-    const body = { name, email, phone, type };
+    const body = { name, destination, email, phone, type };
 
     if (mode === "edit") {
       url = `${API_BASE}/${id}`;
       method = "PUT";
     }
 
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
+    const response =
+      method === "POST" ? await apiPost(url, body) : await apiPut(url, body);
+    if (!response) return;
     const result = await response.json();
 
     if (result.success) {
@@ -449,7 +536,8 @@ async function deletePartner(id) {
     confirmColor: "red",
     onConfirm: async () => {
       try {
-        const response = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+        const response = await apiDelete(`${API_BASE}/${id}`);
+        if (!response) return;
         const result = await response.json();
 
         if (result.success) {
@@ -467,21 +555,20 @@ async function deletePartner(id) {
   });
 }
 
-async function toggleStatus(id) {
+async function toggleStatus(evt, id) {
   try {
-    const row = event.target.closest("tr");
-    const statusCell = row.cells[4];
+    const row = evt?.target?.closest("tr");
+    if (!row) return;
+    const statusCell = row.cells[5];
     const currentStatus = statusCell.textContent.includes("Hoạt động")
       ? "active"
       : "inactive";
     const newStatus = currentStatus === "active" ? "inactive" : "active";
 
-    const response = await fetch(`${API_BASE}/${id}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+    const response = await apiPatch(`${API_BASE}/${id}/status`, {
+      status: newStatus,
     });
-
+    if (!response) return;
     const result = await response.json();
 
     if (result.success) {
@@ -502,3 +589,231 @@ window.closePartnerModal = closePartnerModal;
 window.editPartner = editPartner;
 window.deletePartner = deletePartner;
 window.toggleStatus = toggleStatus;
+
+// ===========================
+// PARTNER SERVICES MODAL
+// ===========================
+
+async function openPartnerServicesModal(partnerId, partnerName) {
+  currentServicePartnerId = partnerId;
+  currentEditingServiceId = null;
+
+  const modal = document.getElementById("partnerServicesModal");
+  const title = document.getElementById("servicesModalTitle");
+  if (!modal || !title) {
+    Notification.error("Không tìm thấy modal dịch vụ");
+    return;
+  }
+
+  title.textContent = `Quản lý dịch vụ - ${partnerName || ""}`;
+  resetPartnerServiceForm();
+  modal.classList.remove("hidden");
+  await loadPartnerServices();
+}
+
+function closePartnerServicesModal() {
+  const modal = document.getElementById("partnerServicesModal");
+  if (modal) modal.classList.add("hidden");
+  currentServicePartnerId = null;
+  currentEditingServiceId = null;
+}
+
+async function loadPartnerServices() {
+  if (!currentServicePartnerId) return;
+  try {
+    const res = await apiGet(`${API_BASE}/${currentServicePartnerId}/services`);
+    if (!res) return;
+    const result = await res.json();
+
+    if (result.success) {
+      renderPartnerServices(result.data || []);
+    } else {
+      Notification.error(result.message || "Không thể tải danh sách dịch vụ");
+    }
+  } catch (err) {
+    console.error(err);
+    Notification.error("Lỗi khi tải danh sách dịch vụ");
+  }
+}
+
+function renderPartnerServices(services) {
+  const tbody = document.getElementById("partnerServicesList");
+  if (!tbody) return;
+
+  if (!Array.isArray(services) || services.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+          <i class="fas fa-box-open text-3xl mb-3 block"></i>
+          <p>Chưa có dịch vụ nào</p>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  const formatCurrency = (n) => {
+    const num = Number(n) || 0;
+    return num.toLocaleString("vi-VN");
+  };
+
+  const badge = (status) =>
+    status === "active"
+      ? '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Hoạt động</span>'
+      : '<span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Tạm dừng</span>';
+
+  tbody.innerHTML = services
+    .map(
+      (s) => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm font-medium text-gray-900">${escapeHtml(
+            s.name
+          )}</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatCurrency(
+          s.price
+        )}</td>
+        <td class="px-6 py-4 whitespace-nowrap">${badge(s.status)}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+          <button class="text-blue-600 hover:text-blue-900" onclick="window.editPartnerService('$
+            s._id
+          }')">Sửa</button>
+          <button class="text-red-600 hover:text-red-900" onclick="window.deletePartnerService('${
+            s._id
+          }')">Xoá</button>
+        </td>
+      </tr>
+    `
+    )
+    .join("");
+}
+
+function resetPartnerServiceForm() {
+  currentEditingServiceId = null;
+  const name = document.getElementById("serviceName");
+  const price = document.getElementById("servicePrice");
+  const status = document.getElementById("serviceStatus");
+  const submitBtn = document.getElementById("serviceFormSubmitBtn");
+  const cancelBtn = document.getElementById("serviceFormCancelBtn");
+
+  if (name) name.value = "";
+  if (price) price.value = "";
+  if (status) status.value = "active";
+  if (submitBtn) submitBtn.textContent = "Thêm dịch vụ";
+  if (cancelBtn) cancelBtn.classList.add("hidden");
+}
+
+async function handlePartnerServiceSubmit() {
+  if (!currentServicePartnerId) return;
+
+  const name = document.getElementById("serviceName")?.value?.trim() || "";
+  const price = document.getElementById("servicePrice")?.value || 0;
+  const status = document.getElementById("serviceStatus")?.value || "active";
+
+  if (!name) {
+    Notification.error("Vui lòng nhập tên dịch vụ");
+    return;
+  }
+
+  try {
+    let res;
+    if (currentEditingServiceId) {
+      res = await apiPut(`${API_BASE}/services/${currentEditingServiceId}`, {
+        name,
+        unit: "per_booking",
+        price,
+        status,
+      });
+    } else {
+      res = await apiPost(`${API_BASE}/${currentServicePartnerId}/services`, {
+        name,
+        unit: "per_booking",
+        price,
+      });
+    }
+    if (!res) return;
+    const result = await res.json();
+
+    if (result.success) {
+      Notification.success(
+        currentEditingServiceId
+          ? "Cập nhật dịch vụ thành công"
+          : "Thêm dịch vụ thành công"
+      );
+      resetPartnerServiceForm();
+      await loadPartnerServices();
+    } else {
+      Notification.error(result.message || "Có lỗi xảy ra");
+    }
+  } catch (err) {
+    console.error(err);
+    Notification.error("Lỗi khi lưu dịch vụ");
+  }
+}
+
+async function editPartnerService(serviceId) {
+  const row = document
+    .querySelector(
+      `#partnerServicesList button[onclick="window.editPartnerService('${serviceId}')"]`
+    )
+    ?.closest("tr");
+
+  currentEditingServiceId = serviceId;
+  const submitBtn = document.getElementById("serviceFormSubmitBtn");
+  const cancelBtn = document.getElementById("serviceFormCancelBtn");
+
+  if (submitBtn) submitBtn.textContent = "Cập nhật";
+  if (cancelBtn) cancelBtn.classList.remove("hidden");
+
+  if (!row) {
+    // Fallback: just keep edit mode, user can retype
+    return;
+  }
+
+  const name = row.querySelector("td:nth-child(1) .text-sm")?.textContent || "";
+  const price = row.querySelector("td:nth-child(2)")?.textContent || "0";
+
+  const nameInput = document.getElementById("serviceName");
+  const priceInput = document.getElementById("servicePrice");
+
+  if (nameInput) nameInput.value = name.trim();
+  if (priceInput)
+    priceInput.value =
+      Number(price.replaceAll(".", "").replaceAll(",", "")) || 0;
+}
+
+async function deletePartnerService(serviceId) {
+  Modal.confirm({
+    title: "Xác nhận xoá",
+    message: "Bạn chắc chắn muốn xoá dịch vụ này?",
+    confirmText: "Xoá",
+    cancelText: "Hủy",
+    confirmColor: "red",
+    onConfirm: async () => {
+      try {
+        const res = await apiDelete(`${API_BASE}/services/${serviceId}`);
+        if (!res) return;
+        const result = await res.json();
+
+        if (result.success) {
+          Notification.success("Xoá dịch vụ thành công");
+          if (currentEditingServiceId === serviceId) {
+            resetPartnerServiceForm();
+          }
+          await loadPartnerServices();
+        } else {
+          Notification.error(result.message || "Lỗi khi xoá dịch vụ");
+        }
+      } catch (err) {
+        console.error(err);
+        Notification.error("Lỗi khi xoá dịch vụ");
+      }
+    },
+  });
+}
+
+window.openPartnerServicesModal = openPartnerServicesModal;
+window.closePartnerServicesModal = closePartnerServicesModal;
+window.resetPartnerServiceForm = resetPartnerServiceForm;
+window.editPartnerService = editPartnerService;
+window.deletePartnerService = deletePartnerService;

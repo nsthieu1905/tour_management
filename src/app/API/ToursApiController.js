@@ -6,7 +6,7 @@ const { notifyTourUpdate } = require("../../utils/NotificationHelper");
 // [GET] /api/tours
 const findAll = async (req, res) => {
   try {
-    const tours = await Tour.find({}).lean();
+    const tours = await Tour.find({}).sort({ createdAt: -1 }).lean();
     return res.status(200).json({
       success: true,
       total: tours.length,
@@ -27,7 +27,9 @@ const tourFeedbacks = async (req, res) => {
   try {
     const tour = await Tour.findOne({ slug: req.params.slug }).lean();
     if (!tour) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy tour" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tour" });
     }
     return res.render("tour-feedbacks", {
       tour,
@@ -42,7 +44,9 @@ const tourFeedbacks = async (req, res) => {
 // [GET] api/tours/trash
 const findTrash = async (req, res) => {
   try {
-    const tours = await Tour.findWithDeleted({ deleted: true }).lean();
+    const tours = await Tour.findWithDeleted({ deleted: true })
+      .sort({ deletedAt: -1 })
+      .lean();
     if (!tours)
       return res
         .status(404)
@@ -66,7 +70,12 @@ const findTrash = async (req, res) => {
 // [GET] /api/tours/:id
 const findOne = async (req, res) => {
   try {
-    const tour = await Tour.findById(req.params.id).lean();
+    const tour = await Tour.findById(req.params.id)
+      .populate({
+        path: "partnerServices.serviceId",
+        select: "name price unit partnerId category status",
+      })
+      .lean();
     if (!tour)
       return res
         .status(404)
@@ -77,7 +86,7 @@ const findOne = async (req, res) => {
       message: "Lấy tour thành công",
       data: tour,
     });
-  } catch (next) {
+  } catch (error) {
     console.error(error);
     return res.status(500).json({
       success: false,
@@ -95,7 +104,7 @@ const create = async (req, res) => {
     return "Cao cấp";
   };
   try {
-    let { price, departureDates, itinerary } = req.body;
+    let { price, departureDates, itinerary, partnerServices } = req.body;
     const imagePaths = req.files?.map((f) => `/uploads/${f.filename}`) ?? [];
 
     // Xử lý itinerary từ form fields
@@ -152,6 +161,21 @@ const create = async (req, res) => {
       }
     }
 
+    // Xử lý partnerServices (JSON string)
+    let parsedPartnerServices = [];
+    if (partnerServices) {
+      if (typeof partnerServices === "string") {
+        try {
+          parsedPartnerServices = JSON.parse(partnerServices);
+        } catch (e) {
+          console.error("Failed to parse partnerServices:", e.message);
+          parsedPartnerServices = [];
+        }
+      } else if (Array.isArray(partnerServices)) {
+        parsedPartnerServices = partnerServices;
+      }
+    }
+
     const tourData = {
       tourCode: req.body.tourCode,
       name: req.body.name,
@@ -173,6 +197,7 @@ const create = async (req, res) => {
       images: imagePaths,
       thumbnail: imagePaths[0] || "",
       tourType: getTourType(Number(price)),
+      partnerServices: parsedPartnerServices,
     };
 
     const tour = new Tour(tourData);
@@ -238,7 +263,7 @@ const update = async (req, res) => {
       });
     }
 
-    let { price, departureDates, itinerary } = req.body;
+    let { price, departureDates, itinerary, partnerServices } = req.body;
     const newImagePaths = req.files?.map((f) => `/uploads/${f.filename}`) ?? [];
 
     // Xử lý itinerary từ form fields
@@ -293,6 +318,21 @@ const update = async (req, res) => {
       parsedDepartureDates = existingTour.departureDates;
     }
 
+    // Xử lý partnerServices (JSON string)
+    let parsedPartnerServices = existingTour.partnerServices || [];
+    if (partnerServices) {
+      if (typeof partnerServices === "string") {
+        try {
+          parsedPartnerServices = JSON.parse(partnerServices);
+        } catch (e) {
+          console.error("Failed to parse partnerServices:", e.message);
+          parsedPartnerServices = existingTour.partnerServices || [];
+        }
+      } else if (Array.isArray(partnerServices)) {
+        parsedPartnerServices = partnerServices;
+      }
+    }
+
     // Xử lý ảnh: giữ ảnh cũ nếu không có ảnh mới
     const finalImages =
       newImagePaths.length > 0 ? newImagePaths : existingTour.images;
@@ -317,6 +357,7 @@ const update = async (req, res) => {
       images: finalImages,
       thumbnail: finalImages[0] || existingTour.thumbnail,
       tourType: getTourType(Number(price || existingTour.price)),
+      partnerServices: parsedPartnerServices,
     };
 
     // Cập nhật tour

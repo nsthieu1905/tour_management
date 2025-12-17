@@ -48,7 +48,12 @@ const updateTourCapacity = async (
 const bookingPage = async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const tour = await Tour.findOne({ slug }).lean();
+    const tour = await Tour.findOne({ slug })
+      .populate({
+        path: "partnerServices.serviceId",
+        populate: { path: "partnerId" },
+      })
+      .lean();
 
     res.render("tour-booking", {
       tour: tour,

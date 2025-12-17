@@ -6,6 +6,7 @@ const Khuyen_mai = require("./Khuyen_mai");
 const Message = require("./Message");
 const Notification = require("./Notification");
 const Session = require("./Session");
+const PartnerService = require("./PartnerService");
 const Tour = require("./Tour");
 const User = require("./User");
 const Feedback = require("./Feedback");
@@ -19,6 +20,7 @@ module.exports = {
   Message,
   Notification,
   Session,
+  PartnerService,
   Tour,
   User,
   Feedback,

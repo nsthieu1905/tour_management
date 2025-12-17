@@ -8,6 +8,15 @@ router.use(protectAdminRoutes);
 // Get all partners with filters
 router.get("/", doiTacApiController.findAll);
 
+// Get distinct partner types
+router.get("/types", doiTacApiController.getTypes);
+
+// Partner services
+router.get("/:id/services", doiTacApiController.getServicesByPartner);
+router.post("/:id/services", doiTacApiController.createPartnerService);
+router.put("/services/:serviceId", doiTacApiController.updatePartnerService);
+router.delete("/services/:serviceId", doiTacApiController.deletePartnerService);
+
 // Get single partner by ID
 router.get("/:id", doiTacApiController.getById);
 

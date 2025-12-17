@@ -3,9 +3,14 @@ const mongoose = require("mongoose");
 const doiTacSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
+    destination: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     type: {
       type: String,
-      enum: ["Tour operator", "Khách sạn", "Lữ hành", "Nhà hàng", "Khác"],
+      trim: true,
       required: true,
     },
     email: { type: String, required: true },

@@ -132,6 +132,27 @@ const tourSchema = new Schema(
         default: 0,
       },
     },
+    partnerServices: [
+      {
+        serviceId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "PartnerService",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        includedInTourPrice: {
+          type: Boolean,
+          default: true,
+        },
+        note: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
     highlights: [String],
     // requirements, partnerId, guideId, viewCount: đã bỏ vì không dùng
     tags: [String],

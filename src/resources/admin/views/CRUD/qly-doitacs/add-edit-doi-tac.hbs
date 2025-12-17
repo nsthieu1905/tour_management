@@ -29,6 +29,18 @@
           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
         />
       </div>
+
+      <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Điểm đến <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="partnerDestination"
+          placeholder="VD: Hạ Long, Đà Nẵng, Phú Quốc..."
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+        />
+      </div>
       <div class="mb-5">
         <label class="block text-sm font-medium text-gray-700 mb-2">
           Email <span class="text-red-500">*</span>
@@ -53,16 +65,12 @@
         <label class="block text-sm font-medium text-gray-700 mb-2">
           Loại hình <span class="text-red-500">*</span>
         </label>
-        <select
+        <input
+          type="text"
           id="partnerType"
+          placeholder="VD: Khách sạn, Lữ hành, Resort, Xe du lịch..."
           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
-        >
-          <option value="">-- Chọn loại hình --</option>
-          <option value="Khách sạn">Khách sạn</option>
-          <option value="Lữ hành">Lữ hành</option>
-          <option value="Nhà hàng">Nhà hàng</option>
-          <option value="Khác">Khác</option>
-        </select>
+        />
       </div>
       <div class="flex gap-3 pt-4">
         <button

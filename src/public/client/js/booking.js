@@ -22,9 +22,14 @@ function formatDateToDDMMYYYY(dateStr) {
 let bookingState = {
   tourId: null,
   guestCount: 1,
+  adultCount: 1,
+  childCount: 0,
+  infantCount: 0,
   departureDate: null,
   departureDatePrice: 0,
   subtotal: 0,
+  extrasTotal: 0,
+  extraServices: [],
   coupon: null,
   discountAmount: 0,
   total: 0,
@@ -46,9 +51,17 @@ const customerNameInput = document.getElementById("customer-name");
 const customerEmailInput = document.getElementById("customer-email");
 const customerPhoneInput = document.getElementById("customer-phone");
 
-const guestCountInput = document.getElementById("guest-count");
-const decreaseGuestBtn = document.getElementById("decrease-guest");
-const increaseGuestBtn = document.getElementById("increase-guest");
+const adultDecreaseBtn = document.getElementById("adult-decrease");
+const adultIncreaseBtn = document.getElementById("adult-increase");
+const childDecreaseBtn = document.getElementById("child-decrease");
+const childIncreaseBtn = document.getElementById("child-increase");
+const infantDecreaseBtn = document.getElementById("infant-decrease");
+const infantIncreaseBtn = document.getElementById("infant-increase");
+
+const adultCountEl = document.getElementById("adult-count");
+const childCountEl = document.getElementById("child-count");
+const infantCountEl = document.getElementById("infant-count");
+const seatsRemainingEl = document.getElementById("seats-remaining");
 const departureDateSelect = document.getElementById("departure-date");
 
 const couponCodeInput = document.getElementById("coupon-code");
@@ -61,6 +74,30 @@ const totalGuestsEl = document.getElementById("total-guests");
 const unitPriceEl = document.getElementById("unit-price");
 const discountAmountEl = document.getElementById("discount-amount");
 const finalTotalEl = document.getElementById("final-total");
+const extrasTotalEl = document.getElementById("extras-total");
+
+const servicesBreakdownEl = document.getElementById("services-breakdown");
+const discountSummaryRow = document.getElementById("discount-summary-row");
+const discountSummaryAmountEl = document.getElementById(
+  "discount-summary-amount"
+);
+
+const includedServicesMeta = Array.from(
+  document.querySelectorAll(".included-service-item")
+).map((el) => ({
+  partnerName: el.dataset.partnerName || "",
+  serviceName: el.dataset.serviceName || "",
+}));
+
+const extraServiceMetaById = new Map(
+  Array.from(document.querySelectorAll(".extra-service-checkbox")).map((cb) => [
+    String(cb.dataset.serviceId),
+    {
+      partnerName: cb.dataset.partnerName || "",
+      serviceName: cb.dataset.serviceName || "",
+    },
+  ])
+);
 
 const nextStep1Btn = document.getElementById("next-step-1");
 const backToStep1Btn = document.getElementById("back-to-step-1");
@@ -72,6 +109,7 @@ const tourId =
   contentDiv?.dataset.tourId || window.location.pathname.split("/").pop();
 const tourPrice = parseInt(contentDiv?.dataset.tourPrice) || 0;
 const tourCapacity = parseInt(contentDiv?.dataset.tourCapacity) || 1;
+const tourAvailableSeats = parseInt(contentDiv?.dataset.tourAvailable) || 1;
 
 // Thông tin ngân hàng
 const BANK_CONFIG = {
@@ -87,6 +125,12 @@ document.addEventListener("DOMContentLoaded", () => {
   bookingState.subtotal = tourPrice;
   bookingState.total = tourPrice;
 
+  if (seatsRemainingEl) {
+    seatsRemainingEl.textContent = String(
+      Math.max(0, tourAvailableSeats - bookingState.guestCount)
+    );
+  }
+
   // Cập nhật giá hiển thị
   unitPriceEl.textContent = formatPrice(tourPrice) + "₫";
 
@@ -94,8 +138,183 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchCurrentUserId();
 
   setupEventListeners();
+  setupExtraServices();
   updatePriceSummary();
 });
+
+function setupExtraServices() {
+  const checkboxes = document.querySelectorAll(".extra-service-checkbox");
+  const extrasEmpty = document.getElementById("extras-empty");
+
+  if (!checkboxes || checkboxes.length === 0) {
+    if (extrasEmpty) extrasEmpty.classList.remove("hidden");
+    return;
+  }
+
+  if (extrasEmpty) {
+    const anyExtras = Array.from(checkboxes).length > 0;
+    if (!anyExtras) extrasEmpty.classList.remove("hidden");
+  }
+
+  checkboxes.forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.serviceId;
+      const qtyBox = document.querySelector(
+        `.extra-service-qty[data-for="${id}"]`
+      );
+      if (cb.checked) {
+        if (qtyBox) qtyBox.classList.remove("hidden");
+      } else {
+        if (qtyBox) qtyBox.classList.add("hidden");
+      }
+      recomputeExtras();
+    });
+  });
+
+  document.querySelectorAll(".extra-service-qty-decrease").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const serviceId = btn.dataset.serviceId;
+      const input = document.querySelector(
+        `.extra-service-qty-input[data-service-id="${serviceId}"]`
+      );
+      if (!input) return;
+      const min = Number(input.min) || 1;
+      const current = Number(input.value) || 1;
+      const next = Math.max(min, current - 1);
+      input.value = String(next);
+      recomputeExtras();
+    });
+  });
+
+  document.querySelectorAll(".extra-service-qty-increase").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const serviceId = btn.dataset.serviceId;
+      const input = document.querySelector(
+        `.extra-service-qty-input[data-service-id="${serviceId}"]`
+      );
+      if (!input) return;
+      const max = Number(input.max) || 1;
+      const current = Number(input.value) || 1;
+      const next = Math.min(max, current + 1);
+      input.value = String(next);
+      recomputeExtras();
+    });
+  });
+
+  document.querySelectorAll(".extra-service-qty-input").forEach((input) => {
+    input.setAttribute("inputmode", "none");
+    input.readOnly = true;
+
+    const prevent = (e) => {
+      e.preventDefault();
+    };
+
+    input.addEventListener("keydown", prevent);
+    input.addEventListener("paste", prevent);
+    input.addEventListener("drop", prevent);
+    input.addEventListener(
+      "wheel",
+      (e) => {
+        prevent(e);
+        input.blur();
+      },
+      { passive: false }
+    );
+
+    input.addEventListener("change", () => {
+      const max = Number(input.max) || 1;
+      const min = Number(input.min) || 1;
+      let val = Number(input.value) || 1;
+      if (val < min) val = min;
+      if (val > max) val = max;
+      input.value = String(val);
+      recomputeExtras();
+    });
+  });
+
+  recomputeExtras();
+}
+
+function renderServicesBreakdown() {
+  if (!servicesBreakdownEl) return;
+
+  const items = [];
+
+  includedServicesMeta.forEach((s) => {
+    const label = `${s.partnerName} - ${s.serviceName}`.trim();
+    if (label) items.push({ label, amount: 0 });
+  });
+
+  (bookingState.extraServices || []).forEach((s) => {
+    const meta = extraServiceMetaById.get(String(s.serviceId));
+    const label = `${meta?.partnerName || ""} - ${
+      meta?.serviceName || ""
+    }`.trim();
+    items.push({
+      label: label || String(s.serviceId),
+      amount: (Number(s.unitPrice) || 0) * (Number(s.quantity) || 1),
+    });
+  });
+
+  if (items.length === 0) {
+    servicesBreakdownEl.innerHTML = "";
+    return;
+  }
+
+  servicesBreakdownEl.innerHTML = `
+    <ul class="mt-2 list-disc pl-5 space-y-1">
+      ${items
+        .map(
+          (x) =>
+            `<li class="flex justify-between gap-3"><span class="truncate">${String(
+              x.label || ""
+            )}</span><span class="font-medium">${formatPrice(
+              Number(x.amount) || 0
+            )}₫</span></li>`
+        )
+        .join("")}
+    </ul>
+  `;
+}
+
+function recomputeExtras() {
+  let total = 0;
+  const selected = [];
+
+  document.querySelectorAll(".extra-service-checkbox:checked").forEach((cb) => {
+    const serviceId = cb.dataset.serviceId;
+    const unitPrice = Number(cb.dataset.price) || 0;
+    const qtyInput = document.querySelector(
+      `.extra-service-qty-input[data-service-id="${serviceId}"]`
+    );
+    const quantity = Math.max(1, Number(qtyInput?.value) || 1);
+    selected.push({ serviceId, quantity, unitPrice });
+    total += unitPrice * quantity;
+  });
+
+  bookingState.extraServices = selected;
+  bookingState.extrasTotal = total;
+
+  if (extrasTotalEl) {
+    extrasTotalEl.textContent = formatPrice(total) + "₫";
+  }
+
+  const summaryRow = document.getElementById("summary-extras-row");
+  const summaryExtras = document.getElementById("summary-extras");
+  if (summaryRow && summaryExtras) {
+    if (total > 0) {
+      summaryRow.classList.remove("hidden");
+      summaryExtras.textContent = formatPrice(total) + "₫";
+    } else {
+      summaryRow.classList.add("hidden");
+      summaryExtras.textContent = "0₫";
+    }
+  }
+
+  renderServicesBreakdown();
+
+  updatePriceSummary();
+}
 
 // Lấy userId hiện tại từ API
 async function fetchCurrentUserId() {
@@ -138,25 +357,76 @@ function setupEventListeners() {
     clearFieldError("customer-phone");
   });
 
-  // Điều khiển số lượng khách
-  decreaseGuestBtn.addEventListener("click", () => {
-    const current = parseInt(guestCountInput.value);
-    if (current > 1) {
-      guestCountInput.value = current - 1;
-      onGuestCountChange();
-    }
-  });
+  const syncGuestUI = () => {
+    if (adultCountEl)
+      adultCountEl.textContent = String(bookingState.adultCount);
+    if (childCountEl)
+      childCountEl.textContent = String(bookingState.childCount);
+    if (infantCountEl)
+      infantCountEl.textContent = String(bookingState.infantCount);
 
-  increaseGuestBtn.addEventListener("click", () => {
-    const current = parseInt(guestCountInput.value);
-    const maxGuests = parseInt(guestCountInput.max);
-    if (current < maxGuests) {
-      guestCountInput.value = current + 1;
-      onGuestCountChange();
-    }
-  });
+    const total =
+      (bookingState.adultCount || 0) +
+      (bookingState.childCount || 0) +
+      (bookingState.infantCount || 0);
+    bookingState.guestCount = total;
+    if (totalGuestsEl) totalGuestsEl.textContent = String(total);
 
-  guestCountInput.addEventListener("change", onGuestCountChange);
+    if (seatsRemainingEl) {
+      seatsRemainingEl.textContent = String(
+        Math.max(0, tourAvailableSeats - total)
+      );
+    }
+  };
+
+  const showCapacityWarning = () => {
+    Notification.error(
+      `Rất tiếc, tour hiện tại chỉ còn ${Math.max(0, tourAvailableSeats)} chỗ.`
+    );
+  };
+
+  const tryIncrease = (key) => {
+    const total =
+      bookingState.adultCount +
+      bookingState.childCount +
+      bookingState.infantCount;
+    if (total >= tourAvailableSeats) {
+      showCapacityWarning();
+      return;
+    }
+    bookingState[key] += 1;
+    syncGuestUI();
+    updatePriceSummary();
+  };
+
+  const tryDecrease = (key, min) => {
+    bookingState[key] = Math.max(min, bookingState[key] - 1);
+    syncGuestUI();
+    updatePriceSummary();
+  };
+
+  if (adultIncreaseBtn)
+    adultIncreaseBtn.addEventListener("click", () => tryIncrease("adultCount"));
+  if (adultDecreaseBtn)
+    adultDecreaseBtn.addEventListener("click", () =>
+      tryDecrease("adultCount", 1)
+    );
+  if (childIncreaseBtn)
+    childIncreaseBtn.addEventListener("click", () => tryIncrease("childCount"));
+  if (childDecreaseBtn)
+    childDecreaseBtn.addEventListener("click", () =>
+      tryDecrease("childCount", 0)
+    );
+  if (infantIncreaseBtn)
+    infantIncreaseBtn.addEventListener("click", () =>
+      tryIncrease("infantCount")
+    );
+  if (infantDecreaseBtn)
+    infantDecreaseBtn.addEventListener("click", () =>
+      tryDecrease("infantCount", 0)
+    );
+
+  syncGuestUI();
 
   // Mã giảm giá
   applyCouponBtn.addEventListener("click", applyCoupon);
@@ -191,14 +461,6 @@ function setupEventListeners() {
   });
 }
 
-// Khi thay đổi số lượng khách
-function onGuestCountChange() {
-  const guestCount = parseInt(guestCountInput.value);
-  bookingState.guestCount = guestCount;
-  totalGuestsEl.textContent = guestCount;
-  updatePriceSummary();
-}
-
 // Khi thay đổi ngày khởi hành
 function onDepartureDateChange() {
   const selected =
@@ -224,7 +486,11 @@ function onDepartureDateChange() {
 // Cập nhật tóm tắt giá
 function updatePriceSummary() {
   const basePrice = bookingState.departureDatePrice || tourPrice;
-  const subtotal = basePrice * bookingState.guestCount;
+  const subtotal = Math.round(
+    basePrice * (bookingState.adultCount || 0) +
+      basePrice * 0.5 * (bookingState.childCount || 0) +
+      basePrice * 0.25 * (bookingState.infantCount || 0)
+  );
 
   bookingState.subtotal = subtotal;
 
@@ -243,12 +509,33 @@ function updatePriceSummary() {
     total = subtotal - discount;
   }
 
+  total = total + (bookingState.extrasTotal || 0);
   bookingState.total = total;
 
   // Cập nhật UI
-  subtotalEl.textContent = formatPrice(subtotal) + "₫";
-  discountAmountEl.textContent = formatPrice(bookingState.discountAmount) + "₫";
-  finalTotalEl.textContent = formatPrice(total) + "₫";
+  subtotalEl.textContent = formatPrice(total) + "₫";
+  if (discountAmountEl) {
+    discountAmountEl.textContent =
+      formatPrice(bookingState.discountAmount) + "₫";
+  }
+  if (finalTotalEl) {
+    finalTotalEl.textContent = formatPrice(total) + "₫";
+  }
+  if (extrasTotalEl) {
+    extrasTotalEl.textContent =
+      formatPrice(bookingState.extrasTotal || 0) + "₫";
+  }
+
+  if (discountSummaryRow && discountSummaryAmountEl) {
+    if (bookingState.discountAmount > 0) {
+      discountSummaryRow.classList.remove("hidden");
+      discountSummaryAmountEl.textContent =
+        "-" + formatPrice(bookingState.discountAmount) + "₫";
+    } else {
+      discountSummaryRow.classList.add("hidden");
+      discountSummaryAmountEl.textContent = "0₫";
+    }
+  }
 
   // Cập nhật tóm tắt ở bước 2
   document.getElementById("summary-subtotal").textContent =
@@ -310,7 +597,10 @@ async function applyCoupon() {
       };
 
       updatePriceSummary();
-      discountInfo.classList.remove("hidden");
+
+      if (discountInfo) {
+        discountInfo.classList.remove("hidden");
+      }
 
       const discountDescription = document.getElementById(
         "discount-description"
@@ -574,6 +864,7 @@ async function confirmPayment() {
         couponCode: bookingState.coupon?.code || null,
         subtotal: bookingState.subtotal,
         total: bookingState.total,
+        extraServices: bookingState.extraServices,
         userId: bookingState.userId,
       };
 
@@ -625,6 +916,7 @@ async function confirmPayment() {
         couponCode: bookingState.coupon?.code || null,
         subtotal: bookingState.subtotal,
         total: bookingState.total,
+        extraServices: bookingState.extraServices,
         userId: bookingState.userId,
       };
 
@@ -678,6 +970,7 @@ async function confirmPayment() {
       couponCode: bookingState.coupon?.code || null,
       subtotal: bookingState.subtotal,
       total: bookingState.total,
+      extraServices: bookingState.extraServices,
       userId: bookingState.userId,
     };
 
