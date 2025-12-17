@@ -1,16 +1,20 @@
 {{!-- Search --}}
 <section
-  class="text-white py-20 bg-cover bg-center bg-no-repeat"
+  class="home-hero text-white py-20 bg-cover bg-center bg-no-repeat relative overflow-hidden"
   style="background-image: url('images/background_1.jpg')"
 >
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+  <div
+    class="home-hero__inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+  >
     <h1 class="text-5xl font-bold mb-6">Khám phá thế giới với TravelSmart</h1>
     <p class="text-xl mb-12 opacity-90">
       Tìm kiếm tour hoàn hảo với công nghệ AI và trải nghiệm cá nhân hóa
     </p>
 
     <!-- Smart Search Box -->
-    <div class="max-w-4xl mx-auto bg-white/70 rounded-2xl p-6 shadow-2xl">
+    <div
+      class="max-w-4xl mx-auto bg-white rounded-2xl p-6 shadow-lg border border-gray-200"
+    >
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1">
           <div class="relative">
@@ -18,7 +22,7 @@
               type="text"
               id="aiSearch"
               placeholder="Tôi muốn đi du lịch..."
-              class="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70"
+              class="w-full px-4 py-3 text-gray-700 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
             />
             <button
               id="voiceSearch"
@@ -31,7 +35,7 @@
 
         <div class="flex gap-2">
           <select
-            class="px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/70"
+            class="px-4 py-3 text-gray-700 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
           >
             <option>Tất cả dịch vụ</option>
             <option>Tour trọn gói</option>
@@ -42,7 +46,7 @@
 
           <button
             id="homeSearchBtn"
-            class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors search-animation"
+            class="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 transition-colors"
           >
             <i class="fas fa-search mr-2"></i>Tìm kiếm
           </button>
@@ -60,7 +64,7 @@
       <div class="flex gap-2">
         <button
           id="compareBtn"
-          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          class="bg-white text-indigo-700 px-4 py-2 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-colors"
         >
           <i class="fas fa-balance-scale mr-2"></i>So sánh (0)
         </button>

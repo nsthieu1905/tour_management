@@ -13,8 +13,8 @@
 }
 
 .card-hover:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
 .search-animation {
@@ -122,6 +122,23 @@
   z-index: 100;
 }
 
+.home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.55) 0%,
+    rgba(15, 23, 42, 0.35) 55%,
+    rgba(15, 23, 42, 0.25) 100%
+  );
+}
+
+.home-hero .home-hero__inner {
+  position: relative;
+  z-index: 1;
+}
+
 // =============================
 // TOUR CARD LAYOUT (CLIENT)
 // =============================
@@ -129,6 +146,11 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition: transform 180ms ease, box-shadow 180ms ease,
+    border-color 180ms ease;
 }
 
 .tour-card .p-6 {
@@ -148,6 +170,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.tour-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(79, 70, 229, 0.22);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
 }
 
 // Hàng meta (giá, thời lượng, đánh giá)
@@ -176,15 +204,18 @@
 }
 
 .category-sections .category-section-wrap:nth-child(odd) {
-  background: #ffedd5;
+  background: #fff7ed;
 }
 
 .category-sections .category-section-wrap:nth-child(even) {
-  background: #e0f2fe;
+  background: #eff6ff;
 }
 
 .category-sections .category-section-wrap {
   padding: 28px 0;
+  position: relative;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .category-sections .category-section-inner {
