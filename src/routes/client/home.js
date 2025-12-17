@@ -8,13 +8,13 @@ const bookingController = require("../../app/controllers/client/BookingControlle
 const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
 router.get("/", homeController.home);
-router.get("/booking-success", bookingController.bookingSuccess);
-router.use(protectClientRoutes);
-router.get("/profile", homeController.profile);
 router.get("/tours/:slug", tourApiController.tourDetail);
 router.get("/tours/:slug/feedbacks", tourApiController.tourFeedbacks);
+router.use(protectClientRoutes);
+router.get("/profile", homeController.profile);
 router.get("/favorites", homeController.favorites);
 router.get("/booking/:slug", bookingController.bookingPage);
+router.get("/booking-success", bookingController.bookingSuccess);
 router.get("/booking-details/:bookingId", bookingController.bookingDetails);
 router.get("/my-bookings", bookingController.myBookings);
 

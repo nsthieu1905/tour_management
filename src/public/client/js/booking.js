@@ -1,5 +1,5 @@
 import { Notification } from "../../utils/modal.js";
-import { apiPost } from "../../utils/api.js";
+import { apiGet, apiPost } from "../../utils/api.js";
 import { formatPrice } from "../../utils/helpers.js";
 import {
   validateEmail,
@@ -100,15 +100,10 @@ document.addEventListener("DOMContentLoaded", () => {
 // Lấy userId hiện tại từ API
 async function fetchCurrentUserId() {
   try {
-    const res = await fetch("/api/users/current-user");
-
-    if (res.ok) {
-      const result = await res.json();
-      if (result.success && result.data?._id) {
-        bookingState.userId = result.data._id;
-      } else {
-        bookingState.userId = null;
-      }
+    const res = await apiGet("/api/users/current-user");
+    const result = await res.json();
+    if (res.ok && result.success && result.data?._id) {
+      bookingState.userId = result.data._id;
     } else {
       bookingState.userId = null;
     }

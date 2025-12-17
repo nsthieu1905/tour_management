@@ -19,6 +19,18 @@ const refreshAccessToken = async () => {
   }
 };
 
+const isAdminContext = () => {
+  const path = window.location.pathname || "";
+  return path.startsWith("/admin") || path.startsWith("/auth");
+};
+
+const buildClientLoginUrl = () => {
+  const nextUrl = `${window.location.pathname || "/"}${
+    window.location.search || ""
+  }`;
+  return `/client/auth/login?next=${encodeURIComponent(nextUrl)}`;
+};
+
 const apiCall = async (url, options = {}) => {
   try {
     if (!options.headers) {
@@ -34,8 +46,10 @@ const apiCall = async (url, options = {}) => {
       if (refreshed) {
         response = await fetch(url, options);
       } else {
-        window.location.href = "/auth/admin";
-        return null;
+        window.location.href = isAdminContext()
+          ? "/auth/admin"
+          : buildClientLoginUrl();
+        return response;
       }
     }
 
@@ -113,3 +127,15 @@ export {
   apiPatch,
   apiPut,
 };
+
+if (typeof window !== "undefined") {
+  window.api = {
+    refreshAccessToken,
+    apiCall,
+    apiGet,
+    apiPost,
+    apiDelete,
+    apiPatch,
+    apiPut,
+  };
+}

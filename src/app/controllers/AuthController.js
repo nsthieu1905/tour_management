@@ -21,10 +21,14 @@ const login = (req, res) => {
 // [GET] /client/login
 const clientLogin = (req, res) => {
   const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
+  const nextUrl = req.query.next;
 
   if (accessToken) {
     try {
       jwt.verify(accessToken, process.env.AUTH_TOKEN_SECRET);
+      if (nextUrl) {
+        return res.redirect(nextUrl);
+      }
       return res.redirect("/");
     } catch (error) {
       console.error(error);

@@ -689,7 +689,9 @@
         </div>
 
         <a
+          id="book-now-btn"
           href="/booking/{{tour.slug}}"
+          data-booking-url="/booking/{{tour.slug}}"
           class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition duration-200 mb-4 shadow-lg flex items-center justify-center gap-2"
         >
           <i class="fas fa-check-circle"></i> Đặt ngay
@@ -714,17 +716,29 @@
           </div>
         </div>
 
-        <a href="/tours/{{tour.slug}}/feedbacks" class="flex items-center justify-center gap-3 mb-4 p-3 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-colors">
+        <a
+          href="/tours/{{tour.slug}}/feedbacks"
+          class="flex items-center justify-center gap-3 mb-4 p-3 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-colors"
+        >
           <div class="stars-wrap">
             <div class="stars-row stars-row--base">
-              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              <i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i>
             </div>
-            <div class="stars-row stars-row--fill" style="--ratio: {{tour.rating.average}}">
-              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            <div
+              class="stars-row stars-row--fill"
+              style="--ratio: {{tour.rating.average}}"
+            >
+              <i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i>
             </div>
           </div>
           <span class="text-sm font-semibold">{{tour.rating.average}}/5</span>
-          <span class="text-xs text-gray-600">({{tour.rating.count}} đánh giá)</span>
+          <span class="text-xs text-gray-600"
+            >({{tour.rating.count}} đánh giá)</span
+          >
         </a>
 
         <button
@@ -1154,4 +1168,4 @@
 </script>
 
 <script type="module" src="/client/js/tour-detail.js"></script>
-<script src="/utils/favorite-helper.js"></script>
+<script type="module" src="/utils/favorite-helper.js"></script>

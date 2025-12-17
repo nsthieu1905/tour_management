@@ -117,6 +117,26 @@ const Modal = {
     this._keyHandler = keyHandler;
   },
 
+  loginRequired({
+    loginUrl = "/client/auth/login",
+    message = "Vui lòng đăng nhập để tiếp tục",
+    onCancel = () => {},
+  } = {}) {
+    this.confirm({
+      title: "Thông báo",
+      message,
+      icon: "fa-info-circle",
+      iconColor: "blue",
+      confirmText: "OK",
+      cancelText: "Hủy",
+      confirmColor: "blue",
+      onConfirm: () => {
+        window.location.href = loginUrl;
+      },
+      onCancel,
+    });
+  },
+
   close() {
     const modal = document.getElementById("reusable-modal");
     if (modal) modal.remove();

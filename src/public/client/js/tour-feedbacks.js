@@ -1,4 +1,4 @@
-import { apiGet } from "../../utils/api.js";
+import { apiCall, apiGet } from "../../utils/api.js";
 
 const listEl = document.getElementById("fb-list");
 const emptyEl = document.getElementById("fb-empty");
@@ -172,9 +172,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
 async function react(id, action, btnEl, colorize) {
   try {
-    const res = await fetch(`/api/feedbacks/${id}/${action}`, {
+    const res = await apiCall(`/api/feedbacks/${id}/${action}`, {
       method: "POST",
-      credentials: "include",
     });
     const json = await res.json();
     if (!json.success) return;

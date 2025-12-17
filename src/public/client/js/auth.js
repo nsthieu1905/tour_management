@@ -198,6 +198,9 @@ async function handleLoginSubmit(e) {
   e.preventDefault();
   const config = FORM_CONFIGS.login;
 
+  const nextUrl = new URLSearchParams(window.location.search).get("next");
+  const redirectUrl = nextUrl || config.redirectUrl;
+
   clearAllErrors(config.fields);
 
   const validationResult = validateFormWithConfig(config);
@@ -228,7 +231,7 @@ async function handleLoginSubmit(e) {
     Notification.success(config.successMessage);
 
     setTimeout(() => {
-      window.location.href = config.redirectUrl;
+      window.location.href = redirectUrl;
     }, 1000);
   } catch (error) {
     toggleLoadingState(config, false);

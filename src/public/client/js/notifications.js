@@ -1,3 +1,5 @@
+import { apiCall, apiDelete, apiGet } from "../../utils/api.js";
+
 class ClientNotificationManager {
   constructor() {
     this.notifications = [];
@@ -19,7 +21,7 @@ class ClientNotificationManager {
   // Lấy userId từ API server (cho người dùng đã đăng nhập)
   async fetchUserIdFromApi() {
     try {
-      const response = await fetch("/api/users/current-user");
+      const response = await apiGet("/api/users/current-user");
 
       if (!response.ok) {
         return null;
@@ -226,7 +228,7 @@ class ClientNotificationManager {
   // Lấy danh sách thông báo từ server để đồng bộ
   async fetchNotificationsFromServer(userId) {
     try {
-      const response = await fetch(`/api/notifications/user`);
+      const response = await apiGet(`/api/notifications/user`);
 
       if (!response.ok) {
         return;
@@ -434,11 +436,8 @@ class ClientNotificationManager {
     const notif = this.notifications.find((n) => n.id === id);
     if (notif) {
       // Cập nhật lên server
-      fetch(`/api/notifications/${id}/read`, {
+      apiCall(`/api/notifications/${id}/read`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
       }).catch((err) => {
         // Xử lý lỗi im lặng
       });
@@ -465,12 +464,7 @@ class ClientNotificationManager {
       this.notifications.splice(index, 1);
 
       // Xóa trên server
-      fetch(`/api/notifications/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).catch((err) => {
+      apiDelete(`/api/notifications/${id}`).catch((err) => {
         // Xử lý lỗi im lặng
       });
 

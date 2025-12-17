@@ -1,4 +1,5 @@
 import { Notification } from "../../utils/modal.js";
+import { Modal } from "../../utils/modal.js";
 import { formatPriceK } from "../../utils/helpers.js";
 
 // Global variables
@@ -499,6 +500,10 @@ function addToWishlist(tourId) {
       const icon = document.getElementById("wishlist-icon");
       const text = document.getElementById("wishlist-text");
 
+      if (result && result.authRequired) {
+        return;
+      }
+
       if (result.success) {
         isWishlisted = result.isFavorited;
 
@@ -693,6 +698,38 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeDepartureDates();
   initializeLightboxThumbnails();
   initializeWishlist(); // Kiểm tra tour đã được yêu thích chưa
+
+  const bookNowBtn = document.getElementById("book-now-btn");
+  if (bookNowBtn) {
+    bookNowBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const bookingUrl =
+        bookNowBtn.getAttribute("data-booking-url") || bookNowBtn.href;
+
+      try {
+        const response = await fetch("/auth/check-token", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        const data = await response.json();
+        const loggedIn = response.ok && data.success && !data.expired;
+
+        if (loggedIn) {
+          window.location.href = bookingUrl;
+          return;
+        }
+      } catch (err) {
+        // ignore
+      }
+
+      Modal.loginRequired({
+        loginUrl: `/client/auth/login?next=${encodeURIComponent(bookingUrl)}`,
+        onCancel: () => {},
+      });
+    });
+  }
 
   // Khởi tạo hiển thị số lượng khách
   changeGuests(0);

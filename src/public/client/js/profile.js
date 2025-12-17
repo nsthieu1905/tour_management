@@ -1,5 +1,6 @@
 import { Modal, Notification } from "../../utils/modal.js";
 import { validateEmail, validatePhoneNumber } from "../../utils/validators.js";
+import { apiGet, apiPut } from "../../utils/api.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadUserProfile();
@@ -8,18 +9,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function loadUserProfile() {
   try {
-    const response = await fetch("/api/users/profile", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch profile");
-    }
-
+    const response = await apiGet("/api/users/profile");
     const data = await response.json();
+
+    if (!response.ok || !data?.success) {
+      throw new Error(data?.message || "Failed to fetch profile");
+    }
     const user = data.data?.user || {};
 
     document.getElementById("fullName").value = user.fullName || "";
@@ -223,19 +218,16 @@ async function handleUpdateProfile() {
   button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang lưu...';
 
   try {
-    const response = await fetch("/api/users/update-profile", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await apiPut(
+      "/api/users/update-profile",
+      JSON.stringify({
         fullName,
         email,
         phone,
         gender,
         dateOfBirth,
-      }),
-    });
+      })
+    );
 
     const data = await response.json();
 
@@ -306,17 +298,14 @@ async function handleChangePassword() {
   button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
 
   try {
-    const response = await fetch("/api/users/change-password", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await apiPut(
+      "/api/users/change-password",
+      JSON.stringify({
         currentPassword,
         newPassword,
         confirmPassword,
-      }),
-    });
+      })
+    );
 
     const data = await response.json();
 

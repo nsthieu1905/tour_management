@@ -6,6 +6,58 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../app/models/index");
 const { generateAccessToken } = require("../app/API/AuthApiController");
 
+const isApiRequest = (req) => {
+  const accept = req.headers.accept || "";
+  const contentType = req.headers["content-type"] || "";
+  return (
+    req.xhr ||
+    req.originalUrl.startsWith("/api/") ||
+    accept.includes("application/json") ||
+    contentType.includes("application/json")
+  );
+};
+
+const buildClientLoginUrl = (nextUrl) => {
+  const safeNext = nextUrl || "/";
+  return `/client/auth/login?next=${encodeURIComponent(safeNext)}`;
+};
+
+const respondAuthRequired = (req, res) => {
+  const nextUrl = isApiRequest(req)
+    ? req.headers.referer || "/"
+    : req.originalUrl || "/";
+  const loginUrl = buildClientLoginUrl(nextUrl);
+
+  if (isApiRequest(req)) {
+    return res.status(401).json({
+      success: false,
+      error: "AUTH_REQUIRED",
+      message: "Vui lòng đăng nhập để tiếp tục",
+      redirect: loginUrl,
+    });
+  }
+
+  return res.status(401).render("auth/require-login", {
+    layout: false,
+    loginUrl,
+  });
+};
+
+const respondForbidden = (req, res) => {
+  if (isApiRequest(req)) {
+    return res.status(403).json({
+      success: false,
+      error: "FORBIDDEN",
+      message: "Bạn không đủ quyền truy cập.",
+    });
+  }
+
+  return res.status(403).render("auth/forbidden", {
+    message: "Bạn không đủ quyền truy cập.",
+    layout: false,
+  });
+};
+
 const protectClientRoutes = async (req, res, next) => {
   try {
     const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
@@ -17,7 +69,7 @@ const protectClientRoutes = async (req, res, next) => {
 
         const user = await User.findById(decoded.userId);
         if (!user) {
-          return res.redirect("/");
+          return respondAuthRequired(req, res);
         }
 
         // Kiểm tra trạng thái tài khoản
@@ -37,7 +89,7 @@ const protectClientRoutes = async (req, res, next) => {
         if (error.name === "TokenExpiredError") {
           // Access token hết hạn và không có refresh token
           if (!refreshToken) {
-            return res.redirect("/");
+            return respondAuthRequired(req, res);
           }
 
           try {
@@ -49,7 +101,7 @@ const protectClientRoutes = async (req, res, next) => {
 
             const user = await User.findById(decodedRefresh.userId);
             if (!user) {
-              return res.redirect("/");
+              return respondAuthRequired(req, res);
             }
 
             // Kiểm tra trạng thái tài khoản
@@ -90,16 +142,16 @@ const protectClientRoutes = async (req, res, next) => {
             };
             return next();
           } catch (refreshError) {
-            return res.redirect("/");
+            return respondAuthRequired(req, res);
           }
         } else {
-          return res.redirect("/");
+          return respondAuthRequired(req, res);
         }
       }
     } else {
       // Không có access token
       if (!refreshToken) {
-        return res.redirect("/");
+        return respondAuthRequired(req, res);
       }
 
       try {
@@ -112,7 +164,7 @@ const protectClientRoutes = async (req, res, next) => {
 
         const user = await User.findById(decodedRefresh.userId);
         if (!user) {
-          return res.redirect("/");
+          return respondAuthRequired(req, res);
         }
 
         const newAccessToken = generateAccessToken(decodedRefresh.userId);
@@ -146,11 +198,11 @@ const protectClientRoutes = async (req, res, next) => {
         };
         return next();
       } catch (refreshError) {
-        return res.redirect("/");
+        return respondAuthRequired(req, res);
       }
     }
   } catch (error) {
-    return res.redirect("/");
+    return respondAuthRequired(req, res);
   }
 };
 

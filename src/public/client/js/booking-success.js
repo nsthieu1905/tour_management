@@ -1,3 +1,5 @@
+import { apiGet } from "../../utils/api.js";
+
 // Định dạng giá tiền
 function formatPrice(num) {
   return new Intl.NumberFormat("vi-VN").format(num);
@@ -39,7 +41,7 @@ function updateBookingUI(booking) {
 // Nếu sessionStorage trống (sau khi F5), lấy từ server
 if (!bookingCode || !bookingTotal) {
   if (bookingId) {
-    fetch(`/api/bookings/${bookingId}`)
+    apiGet(`/api/bookings/${bookingId}`)
       .then((res) => res.json())
       .then((result) => {
         if (result.success && result.data) {

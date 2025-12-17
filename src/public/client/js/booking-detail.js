@@ -1,3 +1,5 @@
+import { apiGet } from "../../utils/api.js";
+
 // Lấy booking ID từ URL
 const pathParts = window.location.pathname.split("/");
 const bookingId = pathParts[pathParts.length - 1];
@@ -11,7 +13,7 @@ if (!bookingId) {
 // Tải chi tiết booking từ API
 async function loadBookingDetail(id) {
   try {
-    const res = await fetch(`/api/bookings/${id}`);
+    const res = await apiGet(`/api/bookings/${id}`);
     const result = await res.json();
 
     if (!result.success) {

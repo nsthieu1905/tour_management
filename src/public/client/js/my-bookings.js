@@ -56,20 +56,20 @@ function displayBookings() {
 }
 
 function createBookingCard(booking) {
-  const tour = booking.tourId;
+  const tour = booking.tourId || {};
+  const tourName = tour.name || "(Tour không còn tồn tại)";
+  const tourSlug = tour.slug;
   const statusBadge = getStatusBadge(booking.bookingStatus);
   const paymentBadge = getPaymentStatusBadge(booking.paymentStatus);
   const canReview = booking.bookingStatus === "completed" && !booking.reviewId;
-  const canViewReview = Boolean(booking.reviewId && tour.slug);
+  const canViewReview = Boolean(booking.reviewId && tourSlug);
 
   return `
         <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
           <div class="p-6">
             <div class="flex justify-between items-start mb-4">
               <div>
-                <h3 class="text-lg font-semibold text-gray-900">${
-                  tour.name
-                }</h3>
+                <h3 class="text-lg font-semibold text-gray-900">${tourName}</h3>
                 <p class="text-sm text-gray-500">Mã đơn: <span class="font-mono font-semibold">${
                   booking.bookingCode
                 }</span></p>
@@ -115,7 +115,7 @@ function createBookingCard(booking) {
                 <i class="bi bi-eye mr-2"></i>Xem chi tiết
               </button>
               <a
-                href="${tour.slug ? `/booking/${tour.slug}` : "#"}"
+                href="${tourSlug ? `/booking/${tourSlug}` : "#"}"
                 class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg text-center transition-colors"
               >
                 <i class="bi bi-arrow-repeat mr-2"></i>Đặt lại
@@ -126,7 +126,7 @@ function createBookingCard(booking) {
                       <i class="fas fa-star mr-2"></i>Đánh giá
                      </button>`
                   : canViewReview
-                  ? `<a class="flex-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 rounded-lg text-center transition-colors" href="/tours/${tour.slug}/feedbacks">
+                  ? `<a class="flex-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 rounded-lg text-center transition-colors" href="/tours/${tourSlug}/feedbacks">
                        <i class=\"fas fa-comment-dots mr-2\"></i>Xem nhận xét
                      </a>`
                   : ""
@@ -190,7 +190,7 @@ document.getElementById("search-box").addEventListener("input", (e) => {
   filteredBookings = bookings.filter(
     (b) =>
       b.bookingCode.toLowerCase().includes(query) ||
-      b.tourId.name.toLowerCase().includes(query)
+      (b.tourId?.name || "").toLowerCase().includes(query)
   );
   displayBookings();
 });
@@ -236,7 +236,8 @@ function setStarVisual(n) {
     i.classList.toggle("text-yellow-400", idx <= n);
     i.classList.toggle("text-gray-300", idx > n);
   });
-  document.getElementById("fb-stars-text").textContent = n > 0 ? `${n}/5` : "Chọn số sao";
+  document.getElementById("fb-stars-text").textContent =
+    n > 0 ? `${n}/5` : "Chọn số sao";
 }
 
 document.getElementById("fb-stars").addEventListener("mousemove", (e) => {
@@ -250,8 +251,12 @@ document.getElementById("fb-stars").addEventListener("click", (e) => {
   currentFeedback.rating = Number(t.getAttribute("data-star"));
   setStarVisual(currentFeedback.rating);
 });
-document.getElementById("fb-close").addEventListener("click", closeFeedbackModal);
-document.getElementById("fb-cancel").addEventListener("click", closeFeedbackModal);
+document
+  .getElementById("fb-close")
+  .addEventListener("click", closeFeedbackModal);
+document
+  .getElementById("fb-cancel")
+  .addEventListener("click", closeFeedbackModal);
 
 document.getElementById("fb-submit").addEventListener("click", async () => {
   if (!currentFeedback.bookingId || !currentFeedback.rating) {

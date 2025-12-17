@@ -1,7 +1,15 @@
 /**
  * Favorite helper - handles favorite operations
  */
+import { Modal } from "/utils/modal.js";
+
 const favoriteHelper = {
+  showLoginRequiredModal: function (redirectUrl) {
+    Modal.loginRequired({
+      loginUrl: redirectUrl || "/client/auth/login",
+    });
+  },
+
   /**
    * Toggle favorite for a tour
    */
@@ -17,6 +25,16 @@ const favoriteHelper = {
       });
 
       const data = await response.json();
+
+      if (response.status === 401 && data && data.error === "AUTH_REQUIRED") {
+        this.showLoginRequiredModal(data.redirect);
+        return {
+          success: false,
+          authRequired: true,
+          redirect: data.redirect,
+          message: data.message,
+        };
+      }
 
       if (response.ok && data.success) {
         return {
