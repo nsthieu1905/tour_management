@@ -87,7 +87,8 @@ async function showComparison() {
           typeof t.price === "number"
             ? t.price.toLocaleString("vi-VN") + " VND"
             : "-";
-        const img = t.thumbnail || (t.images && t.images[0]) || "/images/no-image.png";
+        const img =
+          t.thumbnail || (t.images && t.images[0]) || "/images/no-image.png";
         const ratingAvg = t?.rating?.average ?? 0;
         const ratingCount = t?.rating?.count ?? 0;
         const duration = t?.duration
@@ -137,7 +138,9 @@ async function showComparison() {
     modal.classList.add("active");
   } catch (err) {
     console.error("Lỗi tải dữ liệu so sánh:", err);
-    Notification.error("Không thể tải dữ liệu tour để so sánh. Vui lòng thử lại.");
+    Notification.error(
+      "Không thể tải dữ liệu tour để so sánh. Vui lòng thử lại."
+    );
   }
 }
 
@@ -184,6 +187,28 @@ document.addEventListener("click", function (e) {
 // ============================================
 
 document.addEventListener("DOMContentLoaded", function () {
+  const aiSearch = document.getElementById("aiSearch");
+  const homeSearchBtn = document.getElementById("homeSearchBtn");
+
+  const goToSearch = () => {
+    const q = String(aiSearch?.value || "").trim();
+    const url = q ? `/tours?q=${encodeURIComponent(q)}` : "/tours";
+    window.location.href = url;
+  };
+
+  if (homeSearchBtn) {
+    homeSearchBtn.addEventListener("click", goToSearch);
+  }
+
+  if (aiSearch) {
+    aiSearch.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        goToSearch();
+      }
+    });
+  }
+
   // Thêm hiệu ứng tương tác cho các card
   const cards = document.querySelectorAll(".card-hover");
   cards.forEach((card) => {

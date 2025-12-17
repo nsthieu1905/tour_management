@@ -311,6 +311,21 @@ const qlyTour = async (req, res) => {
   }
 };
 
+// [GET] /admin/qly-tour/categories
+const qlyTourCategories = async (req, res) => {
+  try {
+    return res.render("components/qly-tour-categories", {
+      bodyClass: "bg-gray-50 transition-all duration-300",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau",
+    });
+  }
+};
+
 // [GET] /admin/qly-tour/trash
 const trashTour = async (req, res) => {
   try {
@@ -773,6 +788,7 @@ const qlyNhanTin = (req, res) => {
 module.exports = {
   dashboard,
   qlyTour,
+  qlyTourCategories,
   trashTour,
   bookingTour,
   qlyNhanVien,

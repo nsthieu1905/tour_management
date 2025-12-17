@@ -72,6 +72,10 @@ const findOne = async (req, res) => {
   try {
     const tour = await Tour.findById(req.params.id)
       .populate({
+        path: "categoryId",
+        select: "name slug order",
+      })
+      .populate({
         path: "partnerServices.serviceId",
         select: "name price unit partnerId category status",
       })
@@ -104,7 +108,15 @@ const create = async (req, res) => {
     return "Cao cấp";
   };
   try {
-    let { price, departureDates, itinerary, partnerServices } = req.body;
+    let { price, departureDates, itinerary, partnerServices, categoryId } =
+      req.body;
+
+    if (!String(categoryId || "").trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng chọn danh mục tour",
+      });
+    }
     const imagePaths = req.files?.map((f) => `/uploads/${f.filename}`) ?? [];
 
     // Xử lý itinerary từ form fields
@@ -184,6 +196,7 @@ const create = async (req, res) => {
       duration: req.body.duration,
       capacity: req.body.capacity,
       price: Number(price),
+      categoryId: categoryId || null,
       departureDates:
         parsedDepartureDates.length > 0
           ? parsedDepartureDates
@@ -263,7 +276,15 @@ const update = async (req, res) => {
       });
     }
 
-    let { price, departureDates, itinerary, partnerServices } = req.body;
+    let { price, departureDates, itinerary, partnerServices, categoryId } =
+      req.body;
+
+    if (categoryId !== undefined && !String(categoryId || "").trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng chọn danh mục tour",
+      });
+    }
     const newImagePaths = req.files?.map((f) => `/uploads/${f.filename}`) ?? [];
 
     // Xử lý itinerary từ form fields
@@ -352,6 +373,10 @@ const update = async (req, res) => {
         current: existingTour.capacity.current, // Keep current bookings
       },
       price: Number(price || existingTour.price),
+      categoryId:
+        categoryId !== undefined
+          ? categoryId || null
+          : existingTour.categoryId || null,
       departureDates: parsedDepartureDates,
       itinerary: parsedItinerary,
       images: finalImages,

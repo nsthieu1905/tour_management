@@ -56,10 +56,44 @@ const hbs = engine({
       return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     },
 
+    badgeClass: (type) => {
+      switch (type) {
+        case "Giá tốt":
+          return "badge-giatot";
+        case "Cao cấp":
+          return "badge-caocap";
+        case "Tiêu chuẩn":
+          return "badge-tieuchuan";
+        case "Tiết kiệm":
+          return "badge-tietkiem";
+        default:
+          return "";
+      }
+    },
+
+    badgeIcon: (type) => {
+      switch (type) {
+        case "Giá tốt":
+          return "fa-tag";
+        case "Cao cấp":
+          return "fa-gem";
+        case "Tiêu chuẩn":
+          return "fa-medal";
+        case "Tiết kiệm":
+          return "fa-crown";
+        default:
+          return "fa-ticket";
+      }
+    },
+
     formatDate: (date) => {
       if (!date) return "";
-      const d = Array.isArray(date) ? date[0] : date;
+      let d = Array.isArray(date) ? date[0] : date;
+      if (typeof d === "object" && d !== null && d.date) {
+        d = d.date;
+      }
       const dateObj = new Date(d);
+      if (isNaN(dateObj.getTime())) return "";
       return dateObj.toLocaleDateString("vi-VN", {
         year: "numeric",
         month: "2-digit",

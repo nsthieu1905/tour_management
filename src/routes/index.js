@@ -7,6 +7,7 @@ const usersApiRoutes = require("./admin/users");
 const adminBookingRoutes = require("./admin/bookings");
 const adminStaffRoutes = require("./admin/staff");
 const doiTacApiRoutes = require("./admin/doi-tac");
+const tourCategoryApiRoutes = require("./admin/tour-categories");
 
 // Chatbot
 const chatbotApiRoutes = require("./client/chatbot");
@@ -32,6 +33,7 @@ function route(app) {
   app.use("/api/bookings", adminBookingRoutes);
   app.use("/api/staffs", adminStaffRoutes);
   app.use("/api/doi-tac", doiTacApiRoutes);
+  app.use("/api/tour-categories", tourCategoryApiRoutes);
   app.use("/api/notifications", notificationRoutes);
   app.use("/api/messages", messageRoutes);
 

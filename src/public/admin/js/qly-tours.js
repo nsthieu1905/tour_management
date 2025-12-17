@@ -69,6 +69,8 @@ let partnersCache = [];
 let servicesCacheByPartnerId = new Map();
 let selectedPartnerServices = [];
 
+let tourCategoriesCache = [];
+
 let lastDestinationFilter = "";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -78,7 +80,43 @@ document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("trash-list")) getToursTrash();
   if (document.getElementById("addTourForm")) initTourForm();
   initFilterAndSearch();
+  initTourCategoriesSelect();
 });
+
+async function initTourCategoriesSelect() {
+  const select = document.getElementById("tourCategorySelect");
+  if (!select) return;
+
+  try {
+    const res = await apiGet("/api/tour-categories");
+    if (!res) return;
+    const result = await res.json();
+    if (!result?.success) {
+      Notification.error(result?.message || "Không thể tải danh mục tour");
+      return;
+    }
+
+    tourCategoriesCache = result.data || [];
+    renderTourCategoriesOptions();
+  } catch (err) {
+    console.error(err);
+    Notification.error("Lỗi khi tải danh mục tour");
+  }
+}
+
+function renderTourCategoriesOptions() {
+  const select = document.getElementById("tourCategorySelect");
+  if (!select) return;
+
+  const options = (tourCategoriesCache || [])
+    .map(
+      (c) =>
+        `<option value="${c._id}">${escapeHtml(String(c.name || ""))}</option>`
+    )
+    .join("");
+
+  select.innerHTML = `<option value="">-- Chưa chọn --</option>${options}`;
+}
 
 // ===========================
 // KHỞI TẠO QUẢN LÝ TOUR
@@ -156,7 +194,6 @@ function initPartnerServicesAssignment() {
     const qty = Number(
       document.getElementById("partnerServiceQuantity")?.value || 1
     );
-    const note = document.getElementById("partnerServiceNote")?.value || "";
     const included =
       document.getElementById("partnerServiceIncluded")?.checked ?? true;
 
@@ -176,7 +213,6 @@ function initPartnerServicesAssignment() {
       serviceId,
       quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
       includedInTourPrice: Boolean(included),
-      note,
       _meta: {
         partnerName: partnerMeta?.name || "",
         serviceName: serviceMeta?.name || "",
@@ -347,13 +383,6 @@ function renderSelectedPartnerServices() {
         price !== undefined ? ` | Giá: ${fmt(price)}` : ""
       }
             </div>
-            ${
-              item.note
-                ? `<div class="text-xs text-gray-600 mt-1">Ghi chú: ${escapeHtml(
-                    String(item.note)
-                  )}</div>`
-                : ""
-            }
           </div>
           <button
             type="button"
@@ -375,7 +404,6 @@ function syncPartnerServicesToHiddenInput() {
     serviceId: x.serviceId,
     quantity: x.quantity,
     includedInTourPrice: x.includedInTourPrice,
-    note: x.note,
   }));
   input.value = JSON.stringify(payload);
 }
@@ -384,7 +412,6 @@ function resetPartnerServicesUI() {
   const partnerSelect = document.getElementById("partnerSelect");
   const serviceSelect = document.getElementById("partnerServiceSelect");
   const qty = document.getElementById("partnerServiceQuantity");
-  const note = document.getElementById("partnerServiceNote");
   const included = document.getElementById("partnerServiceIncluded");
   const input = document.getElementById("partnerServicesData");
   const qtyWrap = document.getElementById("partnerServiceQuantityWrap");
@@ -393,7 +420,6 @@ function resetPartnerServicesUI() {
   if (serviceSelect)
     serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>`;
   if (qty) qty.value = 1;
-  if (note) note.value = "";
   if (included) included.checked = true;
   if (input) input.value = "";
 
@@ -507,7 +533,9 @@ function renderTours(tours) {
         </div>
         <div class="p-6">
           <div class="mb-3">
-            <h3 class="text-xl font-bold text-gray-900">${tour.name}</h3>
+            <h3 class="text-xl font-bold text-gray-900 line-clamp-3 min-h-[4.5rem]">${
+              tour.name
+            }</h3>
           </div>
           <div class="tour-card__footer">
             <p class="text-sm text-gray-600">
@@ -898,6 +926,9 @@ function modalHandlers(onCloseCallback = null) {
     if (form) form.reset();
     clearFormErrors(form);
 
+    const categorySelect = document.getElementById("tourCategorySelect");
+    if (categorySelect) categorySelect.value = "";
+
     ensurePartnersLoaded();
     resetPartnerServicesUI();
     applyPartnerDestinationFilter("");
@@ -985,8 +1016,15 @@ function validateNights(nights) {
 }
 
 function validatePrice(price) {
-  if (!price || parseFloat(price) <= 0) {
+  if (!price || isNaN(price) || Number(price) <= 0) {
     return "Giá tour phải lớn hơn 0";
+  }
+  return null;
+}
+
+function validateCategory(categoryId) {
+  if (!String(categoryId || "").trim()) {
+    return "Vui lòng chọn danh mục tour";
   }
   return null;
 }
@@ -1023,6 +1061,9 @@ async function validateTourForm(formData) {
 
   const destError = validateDestination(formData.get("destination"));
   if (destError) errors.destination = destError;
+
+  const categoryError = validateCategory(formData.get("categoryId"));
+  if (categoryError) errors.categoryId = categoryError;
 
   const daysError = validateDays(formData.get("duration[days]"));
   if (daysError) errors.days = daysError;
@@ -1178,7 +1219,9 @@ async function getToursTrash() {
           </div>
           <div class="p-6">
             <div class="mb-3">
-              <h3 class="text-xl font-bold text-gray-900">${tour.name}</h3>
+              <h3 class="text-xl font-bold text-gray-900 line-clamp-3 min-h-[4.5rem]">${
+                tour.name
+              }</h3>
             </div>
             <div class="tour-card__footer">
               <p class="text-sm text-gray-600">
@@ -1364,6 +1407,15 @@ function editTour() {
         form.querySelector('[name="name"]').value = tour.name || "";
         form.querySelector('[name="destination"]').value =
           tour.destination || "";
+
+        const categorySelect = document.getElementById("tourCategorySelect");
+        if (categorySelect) {
+          const categoryId =
+            tour?.categoryId && typeof tour.categoryId === "object"
+              ? tour.categoryId._id
+              : tour?.categoryId;
+          categorySelect.value = categoryId ? String(categoryId) : "";
+        }
         form.querySelector('[name="duration[days]"]').value =
           tour.duration?.days || "";
         form.querySelector('[name="duration[nights]"]').value =
@@ -1433,7 +1485,6 @@ function editTour() {
                   serviceId: serviceDoc?._id || ps.serviceId,
                   quantity: ps.quantity,
                   includedInTourPrice: ps.includedInTourPrice,
-                  note: ps.note,
                   _meta: {
                     partnerName: partnerName || "",
                     serviceName: serviceDoc?.name || "",

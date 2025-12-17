@@ -155,6 +155,28 @@
   line-height: 1.1;
 }
 
+.category-sections .category-section-wrap {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+.category-sections .category-section-wrap:nth-child(odd) {
+  background: #ffedd5;
+}
+
+.category-sections .category-section-wrap:nth-child(even) {
+  background: #e0f2fe;
+}
+
+.category-sections .category-section-wrap {
+  padding: 28px 0;
+}
+
+.category-sections .category-section-inner {
+  padding: 0;
+}
+
 .stars-wrap {
   position: relative;
   width: 100px;
@@ -1552,6 +1574,63 @@ body {
 }
 .hidden {
   display: none !important;
+}
+
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.tour-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tour-badge i {
+  font-size: 16px;
+}
+
+.badge-giatot {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+}
+
+.badge-caocap {
+  background: linear-gradient(135deg, #e63946 0%, #d62828 100%);
+}
+
+.badge-tieuchuan {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.badge-tietkiem {
+  background: linear-gradient(135deg, #ffd93d 0%, #ffb830 100%);
+  color: #111827;
 }
 
 /*# sourceMappingURL=app.css.map */

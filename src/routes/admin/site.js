@@ -11,6 +11,8 @@ router.get("/qly-tour/trash", siteController.trashTour);
 
 router.get("/qly-tour", siteController.qlyTour);
 
+router.get("/qly-tour/categories", siteController.qlyTourCategories);
+
 router.get("/booking-tour", siteController.bookingTour);
 
 router.get("/qly-nhan-vien", siteController.qlyNhanVien);

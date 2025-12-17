@@ -168,3 +168,25 @@
 .tour-card .meta-row .text-2xl {
   line-height: 1.1;
 }
+
+.category-sections .category-section-wrap {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+.category-sections .category-section-wrap:nth-child(odd) {
+  background: #ffedd5;
+}
+
+.category-sections .category-section-wrap:nth-child(even) {
+  background: #e0f2fe;
+}
+
+.category-sections .category-section-wrap {
+  padding: 28px 0;
+}
+
+.category-sections .category-section-inner {
+  padding: 0;
+}

@@ -699,7 +699,7 @@ function resetPartnerServiceForm() {
   if (name) name.value = "";
   if (price) price.value = "";
   if (status) status.value = "active";
-  if (submitBtn) submitBtn.textContent = "Thêm dịch vụ";
+  if (submitBtn) submitBtn.textContent = "Thêm";
   if (cancelBtn) cancelBtn.classList.add("hidden");
 }
 

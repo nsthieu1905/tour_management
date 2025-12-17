@@ -47,6 +47,11 @@ const tourSchema = new Schema(
       type: String,
       enum: ["Tiết kiệm", "Tiêu chuẩn", "Giá tốt", "Cao cấp"],
     },
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TourCategory",
+      default: null,
+    },
     // discountPrice, promotionPrice: đã bỏ vì không dùng
     images: {
       type: [String],

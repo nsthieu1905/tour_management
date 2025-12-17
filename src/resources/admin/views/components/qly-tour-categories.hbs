@@ -1,0 +1,120 @@
+<div class="flex pt-16">
+  <main class="flex-1 ml-64 p-6">
+    <div id="tour-categories" class="section">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">Danh mục Tour</h2>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button
+            type="button"
+            onclick="window.showAddCategoryModal()"
+            class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity shadow-lg"
+          >
+            <i class="fas fa-plus mr-2"></i>Thêm danh mục
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Tìm kiếm</label
+            >
+            <input
+              id="categorySearchInput"
+              type="text"
+              placeholder="Tìm theo tên danh mục"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div id="categories-list" class="divide-y divide-gray-100"></div>
+        <div id="empty-categories-list"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div
+  id="categoryModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+    <div
+      class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center"
+    >
+      <h3 id="categoryModalTitle" class="text-xl font-semibold text-gray-900">
+        Thêm danh mục
+      </h3>
+      <button
+        type="button"
+        onclick="window.hideCategoryModal()"
+        class="text-gray-400 hover:text-gray-600"
+      >
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <form id="categoryForm" class="p-6 space-y-4" novalidate>
+      <input type="hidden" id="categoryId" />
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Tên danh mục <span class="text-red-500">*</span></label
+        >
+        <input
+          type="text"
+          id="categoryName"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="VD: Tour Ưu Đãi, Tour Du Lịch Năm Mới..."
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Mô tả</label
+        >
+        <textarea
+          id="categoryDescription"
+          rows="3"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="Mô tả ngắn về danh mục"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Mục</label>
+        <input
+          type="number"
+          id="categoryOrder"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          placeholder="VD: 1"
+        />
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onclick="window.hideCategoryModal()"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Huỷ
+        </button>
+        <button
+          type="submit"
+          id="categorySubmitBtn"
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          Lưu
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="/admin/js/qly-tour-categories.js"></script>
