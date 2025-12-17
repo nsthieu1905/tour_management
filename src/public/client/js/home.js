@@ -6,6 +6,188 @@ import { apiGet } from "../../utils/api.js";
 // ============================================
 let selectedTours = [];
 
+function initHomeBannerSlider() {
+  const slider = document.getElementById("homeBannerSlider");
+  if (!slider) return;
+
+  const track = slider.querySelector(".home-slider__track");
+  const baseItems = Array.from(slider.querySelectorAll(".home-slider__item"));
+  const dots = Array.from(slider.querySelectorAll(".home-slider__dot"));
+  const prevBtn = slider.querySelector(".home-slider__prev");
+  const nextBtn = slider.querySelector(".home-slider__next");
+
+  if (!track || baseItems.length === 0) return;
+
+  const bannerUrl = (index) => `/images/banner${String(index)}.jpg`;
+  const bannerCache = new Map();
+
+  const resolveBanner = (index) => {
+    const key = Number(index || 0);
+    if (!key) return Promise.resolve(null);
+    if (bannerCache.has(key)) return bannerCache.get(key);
+
+    const p = new Promise((resolve) => {
+      const src = bannerUrl(key);
+      const probe = new Image();
+      probe.onload = () => resolve(src);
+      probe.onerror = () => resolve(null);
+      probe.src = src;
+    });
+
+    bannerCache.set(key, p);
+    return p;
+  };
+
+  // Infinite loop: clone last to head, first to tail
+  if (baseItems.length > 1) {
+    const firstClone = baseItems[0].cloneNode(true);
+    const lastClone = baseItems[baseItems.length - 1].cloneNode(true);
+    track.insertBefore(lastClone, baseItems[0]);
+    track.appendChild(firstClone);
+  }
+
+  const items = Array.from(slider.querySelectorAll(".home-slider__item"));
+  const realCount = baseItems.length;
+
+  // Prepare images (only banner1.jpg..banner5.jpg; keep placeholder when missing)
+  items.forEach((item) => {
+    const img = item.querySelector(".home-slider__img");
+    const placeholder = item.querySelector(".home-slider__placeholder");
+    const bannerIndex = Number(img?.dataset?.banner || 0);
+    if (!img || !bannerIndex) return;
+
+    img.classList.add("home-slider__img--hidden");
+    placeholder?.classList.remove("home-slider__placeholder--hidden");
+
+    resolveBanner(bannerIndex).then((src) => {
+      if (!src) {
+        img.classList.add("home-slider__img--hidden");
+        placeholder?.classList.remove("home-slider__placeholder--hidden");
+        return;
+      }
+
+      img.src = src;
+      img.classList.remove("home-slider__img--hidden");
+      placeholder?.classList.add("home-slider__placeholder--hidden");
+    });
+  });
+
+  let current = realCount > 1 ? 1 : 0;
+  let timer = null;
+  let isTransitioning = false;
+
+  const setTransitionEnabled = (enabled) => {
+    track.style.transition = enabled ? "transform 450ms ease" : "none";
+  };
+
+  const getRealIndex = () => {
+    if (realCount <= 1) return 0;
+    if (current === 0) return realCount - 1;
+    if (current === realCount + 1) return 0;
+    return current - 1;
+  };
+
+  const render = () => {
+    track.style.transform = `translateX(-${current * 100}%)`;
+    const realIndex = getRealIndex();
+    dots.forEach((d, i) => {
+      if (i === realIndex) d.classList.add("is-active");
+      else d.classList.remove("is-active");
+    });
+  };
+
+  const goToReal = (realIndex) => {
+    if (realCount <= 1) {
+      current = 0;
+      render();
+      return;
+    }
+    current = Math.min(Math.max(0, Number(realIndex) + 1), realCount + 1);
+    render();
+  };
+
+  const next = () => {
+    if (realCount <= 1 || isTransitioning) return;
+    isTransitioning = true;
+    setTransitionEnabled(true);
+    current = Math.min(current + 1, realCount + 1);
+    render();
+  };
+
+  const prev = () => {
+    if (realCount <= 1 || isTransitioning) return;
+    isTransitioning = true;
+    setTransitionEnabled(true);
+    current = Math.max(current - 1, 0);
+    render();
+  };
+
+  const start = () => {
+    stop();
+    timer = window.setInterval(() => {
+      if (!isTransitioning) next();
+    }, 4500);
+  };
+
+  const stop = () => {
+    if (timer) {
+      window.clearInterval(timer);
+      timer = null;
+    }
+  };
+
+  prevBtn?.addEventListener("click", () => {
+    prev();
+    start();
+  });
+
+  nextBtn?.addEventListener("click", () => {
+    next();
+    start();
+  });
+
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => {
+      if (realCount <= 1 || isTransitioning) return;
+      const idx = Number(dot.dataset.slide || 0);
+      goToReal(idx);
+      start();
+    });
+  });
+
+  track.addEventListener("transitionend", () => {
+    if (realCount <= 1) return;
+
+    isTransitioning = false;
+
+    if (current === 0) {
+      setTransitionEnabled(false);
+      current = realCount;
+      render();
+      track.offsetHeight;
+      setTransitionEnabled(true);
+      return;
+    }
+
+    if (current === realCount + 1) {
+      setTransitionEnabled(false);
+      current = 1;
+      render();
+      track.offsetHeight;
+      setTransitionEnabled(true);
+    }
+  });
+
+  slider.addEventListener("mouseenter", stop);
+  slider.addEventListener("mouseleave", start);
+  slider.addEventListener("focusin", stop);
+  slider.addEventListener("focusout", start);
+
+  setTransitionEnabled(true);
+  goToReal(0);
+  start();
+}
+
 // ============================================
 // CHỨC NĂNG SO SÁNH TOUR
 // ============================================
@@ -43,17 +225,22 @@ function toggleCompare(button, tourId) {
  * Cập nhật trạng thái và số lượng tour được chọn trên nút so sánh
  */
 function updateCompareButton() {
-  const compareBtn = document.getElementById("compareBtn");
-  if (!compareBtn) return;
+  const fab = document.getElementById("compareFloatingBtn");
+  const countEl = document.getElementById("compareFloatingCount");
+  if (!fab || !countEl) return;
 
-  compareBtn.innerHTML = `<i class="fas fa-balance-scale mr-2"></i>So sánh (${selectedTours.length})`;
+  countEl.textContent = String(selectedTours.length);
 
   if (selectedTours.length > 0) {
-    compareBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
-    compareBtn.classList.add("bg-green-600", "hover:bg-green-700");
+    fab.classList.remove("compare-fab--hidden");
   } else {
-    compareBtn.classList.add("bg-blue-600", "hover:bg-blue-700");
-    compareBtn.classList.remove("bg-green-600", "hover:bg-green-700");
+    fab.classList.add("compare-fab--hidden");
+  }
+
+  if (selectedTours.length < 2) {
+    fab.classList.add("compare-fab--disabled");
+  } else {
+    fab.classList.remove("compare-fab--disabled");
   }
 }
 
@@ -209,22 +396,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Thêm hiệu ứng tương tác cho các card
-  const cards = document.querySelectorAll(".card-hover");
-  cards.forEach((card) => {
-    card.addEventListener("mouseenter", function () {
-      this.style.transform = "translateY(-8px)";
-    });
-
-    card.addEventListener("mouseleave", function () {
-      this.style.transform = "translateY(0)";
-    });
-  });
-
-  // Lắng nghe sự kiện click nút so sánh
-  const compareBtn = document.getElementById("compareBtn");
-  if (compareBtn) {
-    compareBtn.addEventListener("click", function () {
+  // Lắng nghe sự kiện click nút so sánh (floating)
+  const compareFab = document.getElementById("compareFloatingBtn");
+  if (compareFab) {
+    compareFab.addEventListener("click", function () {
       if (selectedTours.length < 2) {
         Notification.error("Vui lòng chọn ít nhất 2 tours để so sánh");
         return;
@@ -232,6 +407,8 @@ document.addEventListener("DOMContentLoaded", function () {
       showComparison();
     });
   }
+
+  initHomeBannerSlider();
 
   // Khởi tạo các tính năng nâng cao
   initDynamicPricing();
