@@ -19,6 +19,22 @@ const home = async (req, res) => {
   }
 };
 
+// [GET] /profile
+const profile = async (req, res) => {
+  try {
+    return res.render("profile", {
+      bodyClass: "bg-gray-50",
+      user: req.user,
+    });
+  } catch (error) {
+    console.error("Profile page error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
+  }
+};
+
 // [GET] /favorites
 const favorites = async (req, res) => {
   try {
@@ -56,4 +72,5 @@ const favorites = async (req, res) => {
 module.exports = {
   home,
   favorites,
+  profile,
 };

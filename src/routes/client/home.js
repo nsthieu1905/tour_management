@@ -10,6 +10,7 @@ const protectClientRoutes = require("../../middleware/protectClientRoutes");
 router.get("/", homeController.home);
 router.get("/booking-success", bookingController.bookingSuccess);
 router.use(protectClientRoutes);
+router.get("/profile", homeController.profile);
 router.get("/tours/:slug", tourApiController.tourDetail);
 router.get("/tours/:slug/feedbacks", tourApiController.tourFeedbacks);
 router.get("/favorites", homeController.favorites);

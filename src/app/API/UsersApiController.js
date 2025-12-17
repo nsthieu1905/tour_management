@@ -1,4 +1,5 @@
 const { User, Booking } = require("../models/index");
+const bcrypt = require("bcrypt");
 
 // [GET] /api/auth/current-user
 const getCurrentUser = async (req, res) => {
@@ -27,6 +28,220 @@ const getCurrentUser = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
+    });
+  }
+};
+
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không xác thực được người dùng",
+      });
+    }
+
+    const user = await User.findById(userId).select("-password -metadata");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy người dùng",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          gender: user.gender,
+          dateOfBirth: user.dateOfBirth,
+          role: user.role,
+          status: user.status,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error in getProfile:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { fullName, email, phone, gender, dateOfBirth } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không xác thực được người dùng",
+      });
+    }
+
+    const errors = {};
+
+    if (!fullName || fullName.trim().length === 0) {
+      errors.fullName = "Vui lòng nhập họ và tên";
+    }
+
+    if (!email) {
+      errors.email = "Vui lòng nhập email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Email không hợp lệ";
+    }
+
+    if (!phone) {
+      errors.phone = "Vui lòng nhập số điện thoại";
+    } else if (!/^(?:\+84|0|84)[1-9]\d{8}$/.test(phone.replace(/\s/g, ""))) {
+      errors.phone = "Số điện thoại không hợp lệ";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng kiểm tra lại thông tin",
+        errors: errors,
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy người dùng",
+      });
+    }
+
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({
+        email: email.toLowerCase(),
+        _id: { $ne: userId },
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "Email đã được sử dụng",
+          errors: {
+            email: "Email đã được sử dụng",
+          },
+        });
+      }
+      user.email = email.toLowerCase();
+    }
+
+    if (fullName) user.fullName = fullName.trim();
+    if (phone) user.phone = phone;
+    if (gender) user.gender = gender;
+    if (dateOfBirth) user.dateOfBirth = dateOfBirth;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật thông tin cá nhân thành công",
+      data: {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          gender: user.gender,
+          dateOfBirth: user.dateOfBirth,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error in updateProfile:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+    });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không xác thực được người dùng",
+      });
+    }
+
+    const errors = {};
+
+    if (!currentPassword) {
+      errors.currentPassword = "Vui lòng nhập mật khẩu cũ";
+    }
+
+    if (!newPassword) {
+      errors.newPassword = "Vui lòng nhập mật khẩu mới";
+    } else if (newPassword.length < 6) {
+      errors.newPassword = "Mật khẩu phải tối thiểu 6 ký tự";
+    }
+
+    if (!confirmPassword) {
+      errors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+    } else if (newPassword !== confirmPassword) {
+      errors.confirmPassword = "Mật khẩu xác nhận không khớp";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng kiểm tra lại thông tin",
+        errors: errors,
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy người dùng",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Mật khẩu cũ không chính xác",
+        errors: {
+          currentPassword: "Mật khẩu cũ không chính xác",
+        },
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Đổi mật khẩu thành công",
+    });
+  } catch (error) {
+    console.error("Error in changePassword:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ, vui lòng thử lại sau.",
+      error: error.message,
     });
   }
 };
@@ -331,6 +546,9 @@ const getCustomerStats = async (req, res) => {
 
 module.exports = {
   getCurrentUser,
+  getProfile,
+  updateProfile,
+  changePassword,
   findAll,
   findOne,
   getCustomerStats,

@@ -10,6 +10,18 @@ router.get(
   usersApiController.getCurrentUser
 );
 
+router.get("/profile", protectClientRoutes, usersApiController.getProfile);
+router.put(
+  "/update-profile",
+  protectClientRoutes,
+  usersApiController.updateProfile
+);
+router.put(
+  "/change-password",
+  protectClientRoutes,
+  usersApiController.changePassword
+);
+
 router.use(protectAdminRoutes);
 
 router.get("/qly-khach-hang", usersApiController.findAll);
