@@ -23,7 +23,6 @@ const favoriteSchema = new Schema(
   }
 );
 
-// Compound index: 1 user chỉ có 1 favorite record cho 1 tour
 favoriteSchema.index({ userId: 1, tourId: 1 }, { unique: true });
 
 module.exports = mongoose.model("Favorite", favoriteSchema);

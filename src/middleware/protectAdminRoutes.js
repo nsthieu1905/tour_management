@@ -1,8 +1,3 @@
-// - Verify access_token từ cookie
-//  - Nếu access_token hết hạn nhưng refresh_token còn hạn -> tạo access_token mới
-// - Nếu không có refresh_token hoặc hết hạn -> redirect login
-// - Kiểm tra role = 'admin', nếu không là admin -> không đủ quyền/ redirect forbidden
-
 const jwt = require("jsonwebtoken");
 const { User } = require("../app/models/index");
 const { generateAccessToken } = require("../app/API/AuthApiController");

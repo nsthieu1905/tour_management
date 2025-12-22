@@ -6,7 +6,7 @@ const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
 router.get(
   "/current-user",
-  protectClientRoutes,
+  protectClientRoutes.optional,
   usersApiController.getCurrentUser
 );
 

@@ -52,12 +52,10 @@ const tourSchema = new Schema(
       ref: "TourCategory",
       default: null,
     },
-    // discountPrice, promotionPrice: đã bỏ vì không dùng
     images: {
       type: [String],
       required: true,
     },
-    // category: đã bỏ vì không dùng
     schedule: [
       {
         day: Number,
@@ -101,7 +99,6 @@ const tourSchema = new Schema(
     capacity: {
       max: {
         type: Number,
-        // required: true,
       },
       current: {
         type: Number,
@@ -109,7 +106,6 @@ const tourSchema = new Schema(
       },
       available: Number,
     },
-    // returnDate: đã bỏ vì không dùng
     departureDates: [
       {
         date: {
@@ -159,13 +155,11 @@ const tourSchema = new Schema(
       },
     ],
     highlights: [String],
-    // requirements, partnerId, guideId, viewCount: đã bỏ vì không dùng
     tags: [String],
     bookingCount: {
       type: Number,
       default: 0,
     },
-    // createdBy: đã bỏ vì không dùng
   },
   { timestamps: true }
 );

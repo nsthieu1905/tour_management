@@ -1,7 +1,3 @@
-// - Verify access_token từ cookie
-// - Nếu access_token hết hạn nhưng refresh_token còn hạn -> tạo access_token mới
-// - Nếu không có refresh_token hoặc hết hạn -> redirect /
-
 const jwt = require("jsonwebtoken");
 const { User } = require("../app/models/index");
 const { generateAccessToken } = require("../app/API/AuthApiController");
@@ -58,7 +54,7 @@ const respondForbidden = (req, res) => {
   });
 };
 
-const protectClientRoutes = async (req, res, next) => {
+const handleClientAuth = async (req, res, next, { optional } = {}) => {
   try {
     const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
     const refreshToken = req.cookies[process.env.REFRESH_TOKEN_NAME];
@@ -69,12 +65,11 @@ const protectClientRoutes = async (req, res, next) => {
 
         const user = await User.findById(decoded.userId);
         if (!user) {
-          return respondAuthRequired(req, res);
+          return optional ? next() : respondAuthRequired(req, res);
         }
 
-        // Kiểm tra trạng thái tài khoản
         if (user.status === "inactive" || user.status === "blocked") {
-          return res.redirect("/");
+          return optional ? next() : res.redirect("/");
         }
 
         req.userId = decoded.userId;
@@ -87,13 +82,11 @@ const protectClientRoutes = async (req, res, next) => {
         return next();
       } catch (error) {
         if (error.name === "TokenExpiredError") {
-          // Access token hết hạn và không có refresh token
           if (!refreshToken) {
-            return respondAuthRequired(req, res);
+            return optional ? next() : respondAuthRequired(req, res);
           }
 
           try {
-            // Refresh token còn hạn
             const decodedRefresh = jwt.verify(
               refreshToken,
               process.env.REFRESH_TOKEN_SECRET
@@ -101,17 +94,15 @@ const protectClientRoutes = async (req, res, next) => {
 
             const user = await User.findById(decodedRefresh.userId);
             if (!user) {
-              return respondAuthRequired(req, res);
+              return optional ? next() : respondAuthRequired(req, res);
             }
 
-            // Kiểm tra trạng thái tài khoản
             if (user.status === "inactive" || user.status === "blocked") {
-              return res.redirect("/");
+              return optional ? next() : res.redirect("/");
             }
 
             const newAccessToken = generateAccessToken(decodedRefresh.userId);
 
-            // Tính maxAge từ AUTH_TOKEN_EXP
             const expiresInStr = process.env.AUTH_TOKEN_EXP;
             let maxAgeMs = 60 * 1000;
 
@@ -125,7 +116,6 @@ const protectClientRoutes = async (req, res, next) => {
               maxAgeMs = parseInt(expiresInStr) * 24 * 60 * 60 * 1000;
             }
 
-            // Set cookie mới
             res.cookie(process.env.AUTH_TOKEN_NAME, newAccessToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === "production",
@@ -142,68 +132,71 @@ const protectClientRoutes = async (req, res, next) => {
             };
             return next();
           } catch (refreshError) {
-            return respondAuthRequired(req, res);
+            return optional ? next() : respondAuthRequired(req, res);
           }
-        } else {
-          return respondAuthRequired(req, res);
-        }
-      }
-    } else {
-      // Không có access token
-      if (!refreshToken) {
-        return respondAuthRequired(req, res);
-      }
-
-      try {
-        // Có refresh token nhưng không có access token
-        // Tạo access token mới từ refresh token
-        const decodedRefresh = jwt.verify(
-          refreshToken,
-          process.env.REFRESH_TOKEN_SECRET
-        );
-
-        const user = await User.findById(decodedRefresh.userId);
-        if (!user) {
-          return respondAuthRequired(req, res);
         }
 
-        const newAccessToken = generateAccessToken(decodedRefresh.userId);
-
-        const expiresInStr = process.env.AUTH_TOKEN_EXP;
-        let maxAgeMs = 60 * 1000;
-
-        if (expiresInStr.endsWith("s")) {
-          maxAgeMs = parseInt(expiresInStr) * 1000;
-        } else if (expiresInStr.endsWith("m")) {
-          maxAgeMs = parseInt(expiresInStr) * 60 * 1000;
-        } else if (expiresInStr.endsWith("h")) {
-          maxAgeMs = parseInt(expiresInStr) * 60 * 60 * 1000;
-        } else if (expiresInStr.endsWith("d")) {
-          maxAgeMs = parseInt(expiresInStr) * 24 * 60 * 60 * 1000;
-        }
-
-        res.cookie(process.env.AUTH_TOKEN_NAME, newAccessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: maxAgeMs,
-        });
-
-        req.userId = decodedRefresh.userId;
-        req.user = {
-          userId: user._id,
-          email: user.email,
-          role: user.role,
-          fullName: user.fullName,
-        };
-        return next();
-      } catch (refreshError) {
-        return respondAuthRequired(req, res);
+        return optional ? next() : respondAuthRequired(req, res);
       }
     }
+
+    if (!refreshToken) {
+      return optional ? next() : respondAuthRequired(req, res);
+    }
+
+    try {
+      const decodedRefresh = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET
+      );
+
+      const user = await User.findById(decodedRefresh.userId);
+      if (!user) {
+        return optional ? next() : respondAuthRequired(req, res);
+      }
+
+      const newAccessToken = generateAccessToken(decodedRefresh.userId);
+
+      const expiresInStr = process.env.AUTH_TOKEN_EXP;
+      let maxAgeMs = 60 * 1000;
+
+      if (expiresInStr.endsWith("s")) {
+        maxAgeMs = parseInt(expiresInStr) * 1000;
+      } else if (expiresInStr.endsWith("m")) {
+        maxAgeMs = parseInt(expiresInStr) * 60 * 1000;
+      } else if (expiresInStr.endsWith("h")) {
+        maxAgeMs = parseInt(expiresInStr) * 60 * 60 * 1000;
+      } else if (expiresInStr.endsWith("d")) {
+        maxAgeMs = parseInt(expiresInStr) * 24 * 60 * 60 * 1000;
+      }
+
+      res.cookie(process.env.AUTH_TOKEN_NAME, newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: maxAgeMs,
+      });
+
+      req.userId = decodedRefresh.userId;
+      req.user = {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+      };
+      return next();
+    } catch (refreshError) {
+      return optional ? next() : respondAuthRequired(req, res);
+    }
   } catch (error) {
-    return respondAuthRequired(req, res);
+    return optional ? next() : respondAuthRequired(req, res);
   }
 };
+
+const protectClientRoutes = (req, res, next) =>
+  handleClientAuth(req, res, next, { optional: false });
+
+protectClientRoutes.optional = (req, res, next) =>
+  handleClientAuth(req, res, next, { optional: true });
 
 module.exports = protectClientRoutes;

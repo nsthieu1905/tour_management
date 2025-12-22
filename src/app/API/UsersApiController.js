@@ -4,7 +4,19 @@ const bcrypt = require("bcrypt");
 // [GET] /api/auth/current-user
 const getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          user: null,
+          loggedIn: false,
+        },
+      });
+    }
+
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -20,6 +32,7 @@ const getCurrentUser = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         avatar: user.avatar,
+        loggedIn: true,
         user: user.toJSON(),
       },
     });

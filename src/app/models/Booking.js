@@ -74,29 +74,25 @@ const bookingSchema = new mongoose.Schema(
       index: { expires: 0 },
     },
 
-    // Hoàn tiền fields
     refundInfo: {
-      reason: String, // Lý do hủy tour
-      requestedAt: Date, // Ngày yêu cầu hoàn tiền
-      daysUntilDeparture: Number, // Số ngày còn lại đến ngày khởi hành
+      reason: String,
+      requestedAt: Date,
+      daysUntilDeparture: Number,
       refundPercentage: {
-        // % hoàn tiền (100, 50, 0)
         type: Number,
         default: null,
         min: 0,
         max: 100,
       },
-      refundAmount: Number, // Số tiền được hoàn
+      refundAmount: Number,
       approvedBy: {
-        // Admin xác nhận hoàn tiền
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
-      approvedAt: Date, // Ngày xác nhận hoàn tiền
-      rejectionReason: String, // Lý do từ chối hoàn tiền
+      approvedAt: Date,
+      rejectionReason: String,
     },
 
-    // Hủy tour fields
     cancellationReason: String,
     cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     cancelledAt: Date,
@@ -112,19 +108,17 @@ const bookingSchema = new mongoose.Schema(
         paidAt: Date,
       },
     ],
-    // Feedback link
+
     reviewId: { type: mongoose.Schema.Types.ObjectId, ref: "Feedback" },
   },
   { timestamps: true }
 );
 
 bookingSchema.pre("save", function (next) {
-  // Set expiresAt cho pre_booking lần đầu (3 phút)
   if (this.isNew && this.bookingStatus === "pre_booking") {
     this.expiresAt = new Date(Date.now() + 3 * 60 * 1000);
   }
 
-  // Xóa expiresAt khi chuyển sang trạng thái không phải pre_booking
   if (
     this.isModified("bookingStatus") &&
     this.bookingStatus !== "pre_booking"

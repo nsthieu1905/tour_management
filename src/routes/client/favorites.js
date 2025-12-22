@@ -3,10 +3,9 @@ const router = express.Router();
 const favoriteController = require("../../app/API/FavoriteApiController");
 const protectClientRoutes = require("../../middleware/protectClientRoutes");
 
-router.use(protectClientRoutes);
-
-router.post("/toggle", favoriteController.toggleFavorite);
-router.get("/list", favoriteController.getUserFavorites);
 router.get("/check/:tourId", favoriteController.checkIsFavorited);
+
+router.post("/toggle", protectClientRoutes, favoriteController.toggleFavorite);
+router.get("/list", protectClientRoutes, favoriteController.getUserFavorites);
 
 module.exports = router;

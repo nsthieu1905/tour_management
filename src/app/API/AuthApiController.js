@@ -463,8 +463,8 @@ const checkToken = (req, res) => {
     const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
 
     if (!accessToken) {
-      return res.status(401).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: "No token",
         expired: true,
       });

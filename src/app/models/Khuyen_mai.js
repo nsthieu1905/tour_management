@@ -2,36 +2,70 @@ const mongoose = require("mongoose");
 
 const khuyenMaiSchema = new mongoose.Schema(
   {
-    code: { type: String, required: true, unique: true, uppercase: true },
-    name: { type: String, required: true },
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
     description: String,
     type: {
       type: String,
       enum: ["percentage", "fixed_amount", "free_service"],
       required: true,
     },
-    value: { type: Number, required: true },
-    minPurchase: { type: Number, default: 0 },
+    value: {
+      type: Number,
+      required: true,
+    },
+    minPurchase: {
+      type: Number,
+      default: 0,
+    },
     maxDiscount: Number,
-    applicableTours: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tour" }],
-    usageLimit: { type: Number, default: 0 },
-    usageCount: { type: Number, default: 0 },
-    perUserLimit: { type: Number, default: 1 },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
+    applicableTours: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Tour",
+      },
+    ],
+    usageLimit: {
+      type: Number,
+      default: 0,
+    },
+    usageCount: {
+      type: Number,
+      default: 0,
+    },
+    perUserLimit: {
+      type: Number,
+      default: 1,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
     status: {
       type: String,
       enum: ["active", "inactive", "expired"],
       default: "active",
     },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );
 
-// ============================================================================
-// VIRTUAL FIELD - Computed Status (không lưu vào DB)
-// ============================================================================
 khuyenMaiSchema.virtual("computedStatus").get(function () {
   const now = new Date();
   const isExpired = now > this.endDate;
@@ -43,9 +77,6 @@ khuyenMaiSchema.virtual("computedStatus").get(function () {
   return this.status;
 });
 
-// ============================================================================
-// INSTANCE METHOD - Check and Update Status
-// ============================================================================
 khuyenMaiSchema.methods.checkAndUpdateStatus = async function () {
   const now = new Date();
   const isExpired = now > this.endDate;
@@ -72,23 +103,17 @@ khuyenMaiSchema.methods.checkAndUpdateStatus = async function () {
   return { updated: false, currentStatus: this.status };
 };
 
-// ============================================================================
-// PRE-FIND MIDDLEWARE - Auto update status before queries
-// ============================================================================
 khuyenMaiSchema.pre(/^find/, async function (next) {
-  // Chỉ chạy khi query thực sự được execute
   this._startTime = Date.now();
   next();
 });
 
-// POST-FIND MIDDLEWARE - Update status sau khi query
 khuyenMaiSchema.post(/^find/, async function (docs, next) {
   if (!docs) return next();
 
   const now = new Date();
   const docsArray = Array.isArray(docs) ? docs : [docs];
 
-  // Batch update các documents cần thay đổi status
   const bulkOps = [];
 
   for (const doc of docsArray) {
@@ -116,7 +141,6 @@ khuyenMaiSchema.post(/^find/, async function (docs, next) {
     }
   }
 
-  // Bulk update để tối ưu performance
   if (bulkOps.length > 0) {
     await this.model.bulkWrite(bulkOps);
   }
@@ -124,35 +148,26 @@ khuyenMaiSchema.post(/^find/, async function (docs, next) {
   next();
 });
 
-// ============================================================================
-// PRE-SAVE MIDDLEWARE - Validate dates and auto-set status
-// ============================================================================
 khuyenMaiSchema.pre("save", function (next) {
-  // Validate dates
   if (this.startDate && this.endDate && this.startDate >= this.endDate) {
     return next(new Error("Ngày kết thúc phải lớn hơn ngày bắt đầu"));
   }
 
-  // Auto-set status based on dates if creating new
   if (this.isNew) {
     const now = new Date();
     if (now > this.endDate) {
       this.status = "expired";
     } else if (now < this.startDate) {
-      this.status = "inactive"; // Chưa bắt đầu
+      this.status = "inactive";
     }
   }
 
   next();
 });
 
-// ============================================================================
-// STATIC METHOD - Bulk update expired coupons (for cron job)
-// ============================================================================
 khuyenMaiSchema.statics.updateExpiredCoupons = async function () {
   const now = new Date();
 
-  // Update expired coupons
   const expiredResult = await this.updateMany(
     {
       endDate: { $lt: now },
@@ -163,7 +178,6 @@ khuyenMaiSchema.statics.updateExpiredCoupons = async function () {
     }
   );
 
-  // Update usage limit reached coupons
   const usageLimitResult = await this.updateMany(
     {
       usageLimit: { $gt: 0 },
@@ -181,14 +195,10 @@ khuyenMaiSchema.statics.updateExpiredCoupons = async function () {
   };
 };
 
-// ============================================================================
-// INDEX - Optimize queries
-// ============================================================================
 khuyenMaiSchema.index({ status: 1 });
 khuyenMaiSchema.index({ endDate: 1 });
 khuyenMaiSchema.index({ startDate: 1, endDate: 1 });
 
-// Enable virtuals in JSON
 khuyenMaiSchema.set("toJSON", { virtuals: true });
 khuyenMaiSchema.set("toObject", { virtuals: true });
 

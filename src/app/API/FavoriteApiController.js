@@ -78,7 +78,14 @@ const getUserFavorites = async (req, res) => {
 const checkIsFavorited = async (req, res) => {
   try {
     const { tourId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(200).json({
+        success: true,
+        isFavorited: false,
+      });
+    }
 
     const exists = await Favorite.exists({
       userId,
