@@ -1,0 +1,294 @@
+<div class="min-h-screen pt-24 pb-12 bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Chi tiết đơn đặt tour</h1>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="flex justify-center items-center py-12">
+      <div class="text-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"
+        ></div>
+        <p class="mt-4 text-gray-600">Đang tải thông tin...</p>
+      </div>
+    </div>
+
+    <!-- Content State -->
+    <div id="content" class="hidden space-y-6">
+      <!-- Success Banner -->
+      <div
+        id="success-banner"
+        class="hidden bg-green-50 border border-green-200 rounded-lg p-6"
+      >
+        <div class="flex items-center space-x-3">
+          <div class="bg-green-100 rounded-full p-2">
+            <i class="bi bi-check-circle text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-green-900">
+              Đơn đặt tour đã được tạo thành công
+            </h3>
+            <p id="success-message" class="text-sm text-green-700"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking Details Card -->
+      <div class="bg-white rounded-lg shadow-md p-8 space-y-6">
+        <div class="pb-6 border-b">
+          <h2 class="text-2xl font-bold text-gray-900">
+            Thông tin đơn đặt tour
+          </h2>
+          <p id="booking-code" class="text-lg text-gray-600 mt-1">
+            Mã đơn: <span class="font-semibold text-blue-600"></span>
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-600 uppercase tracking-wide"
+            >
+              Thông tin khách hàng
+            </h3>
+            <div class="mt-4 space-y-3">
+              <div>
+                <p class="text-xs text-gray-500">Họ và tên</p>
+                <p id="customer-name" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Email</p>
+                <p id="customer-email" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Điện thoại</p>
+                <p id="customer-phone" class="font-semibold text-gray-900"></p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-600 uppercase tracking-wide"
+            >
+              Thông tin tour
+            </h3>
+            <div class="mt-4 space-y-3">
+              <div>
+                <p class="text-xs text-gray-500">Tên tour</p>
+                <p id="tour-name" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Ngày khởi hành</p>
+                <p id="departure-date" class="font-semibold text-gray-900"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Số lượng khách</p>
+                <p id="guest-count" class="font-semibold text-gray-900"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t pt-6">
+          <h3
+            class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4"
+          >
+            Hóa đơn thanh toán
+          </h3>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="flex justify-between">
+              <span>Giá tour (1 người):</span
+              ><span id="price-per-person" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between">
+              <span>Số lượng:</span
+              ><span id="quantity" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between pt-3 border-t">
+              <span>Giá cơ bản:</span
+              ><span id="subtotal" class="font-semibold"></span>
+            </div>
+            <div id="coupon-section" class="hidden pt-3 border-t">
+              <div class="flex justify-between">
+                <span>Mã giảm giá:</span
+                ><span
+                  id="coupon-code"
+                  class="font-semibold text-blue-600"
+                ></span>
+              </div>
+              <div class="flex justify-between mt-2">
+                <span>Tiền giảm:</span
+                ><span
+                  id="discount-amount"
+                  class="font-semibold text-green-600"
+                ></span>
+              </div>
+            </div>
+            <div class="flex justify-between pt-3 border-t">
+              <span class="text-lg font-semibold">Tổng cộng:</span
+              ><span
+                id="total-amount"
+                class="text-2xl font-bold text-blue-600"
+              ></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t pt-6">
+          <h3
+            class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4"
+          >
+            Trạng thái thanh toán
+          </h3>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="flex justify-between">
+              <span>Phương thức thanh toán:</span
+              ><span id="payment-method" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between">
+              <span>Trạng thái thanh toán:</span
+              ><span id="payment-status" class="font-semibold"></span>
+            </div>
+            <div class="flex justify-between">
+              <span>Trạng thái đơn hàng:</span
+              ><span id="booking-status" class="font-semibold"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- REFUND STATUS SECTION -->
+        <div id="refund-section" class="hidden border-t pt-6">
+          <h3
+            class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4"
+          >
+            Thông tin hoàn tiền / Hủy đơn
+          </h3>
+          <div
+            class="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4"
+          >
+            <!-- Refund Requested Status -->
+            <div id="refund-requested-status" class="hidden">
+              <div class="flex items-start space-x-3">
+                <div class="bg-amber-100 rounded-full p-2 flex-shrink-0">
+                  <i class="bi bi-hourglass-split text-amber-600 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-amber-900">
+                    Chờ xử lý hoàn tiền
+                  </h4>
+                  <p id="refund-reason" class="text-sm text-amber-700 mt-1"></p>
+                  <p
+                    id="refund-requested-at"
+                    class="text-xs text-amber-600 mt-2"
+                  ></p>
+                  <p
+                    id="refund-estimated-timeline"
+                    class="text-xs text-amber-600 mt-1"
+                  ></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Refunded Status -->
+            <div id="refunded-status" class="hidden">
+              <div class="flex items-start space-x-3">
+                <div class="bg-green-100 rounded-full p-2 flex-shrink-0">
+                  <i class="bi bi-check-circle text-green-600 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-green-900">
+                    Hoàn tiền thành công
+                  </h4>
+                  <div class="mt-3 space-y-2 text-sm">
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Lý do yêu cầu:</span>
+                      <span
+                        id="refund-reason-confirm"
+                        class="font-semibold text-gray-900"
+                      ></span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Phí hủy:</span>
+                      <span
+                        id="cancellation-fee"
+                        class="font-semibold text-red-600"
+                      ></span>
+                    </div>
+                    <div
+                      class="flex justify-between pt-2 border-t border-green-200"
+                    >
+                      <span class="text-gray-700 font-semibold"
+                        >Số tiền hoàn:</span
+                      >
+                      <span
+                        id="refund-amount"
+                        class="font-bold text-green-600 text-lg"
+                      ></span>
+                    </div>
+                  </div>
+                  <p
+                    id="refund-approved-at"
+                    class="text-xs text-green-600 mt-3"
+                  ></p>
+                  <p class="text-xs text-green-600 mt-1">
+                    Tiền sẽ được hoàn về tài khoản của bạn trong vòng 3-5 ngày
+                    làm việc
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cancelled Status -->
+            <div id="cancelled-status" class="hidden">
+              <div class="flex items-start space-x-3">
+                <div class="bg-red-100 rounded-full p-2 flex-shrink-0">
+                  <i class="bi bi-x-circle text-red-600 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-red-900">
+                    Đơn đặt tour đã bị hủy
+                  </h4>
+                  <p
+                    id="cancellation-reason"
+                    class="text-sm text-red-700 mt-2"
+                  ></p>
+                  <p id="cancelled-at" class="text-xs text-red-600 mt-3"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex">
+        <a
+          href="/my-bookings"
+          class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg mr-4"
+          >Quay lại danh sách</a
+        >
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div
+      id="error-state"
+      class="hidden bg-red-50 border border-red-200 rounded-lg p-8 text-center"
+    >
+      <i class="bi bi-exclamation-circle text-red-600 text-4xl mb-4 block"></i>
+      <h3 class="text-xl font-semibold text-red-900 mb-2">
+        Không tìm thấy đơn đặt tour
+      </h3>
+      <p class="text-red-700 mb-6">
+        Vui lòng kiểm tra lại mã đơn hoặc quay lại danh sách.
+      </p>
+      <a
+        href="/my-bookings"
+        class="inline-block bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg"
+        >Quay lại danh sách</a
+      >
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/customer/js/booking-detail.js"></script>

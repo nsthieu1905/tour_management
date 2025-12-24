@@ -73,7 +73,7 @@ const sendMessage = async (req, res) => {
       const messageData = message.toObject ? message.toObject() : message;
       const roomName = `conversation:${messageData.conversationId}`;
 
-      // Broadcast tin nhắn mới tới room (admin + client trong room)
+      // Broadcast tin nhắn mới tới room (admin + customer trong room)
       global.io.to(roomName).emit("message:new", {
         _id: messageData._id,
         conversationId: messageData.conversationId,
@@ -84,22 +84,22 @@ const sendMessage = async (req, res) => {
         read: false,
       });
 
-      // Nếu là tin từ client -> Notify admin
-      if (senderType === "client") {
+      // Nếu là tin từ customer -> Notify admin
+      if (senderType === "customer") {
         global.io.to("admin-messages").emit("conversation:update", {
           conversationId,
           lastMessage: content.substring(0, 100),
           lastMessageAt: new Date(),
-          lastMessageFrom: "client",
+          lastMessageFrom: "customer",
         });
       }
 
-      // Nếu là tin từ admin -> Notify client
+      // Nếu là tin từ admin -> Notify customer
       if (senderType === "admin" && recipientId) {
-        const clientIdStr = recipientId?.toString
+        const customerIdStr = recipientId?.toString
           ? recipientId.toString()
           : recipientId;
-        global.io.to(`client:${clientIdStr}`).emit("message:new", {
+        global.io.to(`customer:${customerIdStr}`).emit("message:new", {
           _id: messageData._id,
           conversationId: messageData.conversationId,
           senderId: messageData.senderId,

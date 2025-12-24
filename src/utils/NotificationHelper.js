@@ -5,7 +5,7 @@
 const NotificationService = require("../services/NotificationService");
 
 /**
- * Emit booking notification - CHO CẢ ADMIN VÀ CLIENT
+ * Emit booking notification - CHO CẢ ADMIN VÀ CUSTOMER
  */
 const notifyNewBooking = async (bookingData) => {
   try {
@@ -28,7 +28,7 @@ const notifyNewBooking = async (bookingData) => {
       },
       "admin"
     );
-    // 2. Notify CLIENT about successful booking
+    // 2. Notify CUSTOMER about successful booking
     if (bookingData.userId) {
       await NotificationService.createNotification(
         {
@@ -42,7 +42,7 @@ const notifyNewBooking = async (bookingData) => {
           data: { bookingId: bookingData.bookingId },
           priority: "high",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {
@@ -75,7 +75,7 @@ const notifyPayment = async (paymentData) => {
       },
       "admin"
     );
-    // Notify client about payment confirmation
+    // Notify customer about payment confirmation
     if (paymentData.userId) {
       await NotificationService.createNotification(
         {
@@ -89,7 +89,7 @@ const notifyPayment = async (paymentData) => {
           data: { paymentId: paymentData.paymentId },
           priority: "high",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {
@@ -118,7 +118,7 @@ const notifyRefund = async (refundData) => {
       "admin"
     );
 
-    // Notify client about refund status
+    // Notify customer about refund status
     if (refundData.userId) {
       await NotificationService.createNotification(
         {
@@ -131,7 +131,7 @@ const notifyRefund = async (refundData) => {
           data: { refundId: refundData.refundId },
           priority: "medium",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {
@@ -144,7 +144,7 @@ const notifyRefund = async (refundData) => {
  */
 const notifyTourUpdate = async (tourData) => {
   try {
-    await NotificationService.broadcastToAllClients({
+    await NotificationService.broadcastToAllCustomers({
       type: "tour_update",
       title: `Tour mới: ${tourData.name}`,
       message: tourData.description || "Khám phá điểm đến tuyệt vời mới",
@@ -159,7 +159,7 @@ const notifyTourUpdate = async (tourData) => {
 };
 
 /**
- * Emit promotion notification - LƯU VÀO DB + BROADCAST CHO CLIENT
+ * Emit promotion notification - LƯU VÀO DB + BROADCAST CHO CUSTOMER
  */
 const notifyPromotion = async (promotionData) => {
   try {
@@ -205,7 +205,7 @@ const notifyTourAlmostFull = async (tourData) => {
  */
 const notifyTourCancelled = async (tourData) => {
   try {
-    await NotificationService.broadcastToAllClients({
+    await NotificationService.broadcastToAllCustomers({
       type: "alert",
       title: `Tour bị hủy: ${tourData.tourName}`,
       message: `Tour ${tourData.tourName} (${tourData.startDate}) đã bị hủy. Vui lòng liên hệ để hoàn tiền.`,
@@ -220,12 +220,12 @@ const notifyTourCancelled = async (tourData) => {
 };
 
 /**
- * Notify client when booking is paid/confirmed by admin (thao tác thanh toán)
+ * Notify customer when booking is paid/confirmed by admin (thao tác thanh toán)
  */
 const notifyBookingPaid = async (bookingData) => {
   try {
     if (bookingData.userId) {
-      // Gửi notification đặt tour thành công cho client
+      // Gửi notification đặt tour thành công cho customer
       await NotificationService.createNotification(
         {
           userId: bookingData.userId,
@@ -238,7 +238,7 @@ const notifyBookingPaid = async (bookingData) => {
           data: { bookingId: bookingData.bookingId },
           priority: "high",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {
@@ -247,7 +247,7 @@ const notifyBookingPaid = async (bookingData) => {
 };
 
 /**
- * Notify client when booking is confirmed by admin (xác nhận) - chỉ email, không notification
+ * Notify customer when booking is confirmed by admin (xác nhận) - chỉ email, không notification
  */
 const notifyBookingConfirmed = async (bookingData) => {
   // Chỉ gửi email, không gửi notification
@@ -256,8 +256,8 @@ const notifyBookingConfirmed = async (bookingData) => {
 };
 
 /**
- * Notify client when refund is requested by admin (yêu cầu hoàn tiền)
- * ADMIN THAO TÁC -> GỬI CHO CLIENT + ADMIN
+ * Notify customer when refund is requested by admin (yêu cầu hoàn tiền)
+ * ADMIN THAO TÁC -> GỬI CHO CUSTOMER + ADMIN
  */
 const notifyRefundRequested = async (refundData) => {
   try {
@@ -277,7 +277,7 @@ const notifyRefundRequested = async (refundData) => {
       },
       "admin"
     );
-    // 2. Notify CLIENT
+    // 2. Notify CUSTOMER
     if (refundData.userId) {
       await NotificationService.createNotification(
         {
@@ -292,7 +292,7 @@ const notifyRefundRequested = async (refundData) => {
           data: { bookingId: refundData.bookingId },
           priority: "high",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {
@@ -301,8 +301,8 @@ const notifyRefundRequested = async (refundData) => {
 };
 
 /**
- * Notify client when refund is confirmed by admin (xác nhận hoàn tiền)
- * ADMIN THAO TÁC -> GỬI CHO CLIENT + ADMIN
+ * Notify customer when refund is confirmed by admin (xác nhận hoàn tiền)
+ * ADMIN THAO TÁC -> GỬI CHO CUSTOMER + ADMIN
  */
 const notifyRefundConfirmed = async (refundData) => {
   try {
@@ -324,7 +324,7 @@ const notifyRefundConfirmed = async (refundData) => {
     // );
     // console.log("[notifyRefundConfirmed] Admin notification sent");
 
-    // 2. Notify CLIENT
+    // 2. Notify CUSTOMER
     if (refundData.userId) {
       await NotificationService.createNotification(
         {
@@ -339,7 +339,7 @@ const notifyRefundConfirmed = async (refundData) => {
           data: { bookingId: refundData.bookingId },
           priority: "high",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {
@@ -348,8 +348,8 @@ const notifyRefundConfirmed = async (refundData) => {
 };
 
 /**
- * Notify client when booking is cancelled by admin
- * ADMIN THAO TÁC -> GỬI CHO CLIENT + ADMIN
+ * Notify customer when booking is cancelled by admin
+ * ADMIN THAO TÁC -> GỬI CHO CUSTOMER + ADMIN
  */
 const notifyCancellation = async (cancellationData) => {
   try {
@@ -371,7 +371,7 @@ const notifyCancellation = async (cancellationData) => {
     // );
     // console.log("�u2705 [notifyCancellation] Admin notification sent");
 
-    // 2. Notify CLIENT
+    // 2. Notify CUSTOMER
     if (cancellationData.userId) {
       await NotificationService.createNotification(
         {
@@ -385,7 +385,7 @@ const notifyCancellation = async (cancellationData) => {
           data: { bookingId: cancellationData.bookingId },
           priority: "high",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {
@@ -394,7 +394,7 @@ const notifyCancellation = async (cancellationData) => {
 };
 
 /**
- * Notify client when booking is completed
+ * Notify customer when booking is completed
  */
 const notifyBookingCompleted = async (bookingData) => {
   try {
@@ -411,7 +411,7 @@ const notifyBookingCompleted = async (bookingData) => {
           data: { bookingId: bookingData.bookingId },
           priority: "medium",
         },
-        "client"
+        "customer"
       );
     }
   } catch (error) {

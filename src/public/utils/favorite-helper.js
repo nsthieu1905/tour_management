@@ -6,7 +6,7 @@ import { Modal } from "/utils/modal.js";
 const favoriteHelper = {
   showLoginRequiredModal: function (redirectUrl) {
     Modal.loginRequired({
-      loginUrl: redirectUrl || "/client/auth/login",
+      loginUrl: redirectUrl || "/customer/auth/login",
     });
   },
 

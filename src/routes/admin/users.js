@@ -2,23 +2,23 @@ const express = require("express");
 const router = express.Router();
 const usersApiController = require("../../app/API/UsersApiController");
 const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
-const protectClientRoutes = require("../../middleware/protectClientRoutes");
+const protectCusRoutes = require("../../middleware/protectCustomerRoutes");
 
 router.get(
   "/current-user",
-  protectClientRoutes.optional,
+  protectCusRoutes.optional,
   usersApiController.getCurrentUser
 );
 
-router.get("/profile", protectClientRoutes, usersApiController.getProfile);
+router.get("/profile", protectCusRoutes, usersApiController.getProfile);
 router.put(
   "/update-profile",
-  protectClientRoutes,
+  protectCusRoutes,
   usersApiController.updateProfile
 );
 router.put(
   "/change-password",
-  protectClientRoutes,
+  protectCusRoutes,
   usersApiController.changePassword
 );
 

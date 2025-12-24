@@ -3,11 +3,11 @@ const router = express.Router();
 const authController = require("../../app/controllers/AuthController");
 const authApiController = require("../../app/API/AuthApiController");
 const protectAdminRoutes = require("../../middleware/protectAdminRoutes");
-const protectClientRoutes = require("../../middleware/protectClientRoutes");
+const protectCusRoutes = require("../../middleware/protectCustomerRoutes");
 
 router.get("/admin", authController.login);
 router.post("/login", authApiController.adminLogin);
-router.post("/client-login", authApiController.clientLogin);
+router.post("/cus-login", authApiController.cusLogin);
 router.post("/register", authApiController.register);
 router.post("/add-staff", protectAdminRoutes, authApiController.addAdmin);
 router.post("/check-token", authApiController.checkToken);

@@ -674,7 +674,7 @@ const confirmPayment = async (req, res) => {
     await EmailService.sendPaymentConfirmationEmail(booking, booking.tourId);
     await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
 
-    // Gửi notification cho client
+    // Gửi notification cho customer
     try {
       await notifyBookingPaid({
         userId: booking.userId,
@@ -737,7 +737,7 @@ const confirmBooking = async (req, res) => {
     // Gửi email xác nhận
     await EmailService.sendBookingConfirmationEmail(booking, booking.tourId);
 
-    // Gửi notification cho client (chỉnh sửa lại)
+    // Gửi notification cho customer (chỉnh sửa lại)
     try {
       await notifyBookingPaid({
         userId: booking.userId,
@@ -800,7 +800,7 @@ const completeBooking = async (req, res) => {
       booking.tourId
     );
 
-    // Gửi notification cho client
+    // Gửi notification cho customer
     try {
       await notifyBookingCompleted({
         userId: booking.userId,

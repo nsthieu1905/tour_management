@@ -170,8 +170,8 @@ const adminLogin = async (req, res) => {
   }
 };
 
-// [POST] auth/client/login
-const clientLogin = async (req, res) => {
+// [POST] auth/cus/login
+const cusLogin = async (req, res) => {
   try {
     const { username, password, rememberMe } = req.body;
 
@@ -305,7 +305,7 @@ const clientLogin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Client login error:", error);
+    console.error("Customer login error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -406,7 +406,7 @@ const refreshToken = async (req, res) => {
     }
 
     console.error(error);
-    console.error("Client refresh token error:", error);
+    console.error("Customer refresh token error:", error);
     return res.status(500).json({
       success: false,
       message: "Lỗi server, vui lòng thử lại sau",
@@ -686,7 +686,7 @@ const addAdmin = async (req, res) => {
 
 module.exports = {
   adminLogin,
-  clientLogin,
+  cusLogin,
   register,
   addAdmin,
   refreshToken,

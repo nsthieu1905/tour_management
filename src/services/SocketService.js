@@ -8,7 +8,7 @@ class SocketService {
     this.io.on("connection", (socket) => {
       this.handleUserJoin(socket);
       this.handleAdminJoin(socket);
-      this.handleClientJoin(socket);
+      this.handleCustomerJoin(socket);
       this.handleConversationJoin(socket);
       this.handleConversationLeave(socket);
       this.handleTypingStart(socket);
@@ -45,23 +45,23 @@ class SocketService {
     });
   }
 
-  // Client tham gia kết nối
-  handleClientJoin(socket) {
-    socket.on("client:join", (data) => {
-      const clientId = data.userId || data;
-      this.connectedUsers.set(`client:${clientId}`, socket.id);
-      socket.join("client-notifications");
-      socket.join(`client:${clientId}`); // Individual client room
+  // Customer tham gia kết nối
+  handleCustomerJoin(socket) {
+    socket.on("customer:join", (data) => {
+      const customerId = data.userId || data;
+      this.connectedUsers.set(`customer:${customerId}`, socket.id);
+      socket.join("customer-notifications");
+      socket.join(`customer:${customerId}`); // Individual customer room
     });
   }
 
   /**
    * Conversation:join - Join vào ROOM của cuộc hội thoại
-   * Client join khi mở chat, Admin join để quản lý tin nhắn
+   * Customer join khi mở chat, Admin join để quản lý tin nhắn
    */
   handleConversationJoin(socket) {
     socket.on("conversation:join", (data) => {
-      const { conversationId, userId, userType = "client" } = data;
+      const { conversationId, userId, userType = "customer" } = data;
       const roomName = `conversation:${conversationId}`;
 
       socket.join(roomName);

@@ -139,7 +139,7 @@ const hbs = engine({
     "./src/resources/admin/views/CRUD/qly-coupons",
     "./src/resources/admin/views/CRUD/qly-nhanviens",
     "./src/resources/admin/views/CRUD/qly-doitacs",
-    "./src/resources/client/views/partials",
+    "./src/resources/customer/views/partials",
   ],
 });
 
@@ -147,7 +147,7 @@ app.engine(".hbs", hbs);
 app.set("view engine", ".hbs");
 app.set("views", [
   "./src/resources/admin/views",
-  "./src/resources/client/views",
+  "./src/resources/customer/views",
 ]);
 
 route(app);
@@ -156,5 +156,5 @@ server.listen(port, () => {
   console.log(
     `Admin app listening on http://localhost:${port}/admin/dashboard`
   );
-  console.log(`Client app listening on http://localhost:${port}`);
+  console.log(`Customer app listening on http://localhost:${port}`);
 });

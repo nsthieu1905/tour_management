@@ -387,7 +387,7 @@ JSON: {location:"..."}`;
   }
 
   /**
-   * Format tour list để trả về cho client (có link)
+   * Format tour list để trả về cho customer (có link)
    */
   formatTourListWithLinks(tours, baseUrl = "http://localhost:8386") {
     if (!tours || tours.length === 0) {

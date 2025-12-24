@@ -4,12 +4,12 @@ const { Favorite, Tour } = require("../models/index");
 const toggleFavorite = async (req, res) => {
   try {
     const { tourId } = req.body;
-    const userId = req.user.userId; // From protectClientRoutes middleware
+    const userId = req.user.userId; // From protectCusRoutes middleware
 
     // kiểm tra tour đã thích hay chưa
     const existingFavorite = await Favorite.findOne({
-      userId,
       tourId,
+      userId,
     });
 
     if (existingFavorite) {

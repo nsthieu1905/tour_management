@@ -24,11 +24,11 @@ const isAdminContext = () => {
   return path.startsWith("/admin") || path.startsWith("/auth");
 };
 
-const buildClientLoginUrl = () => {
+const buildCustomerLoginUrl = () => {
   const nextUrl = `${window.location.pathname || "/"}${
     window.location.search || ""
   }`;
-  return `/client/auth/login?next=${encodeURIComponent(nextUrl)}`;
+  return `/customer/auth/login?next=${encodeURIComponent(nextUrl)}`;
 };
 
 const apiCall = async (url, options = {}) => {
@@ -48,7 +48,7 @@ const apiCall = async (url, options = {}) => {
       } else {
         window.location.href = isAdminContext()
           ? "/auth/admin"
-          : buildClientLoginUrl();
+          : buildCustomerLoginUrl();
         return response;
       }
     }

@@ -489,7 +489,7 @@ class RealtimeMessaging {
 
     return `
       <div class="message-container ${
-        isAdmin ? "admin-message" : "client-message"
+        isAdmin ? "admin-message" : "customer-message"
       }">
         <div class="message-wrapper">
           <div class="message-content">

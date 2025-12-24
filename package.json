@@ -6,7 +6,7 @@
     "dev": "nodemon --inspect ./src/index.js",
     "start": "node ./src/index.js",
     "watch:d": "sass --watch ./src/resources/admin/scss/app.scss:./src/public/admin/css/app.css",
-    "watch:c": "sass --watch ./src/resources/client/scss/app.scss:./src/public/client/css/app.css",
+    "watch:c": "sass --watch ./src/resources/customer/scss/app.scss:./src/public/customer/css/app.css",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clear": "taskkill /F /IM node.exe",
     "setup:env": "copy .env.example .env"

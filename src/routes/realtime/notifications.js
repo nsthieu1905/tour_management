@@ -1,28 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const NotificationController = require("../../app/controllers/NotificationController");
-const protectClientRoutes = require("../../middleware/protectClientRoutes");
+const protectCusRoutes = require("../../middleware/protectCustomerRoutes");
 
 router.get(
   "/user",
-  protectClientRoutes,
+  protectCusRoutes,
   NotificationController.getUserNotifications
 );
-router.get(
-  "/unread",
-  protectClientRoutes,
-  NotificationController.getUnreadCount
-);
+router.get("/unread", protectCusRoutes, NotificationController.getUnreadCount);
 router.get("/admin/all", NotificationController.getAdminNotifications);
 router.get("/admin/unread", NotificationController.getAdminUnreadCount);
 router.put(
   "/:notificationId/read",
-  protectClientRoutes,
+  protectCusRoutes,
   NotificationController.markAsRead
 );
 router.delete(
   "/:notificationId",
-  protectClientRoutes,
+  protectCusRoutes,
   NotificationController.deleteNotification
 );
 

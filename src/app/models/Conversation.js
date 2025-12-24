@@ -16,14 +16,14 @@ const conversationSchema = new mongoose.Schema(
     lastMessageAt: Date,
     lastMessageFrom: {
       type: String,
-      enum: ["admin", "client"],
+      enum: ["admin", "customer"],
     },
     unreadCount: {
       admin: {
         type: Number,
         default: 0,
       },
-      client: {
+      customer: {
         type: Number,
         default: 0,
       },

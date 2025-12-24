@@ -2,7 +2,10 @@ const mongoose = require("mongoose");
 const Notification = require("../app/models/Notification");
 
 class NotificationService {
-  static async createNotification(notificationData, recipientType = "client") {
+  static async createNotification(
+    notificationData,
+    recipientType = "customer"
+  ) {
     try {
       const notification = new Notification({
         userId: notificationData.userId,
@@ -117,10 +120,10 @@ class NotificationService {
     }
   }
 
-  static broadcastToAllClients(notification) {
+  static broadcastToAllCustomers(notification) {
     if (global.io) {
       global.io
-        .to("client-notifications")
+        .to("customer-notifications")
         .emit("notification:new", notification);
     }
   }
@@ -163,9 +166,9 @@ class NotificationService {
 
       if (global.io) {
         global.io
-          .to("client-notifications")
+          .to("customer-notifications")
           .emit("notification:new", broadcastData);
-        console.log("[NotificationService] Promotion broadcasted to clients");
+        console.log("[NotificationService] Promotion broadcasted to customers");
       } else {
         console.warn("[NotificationService] global.io not available");
       }
@@ -201,7 +204,7 @@ class NotificationService {
       priority: "high",
     };
 
-    return this.createNotification(notification, "client");
+    return this.createNotification(notification, "customer");
   }
 
   static async notifyTourUpdate(tourData) {
@@ -215,7 +218,7 @@ class NotificationService {
       priority: "medium",
     };
 
-    return this.broadcastToAllClients(notification);
+    return this.broadcastToAllCustomers(notification);
   }
 
   static async notifyPromotion(promotionData) {
@@ -229,7 +232,7 @@ class NotificationService {
       priority: "high",
     };
 
-    return this.broadcastToAllClients(notification);
+    return this.broadcastToAllCustomers(notification);
   }
 
   static async notifyPayment(paymentData) {
@@ -244,7 +247,7 @@ class NotificationService {
       priority: "high",
     };
 
-    return this.createNotification(notification, "client");
+    return this.createNotification(notification, "customer");
   }
 }
 

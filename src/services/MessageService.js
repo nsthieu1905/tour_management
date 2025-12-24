@@ -106,7 +106,7 @@ class MessageService {
           lastMessageAt: new Date(),
           lastMessageFrom: senderType,
           $inc: {
-            [`unreadCount.${senderType === "admin" ? "client" : "admin"}`]: 1,
+            [`unreadCount.${senderType === "admin" ? "customer" : "admin"}`]: 1,
           },
         },
         { new: true }
@@ -296,7 +296,7 @@ class MessageService {
       await Conversation.findByIdAndUpdate(conversationId, {
         $set: {
           "unreadCount.admin": 0,
-          "unreadCount.client": 0,
+          "unreadCount.customer": 0,
         },
       });
 
@@ -460,25 +460,23 @@ class MessageService {
       throw error;
     }
   }
+
   // Đánh dấu tất cả tin nhắn trong cuộc hội thoại đọc bởi admin
   static async markConversationAsReadByAdmin(conversationId) {
     try {
       await Message.updateMany(
         {
           conversationId,
-          senderType: "client",
+          senderType: "customer",
           read: false,
         },
         {
-          read: true,
-          readAt: new Date(),
+          $set: { read: true, readAt: new Date() },
         }
       );
 
       await Conversation.findByIdAndUpdate(conversationId, {
-        $set: {
-          "unreadCount.admin": 0,
-        },
+        $set: { "unreadCount.admin": 0 },
       });
 
       return true;

@@ -18,8 +18,8 @@ const login = (req, res) => {
   });
 };
 
-// [GET] /client/login
-const clientLogin = (req, res) => {
+// [GET] /customer/auth/login
+const cusLogin = (req, res) => {
   const accessToken = req.cookies[process.env.AUTH_TOKEN_NAME];
   const nextUrl = req.query.next;
 
@@ -35,14 +35,14 @@ const clientLogin = (req, res) => {
     }
   }
 
-  res.render("auth/login-client", {
+  res.render("auth/login-customer", {
     bodyClass: "bg-gray-50 transition-all duration-300",
     layout: false,
   });
 };
 
-// [GET] /client/register
-const clientRegister = (req, res) => {
+// [GET] /customer/auth/register
+const cusRegister = (req, res) => {
   res.render("auth/register", {
     bodyClass: "bg-gray-50 transition-all duration-300",
     layout: false,
@@ -51,6 +51,6 @@ const clientRegister = (req, res) => {
 
 module.exports = {
   login,
-  clientLogin,
-  clientRegister,
+  cusLogin,
+  cusRegister,
 };

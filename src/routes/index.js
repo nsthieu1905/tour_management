@@ -10,14 +10,14 @@ const doiTacApiRoutes = require("./admin/doi-tac");
 const tourCategoryApiRoutes = require("./admin/tour-categories");
 
 // Chatbot
-const chatbotApiRoutes = require("./client/chatbot");
+const chatbotApiRoutes = require("./customer/chatbot");
 
-// Client
-const homeRoutes = require("./client/home");
-const clientAuthRoutes = require("./client/auth");
-const favoriteRoutes = require("./client/favorites");
-const bookingRoutes = require("./client/bookings");
-const feedbackRoutes = require("./client/feedbacks");
+// Customer
+const homeRoutes = require("./customer/home");
+const customerAuthRoutes = require("./customer/auth");
+const favoriteRoutes = require("./customer/favorites");
+const bookingRoutes = require("./customer/bookings");
+const feedbackRoutes = require("./customer/feedbacks");
 
 // Real-time
 const notificationRoutes = require("./realtime/notifications");
@@ -40,8 +40,8 @@ function route(app) {
   // Chatbot
   app.use("/api/chatbot", chatbotApiRoutes);
 
-  // Client
-  app.use("/client/auth", clientAuthRoutes);
+  // Customer
+  app.use("/customer/auth", customerAuthRoutes);
   app.use("/api/favorites", favoriteRoutes);
   app.use("/api/bookings", bookingRoutes);
   app.use("/api/feedbacks", feedbackRoutes);

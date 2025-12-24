@@ -118,7 +118,7 @@ const Modal = {
   },
 
   loginRequired({
-    loginUrl = "/client/auth/login",
+    loginUrl = "/customer/auth/login",
     message = "Vui lòng đăng nhập để tiếp tục",
     onCancel = () => {},
   } = {}) {

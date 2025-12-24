@@ -184,7 +184,7 @@ function setupFormHandlers() {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData);
 
-    // Client-side validation
+    // Customer-side validation
     const validation = validateCouponInput(data);
     if (!validation.isValid) {
       // Hiển thị tất cả lỗi

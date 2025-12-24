@@ -1134,7 +1134,7 @@ h1 {
   justify-content: flex-end !important;
 }
 
-.message-container.client-message {
+.message-container.customer-message {
   justify-content: flex-start !important;
 }
 
@@ -1149,7 +1149,7 @@ h1 {
   align-items: flex-end;
 }
 
-.message-container.client-message .message-wrapper {
+.message-container.customer-message .message-wrapper {
   align-items: flex-start;
 }
 
@@ -1177,13 +1177,13 @@ h1 {
   box-shadow: 0 2px 4px rgba(0, 132, 255, 0.2);
 }
 
-.client-message .message-content {
+.customer-message .message-content {
   background-color: #e4e6eb;
   color: #000;
   border-radius: 20px;
 }
 
-.client-message .message-content:hover {
+.customer-message .message-content:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -1483,7 +1483,7 @@ h1 {
   justify-content: flex-end !important;
 }
 
-.message-container.client-message {
+.message-container.customer-message {
   justify-content: flex-start !important;
 }
 

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelSmart - Đặt Tour Du Lịch Thông Minh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/customer/css/app.css" />
+  </head>
+  <body class="{{bodyClass}}" {{#if user}}data-customer-id="{{user._id}}" data-user-id="{{user._id}}"{{/if}}>
+    {{> header_customer}} {{{body}}} {{> floating_btn}} {{> footer_customer}}
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/customer/js/notifications.js"></script>
+    <script src="/customer/js/chatbox-realtime.js"></script>
+    <script src="/customer/js/chatbot.js"></script>
+    <script src="/customer/js/floating-buttons.js"></script>
+  </body>
+</html>
