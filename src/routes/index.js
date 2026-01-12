@@ -8,6 +8,7 @@ const adminBookingRoutes = require("./admin/bookings");
 const adminStaffRoutes = require("./admin/staff");
 const doiTacApiRoutes = require("./admin/doi-tac");
 const tourCategoryApiRoutes = require("./admin/tour-categories");
+const statisticsApiRoutes = require("./admin/statistics");
 
 // Chatbot
 const chatbotApiRoutes = require("./customer/chatbot");
@@ -20,8 +21,8 @@ const bookingRoutes = require("./customer/bookings");
 const feedbackRoutes = require("./customer/feedbacks");
 
 // Real-time
-const notificationRoutes = require("./realtime/notifications");
-const messageRoutes = require("./realtime/messages");
+const notificationRoutes = require("./admin/notifications");
+const messageRoutes = require("./admin/messages");
 
 function route(app) {
   // Admin
@@ -34,6 +35,9 @@ function route(app) {
   app.use("/api/staffs", adminStaffRoutes);
   app.use("/api/doi-tac", doiTacApiRoutes);
   app.use("/api/tour-categories", tourCategoryApiRoutes);
+  app.use("/api/statistics", statisticsApiRoutes);
+
+  // Real-time
   app.use("/api/notifications", notificationRoutes);
   app.use("/api/messages", messageRoutes);
 

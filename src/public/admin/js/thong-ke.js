@@ -25,18 +25,42 @@ const chartInstances = {
 };
 
 function initStatisticsCharts() {
-  const data = window.statisticsData;
-  if (!data) return;
-
-  displayKPIs(data.kpis);
-
-  initSeasonalTrendsChart(data.seasonalTrends);
-  initTourTypeChart(data.tourTypes);
-  initBookingStatusChart(data.bookingStatus);
-
-  populatePerformanceTable(data.topTours);
   setupResizeListener();
   handleTimeRangeChange();
+
+  loadStatisticsData();
+}
+
+async function loadStatisticsData() {
+  try {
+    const startInput = document.querySelector('input[name="startDate"]');
+    const endInput = document.querySelector('input[name="endDate"]');
+
+    const params = new URLSearchParams();
+    if (startInput?.value) params.set("startDate", startInput.value);
+    if (endInput?.value) params.set("endDate", endInput.value);
+
+    const url = params.toString()
+      ? `/api/statistics/thong-ke?${params.toString()}`
+      : `/api/statistics/thong-ke`;
+
+    const res = await fetch(url, { credentials: "include" });
+    const payload = await res.json();
+    if (!res.ok || !payload?.success) {
+      throw new Error(payload?.message || "Không thể tải dữ liệu thống kê");
+    }
+
+    const data = payload.data;
+    if (!data) return;
+
+    displayKPIs(data.kpis);
+    initSeasonalTrendsChart(data.seasonalTrends);
+    initTourTypeChart(data.tourTypes);
+    initBookingStatusChart(data.bookingStatus);
+    populatePerformanceTable(data.topTours);
+  } catch (error) {
+    console.error("Load statistics data error:", error);
+  }
 }
 
 function displayKPIs(kpis) {
@@ -288,11 +312,23 @@ function setupResizeListener() {
 }
 
 function handleTimeRangeChange() {
-  const select = document.querySelector('select[name="timeRange"]');
-  if (!select) return;
+  const startInput = document.querySelector('input[name="startDate"]');
+  const endInput = document.querySelector('input[name="endDate"]');
+  const applyBtn = document.getElementById("applyDateRange");
+  if (!startInput || !endInput || !applyBtn) return;
 
-  select.addEventListener("change", function () {
-    window.location.href = `/admin/thong-ke?days=${this.value}`;
+  applyBtn.addEventListener("click", () => {
+    const startDate = startInput.value;
+    const endDate = endInput.value;
+
+    const params = new URLSearchParams();
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+
+    const query = params.toString();
+    window.location.href = query
+      ? `/admin/thong-ke?${query}`
+      : `/admin/thong-ke`;
   });
 }
 

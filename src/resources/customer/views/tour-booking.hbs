@@ -261,19 +261,22 @@
                     this.includedInTourPrice}}
                     <div class="p-3 bg-white border border-gray-200 rounded-lg">
                       <label class="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          class="w-4 h-4 text-blue-600 extra-service-checkbox"
-                          data-service-id="{{this.serviceId._id}}"
-                          data-price="{{this.serviceId.price}}"
-                          data-max-qty="{{this.quantity}}"
-                          data-service-name="{{this.serviceId.name}}"
-                          data-partner-name="{{this.serviceId.partnerId.name}}"
-                        />
+                        <input type="checkbox" class="w-4 h-4 text-blue-600
+                        extra-service-checkbox"
+                        data-service-id="{{this.serviceId._id}}"
+                        data-price="{{this.serviceId.price}}"
+                        data-max-qty="{{this.remainingQuantity}}"
+                        data-service-name="{{this.serviceId.name}}"
+                        data-partner-name="{{this.serviceId.partnerId.name}}"
+                        {{#unless this.remainingQuantity}}disabled{{/unless}} />
                         <div class="flex-1">
                           <div class="font-medium text-gray-900">
                             {{this.serviceId.partnerId.name}} -
                             {{this.serviceId.name}}
+                          </div>
+                          <div class="text-xs text-gray-600 mt-1">
+                            {{#if this.remainingQuantity}} Còn lại:
+                            {{this.remainingQuantity}} {{else}} Tạm hết {{/if}}
                           </div>
                           {{#if this.note}}
                           <div class="text-xs text-gray-600 mt-1">
@@ -304,7 +307,7 @@
                           <input
                             type="number"
                             min="1"
-                            max="{{this.quantity}}"
+                            max="{{this.remainingQuantity}}"
                             value="1"
                             readonly
                             class="w-24 text-center border border-gray-300 rounded-lg px-3 py-2 text-lg font-medium bg-gray-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none extra-service-qty-input"

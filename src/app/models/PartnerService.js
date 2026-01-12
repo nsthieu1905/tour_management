@@ -30,6 +30,11 @@ const partnerServiceSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    supplyQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     status: {
       type: String,
       enum: ["active", "inactive"],

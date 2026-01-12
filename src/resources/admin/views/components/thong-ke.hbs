@@ -5,18 +5,27 @@
       <div class="flex justify-between items-center mb-6">
         <div>
           <h2 class="text-3xl font-bold text-gray-900 mb-2">Thống kê</h2>
-
         </div>
         <div class="flex space-x-3">
-          <select
-            name="timeRange"
+          <input
+            type="date"
+            name="startDate"
+            value="{{selectedStartDate}}"
             class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="date"
+            name="endDate"
+            value="{{selectedEndDate}}"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="button"
+            id="applyDateRange"
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
           >
-            <option value="30" {{#if (eq selectedDays 30)}}selected{{/if}}>30 ngày qua</option>
-            <option value="90" {{#if (eq selectedDays 90)}}selected{{/if}}>90 ngày qua</option>
-            <option value="180" {{#if (eq selectedDays 180)}}selected{{/if}}>6 tháng qua</option>
-            <option value="365" {{#if (eq selectedDays 365)}}selected{{/if}}>1 năm qua</option>
-          </select>
+            Lọc
+          </button>
           <button
             class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
           >
@@ -31,9 +40,7 @@
         <div class="bg-white p-6 rounded-xl shadow-sm">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600">
-                Doanh thu TB/ngày
-              </p>
+              <p class="text-sm font-medium text-gray-600">Doanh thu TB/ngày</p>
               <p id="avgDailyRevenue" class="text-2xl font-bold text-gray-900">
                 0 VNĐ
               </p>
@@ -84,9 +91,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-medium text-gray-600">Tỷ lệ đặt lại</p>
-              <p id="repeatRate" class="text-2xl font-bold text-gray-900">
-                0%
-              </p>
+              <p id="repeatRate" class="text-2xl font-bold text-gray-900">0%</p>
               <p class="text-sm text-purple-600">Khách quay lại</p>
             </div>
             <div class="bg-purple-100 p-3 rounded-full">
@@ -174,10 +179,5 @@
     </div>
   </main>
 </div>
-
-<script>
-  // Embed statistics data from server
-  window.statisticsData = {{{statisticsData}}};
-</script>
 
 <script type="module" src="/admin/js/thong-ke.js"></script>

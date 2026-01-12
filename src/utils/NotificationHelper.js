@@ -144,11 +144,12 @@ const notifyRefund = async (refundData) => {
  */
 const notifyTourUpdate = async (tourData) => {
   try {
-    await NotificationService.broadcastToAllCustomers({
+    await NotificationService.createAndBroadcastPromotion({
       type: "tour_update",
       title: `Tour mới: ${tourData.name}`,
       message: tourData.description || "Khám phá điểm đến tuyệt vời mới",
       icon: "fa-map",
+      iconBg: "bg-blue-100",
       link: `/tour/${tourData.tourId}`,
       data: { tourId: tourData.tourId },
       priority: "medium",

@@ -159,7 +159,8 @@ const validateCouponCode = (code) => {
   if (!code || typeof code !== "string") return false;
   const trimmedCode = code.trim();
   if (trimmedCode.length < 3 || trimmedCode.length > 20) return false;
-  return /^[A-Z0-9\-]+$/.test(trimmedCode);
+  const normalized = trimmedCode.toUpperCase();
+  return /^[A-Z0-9\-]+$/.test(normalized);
 };
 
 /**
@@ -177,7 +178,7 @@ const validateCouponName = (name) => {
  * Validate coupon type
  */
 const validateCouponType = (type) => {
-  const validTypes = ["percentage", "fixed_amount"];
+  const validTypes = ["percentage", "fixed_amount", "free_service"];
   return validTypes.includes(type);
 };
 

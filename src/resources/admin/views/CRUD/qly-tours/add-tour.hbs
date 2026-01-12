@@ -135,7 +135,55 @@
 
       <div class="border border-gray-200 rounded-xl p-4">
         <div class="flex items-center justify-between mb-3">
-          <h4 class="text-lg font-semibold text-gray-900">Dịch vụ đối tác</h4>
+          <h4 class="text-lg font-semibold text-gray-900">Dịch vụ di chuyển</h4>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Đối tác</label
+            >
+            <select
+              id="transportPartnerSelect"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Chọn đối tác --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Dịch vụ</label
+            >
+            <select
+              id="transportServiceSelect"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Chọn dịch vụ --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Số lượng cung cấp</label
+            >
+            <input
+              type="number"
+              id="transportSupplyQuantity"
+              value="0"
+              min="0"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50"
+              readonly
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="border border-gray-200 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-lg font-semibold text-gray-900">Dịch vụ thêm</h4>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

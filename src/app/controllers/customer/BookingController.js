@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { Tour, Booking, User } = require("../../models/index");
 const MoMoService = require("../../../services/MoMoService");
 const { notifyPayment } = require("../../../utils/NotificationHelper");
@@ -54,6 +55,37 @@ const bookingPage = async (req, res, next) => {
         populate: { path: "partnerId" },
       })
       .lean();
+
+    if (tour?._id) {
+      const booked = await Booking.aggregate([
+        {
+          $match: {
+            tourId: new mongoose.Types.ObjectId(tour._id),
+            bookingStatus: { $nin: ["cancelled", "refunded"] },
+          },
+        },
+        { $unwind: "$extraServices" },
+        {
+          $group: {
+            _id: "$extraServices.serviceId",
+            total: { $sum: "$extraServices.quantity" },
+          },
+        },
+      ]);
+
+      const bookedByServiceId = new Map(
+        (booked || []).map((x) => [String(x._id), Number(x.total) || 0])
+      );
+
+      tour.partnerServices = (tour.partnerServices || []).map((ps) => {
+        if (!ps || ps.includedInTourPrice) return ps;
+        const sid = ps?.serviceId?._id ? String(ps.serviceId._id) : "";
+        const totalQty = Number(ps.quantity) || 0;
+        const usedQty = sid ? bookedByServiceId.get(sid) || 0 : 0;
+        const remainingQuantity = Math.max(0, totalQty - usedQty);
+        return { ...ps, remainingQuantity };
+      });
+    }
 
     res.render("tour-booking", {
       tour: tour,

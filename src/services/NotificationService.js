@@ -185,7 +185,15 @@ class NotificationService {
 
   static async getUnreadCount(userId) {
     try {
-      return await Notification.countDocuments({ userId, read: false });
+      let queryUserId = userId;
+      if (typeof userId === "string") {
+        queryUserId = new mongoose.Types.ObjectId(userId);
+      }
+
+      return await Notification.countDocuments({
+        read: false,
+        $or: [{ userId: queryUserId }, { recipientType: "promotion" }],
+      });
     } catch (error) {
       console.error("[NotificationService] Error getting unread count:", error);
       throw error;

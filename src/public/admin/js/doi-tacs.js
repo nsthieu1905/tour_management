@@ -643,7 +643,7 @@ function renderPartnerServices(services) {
   if (!Array.isArray(services) || services.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
           <i class="fas fa-box-open text-3xl mb-3 block"></i>
           <p>Chưa có dịch vụ nào</p>
         </td>
@@ -673,9 +673,12 @@ function renderPartnerServices(services) {
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatCurrency(
           s.price
         )}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${
+          Number(s.supplyQuantity) || 0
+        }</td>
         <td class="px-6 py-4 whitespace-nowrap">${badge(s.status)}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-          <button class="text-blue-600 hover:text-blue-900" onclick="window.editPartnerService('$
+          <button class="text-blue-600 hover:text-blue-900" onclick="window.editPartnerService('${
             s._id
           }')">Sửa</button>
           <button class="text-red-600 hover:text-red-900" onclick="window.deletePartnerService('${
@@ -692,12 +695,14 @@ function resetPartnerServiceForm() {
   currentEditingServiceId = null;
   const name = document.getElementById("serviceName");
   const price = document.getElementById("servicePrice");
+  const supplyQuantity = document.getElementById("serviceSupplyQuantity");
   const status = document.getElementById("serviceStatus");
   const submitBtn = document.getElementById("serviceFormSubmitBtn");
   const cancelBtn = document.getElementById("serviceFormCancelBtn");
 
   if (name) name.value = "";
   if (price) price.value = "";
+  if (supplyQuantity) supplyQuantity.value = "";
   if (status) status.value = "active";
   if (submitBtn) submitBtn.textContent = "Thêm";
   if (cancelBtn) cancelBtn.classList.add("hidden");
@@ -708,6 +713,8 @@ async function handlePartnerServiceSubmit() {
 
   const name = document.getElementById("serviceName")?.value?.trim() || "";
   const price = document.getElementById("servicePrice")?.value || 0;
+  const supplyQuantity =
+    document.getElementById("serviceSupplyQuantity")?.value || 0;
   const status = document.getElementById("serviceStatus")?.value || "active";
 
   if (!name) {
@@ -722,6 +729,7 @@ async function handlePartnerServiceSubmit() {
         name,
         unit: "per_booking",
         price,
+        supplyQuantity,
         status,
       });
     } else {
@@ -729,6 +737,8 @@ async function handlePartnerServiceSubmit() {
         name,
         unit: "per_booking",
         price,
+        supplyQuantity,
+        status,
       });
     }
     if (!res) return;
@@ -772,14 +782,18 @@ async function editPartnerService(serviceId) {
 
   const name = row.querySelector("td:nth-child(1) .text-sm")?.textContent || "";
   const price = row.querySelector("td:nth-child(2)")?.textContent || "0";
+  const supplyText = row.querySelector("td:nth-child(3)")?.textContent || "0";
 
   const nameInput = document.getElementById("serviceName");
   const priceInput = document.getElementById("servicePrice");
+  const supplyInput = document.getElementById("serviceSupplyQuantity");
 
   if (nameInput) nameInput.value = name.trim();
   if (priceInput)
     priceInput.value =
       Number(price.replaceAll(".", "").replaceAll(",", "")) || 0;
+
+  if (supplyInput) supplyInput.value = Number(supplyText) || 0;
 }
 
 async function deletePartnerService(serviceId) {

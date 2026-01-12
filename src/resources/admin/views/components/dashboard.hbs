@@ -3,10 +3,32 @@
   <main class="flex-1 ml-64 p-6">
     <!-- Dashboard Section -->
     <div id="dashboard" class="section">
-      <div class="mb-6">
+      <div class="mb-6 flex items-center justify-between">
         <h2 class="text-3xl font-bold text-gray-900 mb-2">
           Dashboard Tổng quan
         </h2>
+
+        <div class="flex space-x-3">
+          <input
+            type="date"
+            name="startDate"
+            value="{{selectedStartDate}}"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="date"
+            name="endDate"
+            value="{{selectedEndDate}}"
+            class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="button"
+            id="applyDateRange"
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
+            Lọc
+          </button>
+        </div>
       </div>
 
       <!-- Key Metrics -->
@@ -16,7 +38,7 @@
             <div>
               <p class="text-sm font-medium text-gray-600">Doanh thu tháng</p>
               <p class="text-3xl font-bold text-gray-900">
-                {{monthlyRevenue}} VNĐ
+                <span id="monthlyRevenue">0</span> VNĐ
               </p>
               <p class="text-sm text-green-600">Dữ liệu thực tế</p>
             </div>
@@ -30,7 +52,9 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-medium text-gray-600">Đơn đặt tour</p>
-              <p class="text-3xl font-bold text-gray-900">{{totalBookings}}</p>
+              <p class="text-3xl font-bold text-gray-900" id="totalBookings">
+                0
+              </p>
               <p class="text-sm text-blue-600">Tháng hiện tại</p>
             </div>
             <div class="bg-blue-100 p-3 rounded-full">
@@ -43,7 +67,9 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-medium text-gray-600">Tỷ lệ lấp đầy</p>
-              <p class="text-3xl font-bold text-gray-900">{{avgCapacity}}%</p>
+              <p class="text-3xl font-bold text-gray-900" id="avgCapacity">
+                0%
+              </p>
               <p class="text-sm text-orange-600">Trung bình</p>
             </div>
             <div class="bg-orange-100 p-3 rounded-full">
@@ -56,7 +82,9 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-medium text-gray-600">Khách hàng mới</p>
-              <p class="text-3xl font-bold text-gray-900">{{newCustomers}}</p>
+              <p class="text-3xl font-bold text-gray-900" id="newCustomers">
+                0
+              </p>
               <p class="text-sm text-purple-600">Tháng hiện tại</p>
             </div>
             <div class="bg-purple-100 p-3 rounded-full">
@@ -97,33 +125,7 @@
               Top 10 Tour được đặt nhiều nhất
             </h3>
           </div>
-          <div class="space-y-3">
-            {{#each topExpensiveTours}}
-            <div
-              class="flex items-center {{#if isTopThree}}p-4 bg-{{bgColor}} rounded-lg border-l-4 border-{{borderColor}}{{else}}p-3 bg-white rounded-lg hover:bg-gray-50 transition border border-gray-100{{/if}}"
-            >
-              <div class="flex-shrink-0 w-12">
-                <span
-                  class="{{#if isTopThree}}text-xl{{else}}text-sm{{/if}} font-bold text-{{rankColor}}-600"
-                  >#{{rank}}</span
-                >
-              </div>
-              <div class="flex-1 min-w-0">
-                <p
-                  class="text-sm font-{{#if isTopThree}}semibold{{else}}medium{{/if}} text-gray-900 truncate"
-                >
-                  {{tourName}}
-                </p>
-              </div>
-              <div class="flex-shrink-0 text-right ml-4">
-                <p class="text-sm font-bold text-gray-900">
-                  {{totalRevenue}} VNĐ
-                </p>
-                <p class="text-xs text-gray-500">{{bookingCount}} tour</p>
-              </div>
-            </div>
-            {{/each}}
-          </div>
+          <div class="space-y-3" id="topExpensiveTours"></div>
         </div>
 
         <!-- Top 10 Khách hàng VIP -->
@@ -134,47 +136,11 @@
               Top 10 Khách hàng VIP
             </h3>
           </div>
-          <div class="space-y-3">
-            {{#each topVIPCustomers}}
-            <div
-              class="flex items-center {{#if isTopThree}}p-4 bg-{{bgColor}} rounded-lg border-l-4 border-{{borderColor}}{{else}}p-3 bg-white rounded-lg hover:bg-gray-50 transition border border-gray-100{{/if}}"
-            >
-              <div class="flex-shrink-0 w-12">
-                <span
-                  class="{{#if isTopThree}}text-xl{{else}}text-sm{{/if}} font-bold text-{{rankColor}}-600"
-                  >#{{rank}}</span
-                >
-              </div>
-              <div class="flex items-center flex-1 min-w-0 ml-3">
-                <div class="ml-3 flex-1 min-w-0">
-                  <p
-                    class="text-sm font-{{#if isTopThree}}semibold{{else}}medium{{/if}} text-gray-900 truncate"
-                  >
-                    {{userName}}
-                  </p>
-                </div>
-              </div>
-              <div class="flex-shrink-0 text-right ml-4">
-                <p class="text-sm font-bold text-gray-900">
-                  {{totalSpent}} VNĐ
-                </p>
-                <p class="text-xs text-gray-500">{{bookingCount}} đơn</p>
-              </div>
-            </div>
-            {{/each}}
-          </div>
+          <div class="space-y-3" id="topVIPCustomers"></div>
         </div>
       </div>
     </div>
   </main>
 </div>
-
-<script>
-  // Embed chart data from server
-  window.dashboardData = {
-    revenueData: {{{revenueChartData}}},
-    popularTours: {{{popularToursChartData}}}
-  };
-</script>
 
 <script type="module" src="/admin/js/dashboard.js"></script>

@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { Booking, Tour, User, Khuyen_mai } = require("../models/index");
 const MoMoService = require("../../services/MoMoService");
 const RefundService = require("../../services/RefundService");
@@ -145,6 +146,87 @@ const validateAndParseBookingData = (body) => {
   };
 };
 
+const validateExtraServiceStock = async ({ tour, requestedExtraServices }) => {
+  const partnerServices = Array.isArray(tour?.partnerServices)
+    ? tour.partnerServices
+    : [];
+
+  const offerByServiceId = new Map();
+  const nameByServiceId = new Map();
+
+  for (const ps of partnerServices) {
+    if (!ps || ps.includedInTourPrice) continue;
+    const sid = ps?.serviceId?._id
+      ? String(ps.serviceId._id)
+      : ps?.serviceId
+      ? String(ps.serviceId)
+      : "";
+    if (!sid) continue;
+    offerByServiceId.set(sid, Number(ps.quantity) || 0);
+    nameByServiceId.set(sid, ps?.serviceId?.name || "");
+  }
+
+  if (!requestedExtraServices || requestedExtraServices.length === 0) {
+    return { isValid: true };
+  }
+
+  const booked = await Booking.aggregate([
+    {
+      $match: {
+        tourId: new mongoose.Types.ObjectId(tour._id),
+        bookingStatus: { $nin: ["cancelled", "refunded"] },
+      },
+    },
+    { $unwind: "$extraServices" },
+    {
+      $group: {
+        _id: "$extraServices.serviceId",
+        total: { $sum: "$extraServices.quantity" },
+      },
+    },
+  ]);
+
+  const usedByServiceId = new Map(
+    (booked || []).map((x) => [String(x._id), Number(x.total) || 0])
+  );
+
+  const requestedTotals = new Map();
+  for (const item of requestedExtraServices) {
+    const sid = item?.serviceId ? String(item.serviceId) : "";
+    if (!sid) continue;
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    requestedTotals.set(sid, (requestedTotals.get(sid) || 0) + qty);
+  }
+
+  for (const [sid, reqQty] of requestedTotals.entries()) {
+    if (!offerByServiceId.has(sid)) {
+      return {
+        isValid: false,
+        message: "Dịch vụ thêm không hợp lệ",
+      };
+    }
+    const totalQty = offerByServiceId.get(sid) || 0;
+    const usedQty = usedByServiceId.get(sid) || 0;
+    const remaining = Math.max(0, totalQty - usedQty);
+    if (remaining <= 0) {
+      const name = nameByServiceId.get(sid) || "";
+      return {
+        isValid: false,
+        message: `Dịch vụ '${name}' tạm hết`,
+      };
+    }
+    if (reqQty > remaining) {
+      const name = nameByServiceId.get(sid) || "";
+      return {
+        isValid: false,
+        message: `Dịch vụ '${name}' chỉ còn ${remaining}`,
+      };
+    }
+  }
+
+  return { isValid: true };
+};
+
 const createBookingDataObject = async (params) => {
   const {
     userId,
@@ -208,7 +290,10 @@ const createMoMoPayment = async (req, res) => {
     const validatedData = validateAndParseBookingData(req.body);
     const { tourId, customerName, total, couponCode, guestCount } = req.body;
 
-    const tour = await Tour.findById(tourId);
+    const tour = await Tour.findById(tourId).populate({
+      path: "partnerServices.serviceId",
+      select: "name",
+    });
     if (!tour) {
       return res.status(404).json({
         success: false,
@@ -226,6 +311,17 @@ const createMoMoPayment = async (req, res) => {
           message: `Tour chỉ còn ${availableSeats} chỗ trống, không đủ cho ${guestCount} người`,
         });
       }
+    }
+
+    const stockValidation = await validateExtraServiceStock({
+      tour,
+      requestedExtraServices: validatedData.extraServices,
+    });
+    if (!stockValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: stockValidation.message,
+      });
     }
 
     const totalAmount = Math.round(total);
@@ -308,7 +404,10 @@ const createBankPayment = async (req, res) => {
     const { tourId, customerName, couponCode, paymentMethod, guestCount } =
       req.body;
 
-    const tour = await Tour.findById(tourId);
+    const tour = await Tour.findById(tourId).populate({
+      path: "partnerServices.serviceId",
+      select: "name",
+    });
     if (!tour) {
       return res.status(404).json({
         success: false,
@@ -326,6 +425,17 @@ const createBankPayment = async (req, res) => {
           message: `Tour chỉ còn ${availableSeats} chỗ trống, không đủ cho ${guestCount} người`,
         });
       }
+    }
+
+    const stockValidation = await validateExtraServiceStock({
+      tour,
+      requestedExtraServices: validatedData.extraServices,
+    });
+    if (!stockValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: stockValidation.message,
+      });
     }
 
     const bookingData = await createBookingDataObject({

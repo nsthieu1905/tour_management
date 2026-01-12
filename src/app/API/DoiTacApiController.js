@@ -153,6 +153,8 @@ const createPartnerService = async (req, res) => {
       category = "other",
       unit = "per_booking",
       price = 0,
+      supplyQuantity = 0,
+      status = "active",
     } = req.body;
 
     if (!name || !name.trim()) {
@@ -176,6 +178,8 @@ const createPartnerService = async (req, res) => {
       category,
       unit,
       price: Number(price) || 0,
+      supplyQuantity: Math.max(0, Number(supplyQuantity) || 0),
+      status: typeof status === "string" ? status : "active",
     });
 
     return res.status(201).json({
@@ -197,7 +201,7 @@ const createPartnerService = async (req, res) => {
 const updatePartnerService = async (req, res) => {
   try {
     const { serviceId } = req.params;
-    const { name, category, unit, price, status } = req.body;
+    const { name, category, unit, price, status, supplyQuantity } = req.body;
 
     const service = await PartnerService.findById(serviceId);
     if (!service) {
@@ -211,6 +215,8 @@ const updatePartnerService = async (req, res) => {
     if (typeof category === "string") service.category = category;
     if (typeof unit === "string") service.unit = unit;
     if (price !== undefined) service.price = Number(price) || 0;
+    if (supplyQuantity !== undefined)
+      service.supplyQuantity = Math.max(0, Number(supplyQuantity) || 0);
     if (typeof status === "string") service.status = status;
 
     await service.save();
@@ -260,6 +266,89 @@ const deletePartnerService = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Lỗi khi xoá dịch vụ",
+      error: error.message,
+    });
+  }
+};
+
+// [GET] /api/doi-tac/services/search
+const searchServices = async (req, res) => {
+  try {
+    const {
+      category = "",
+      destination = "",
+      status = "active",
+      partnerStatus = "active",
+    } = req.query;
+
+    if (!String(category || "").trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng chọn loại dịch vụ (category)",
+      });
+    }
+
+    const partnerFilter = {};
+    if (String(partnerStatus || "").trim()) {
+      partnerFilter.status = partnerStatus;
+    }
+    if (destination) {
+      partnerFilter.destination = { $regex: destination, $options: "i" };
+    }
+
+    const partners = await Doi_tac.find(partnerFilter)
+      .select("name destination status")
+      .lean();
+
+    const partnerIds = partners.map((p) => p._id);
+    const partnerById = new Map(partners.map((p) => [String(p._id), p]));
+
+    const serviceFilter = {
+      partnerId: { $in: partnerIds },
+      category: {
+        $regex: `^${escapeRegex(String(category).trim())}$`,
+        $options: "i",
+      },
+    };
+    if (status && status !== "all") {
+      serviceFilter.status = status;
+    }
+
+    const services = await PartnerService.find(serviceFilter)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formatted = (services || [])
+      .map((s) => {
+        const partner = partnerById.get(String(s.partnerId));
+        if (!partner) return null;
+        return {
+          _id: s._id,
+          name: s.name,
+          category: s.category,
+          unit: s.unit,
+          price: s.price,
+          supplyQuantity: s.supplyQuantity,
+          status: s.status,
+          partner: {
+            _id: partner._id,
+            name: partner.name,
+            destination: partner.destination || "",
+            status: partner.status,
+          },
+        };
+      })
+      .filter(Boolean);
+
+    return res.status(200).json({
+      success: true,
+      data: formatted,
+    });
+  } catch (error) {
+    console.error("Error searching partner services:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi tìm dịch vụ",
       error: error.message,
     });
   }
@@ -493,6 +582,7 @@ module.exports = {
   update,
   updateStatus,
   deleteOne,
+  searchServices,
   getServicesByPartner,
   createPartnerService,
   updatePartnerService,

@@ -69,6 +69,9 @@ let partnersCache = [];
 let servicesCacheByPartnerId = new Map();
 let selectedPartnerServices = [];
 
+let selectedTransportServiceId = null;
+let selectedTransportSupplyQuantity = 0;
+
 let tourCategoriesCache = [];
 
 let lastDestinationFilter = "";
@@ -134,10 +137,145 @@ function initTourManagement() {
     selectedPartnerServices = [];
     servicesCacheByPartnerId = new Map();
     lastDestinationFilter = "";
+    selectedTransportServiceId = null;
+    selectedTransportSupplyQuantity = 0;
     resetPartnerServicesUI();
     applyPartnerDestinationFilter("");
     renderDepartures();
   });
+}
+
+function isTransportPartner(partner) {
+  return normalizeText(partner?.type).includes("di chuyen");
+}
+
+function renderTransportPartnersOptions(destination) {
+  const select = document.getElementById("transportPartnerSelect");
+  if (!select) return;
+
+  const dest = normalizeText(destination);
+  if (!dest) {
+    select.innerHTML = '<option value="">(Vui lòng nhập điểm đến)</option>';
+    select.value = "";
+    const svc = document.getElementById("transportServiceSelect");
+    if (svc) svc.innerHTML = '<option value="">-- Chọn dịch vụ --</option>';
+    const supply = document.getElementById("transportSupplyQuantity");
+    if (supply) supply.value = 0;
+    return;
+  }
+
+  const filtered = (partnersCache || []).filter((p) => {
+    if (p?.status === "inactive") return false;
+    if (!isTransportPartner(p)) return false;
+    const pd = normalizeText(p.destination);
+    if (!pd) return false;
+    return pd === dest;
+  });
+
+  if (filtered.length === 0) {
+    select.innerHTML = '<option value="">(Chưa có đối tác phù hợp)</option>';
+    select.value = "";
+    const svc = document.getElementById("transportServiceSelect");
+    if (svc) svc.innerHTML = '<option value="">-- Chọn dịch vụ --</option>';
+    const supply = document.getElementById("transportSupplyQuantity");
+    if (supply) supply.value = 0;
+    return;
+  }
+
+  const options = filtered
+    .map((p) => `<option value="${p._id}">${escapeHtml(p.name || "")}</option>`)
+    .join("");
+  select.innerHTML = `<option value="">-- Chọn đối tác --</option>${options}`;
+}
+
+async function loadTransportServicesForPartner(partnerId) {
+  const serviceSelect = document.getElementById("transportServiceSelect");
+  if (!serviceSelect) return;
+
+  serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>`;
+  if (!partnerId) return;
+
+  try {
+    if (!servicesCacheByPartnerId.has(partnerId)) {
+      const res = await apiGet(`/api/doi-tac/${partnerId}/services`);
+      if (!res) return;
+      const result = await res.json();
+      if (!result?.success) {
+        Notification.error(result?.message || "Không thể tải dịch vụ");
+        return;
+      }
+      servicesCacheByPartnerId.set(partnerId, result.data || []);
+    }
+
+    const services = servicesCacheByPartnerId.get(partnerId) || [];
+    const servicesToRender = (services || []).filter(
+      (s) => s.status !== "inactive"
+    );
+
+    if (servicesToRender.length === 0) {
+      serviceSelect.innerHTML =
+        '<option value="">-- Chọn dịch vụ --</option><option value="" disabled>(Chưa có dịch vụ di chuyển)</option>';
+      return;
+    }
+
+    const options = servicesToRender
+      .map((s) => {
+        const supply = Number(s.supplyQuantity) || 0;
+        return `<option value="${s._id}" data-supply="${supply}">${escapeHtml(
+          s.name || ""
+        )}</option>`;
+      })
+      .join("");
+    serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>${options}`;
+  } catch (err) {
+    console.error(err);
+    Notification.error("Lỗi khi tải dịch vụ");
+  }
+}
+
+function setSelectedTransport(serviceId, partnerId) {
+  selectedTransportServiceId = serviceId ? String(serviceId) : null;
+
+  let supply = 0;
+  let serviceMeta;
+  if (partnerId) {
+    serviceMeta = servicesCacheByPartnerId
+      .get(partnerId)
+      ?.find((s) => String(s._id) === String(serviceId));
+    supply = Number(serviceMeta?.supplyQuantity) || 0;
+  }
+  selectedTransportSupplyQuantity = supply;
+
+  const supplyInput = document.getElementById("transportSupplyQuantity");
+  if (supplyInput) supplyInput.value = supply;
+
+  // Ensure only 1 transport service in selectedPartnerServices
+  selectedPartnerServices = (selectedPartnerServices || []).filter(
+    (x) => String(x?.note || "").toLowerCase() !== "transport"
+  );
+
+  if (serviceId) {
+    const partnerMeta = partnersCache.find(
+      (p) => String(p._id) === String(partnerId)
+    );
+
+    selectedPartnerServices.unshift({
+      serviceId,
+      quantity: 1,
+      includedInTourPrice: true,
+      note: "transport",
+      _meta: {
+        partnerName: partnerMeta?.name || "",
+        serviceName: serviceMeta?.name || "",
+        price: serviceMeta?.price,
+        unit: serviceMeta?.unit,
+        supplyQuantity: supply,
+      },
+    });
+  }
+
+  renderSelectedPartnerServices();
+  syncPartnerServicesToHiddenInput();
 }
 
 function initPartnerServicesAssignment() {
@@ -145,6 +283,12 @@ function initPartnerServicesAssignment() {
   const serviceSelect = document.getElementById("partnerServiceSelect");
   const addBtn = document.getElementById("addPartnerServiceBtn");
   const destinationInput = document.querySelector('input[name="destination"]');
+  const transportPartnerSelect = document.getElementById(
+    "transportPartnerSelect"
+  );
+  const transportServiceSelect = document.getElementById(
+    "transportServiceSelect"
+  );
   const qtyWrap = document.getElementById("partnerServiceQuantityWrap");
   const qtyInput = document.getElementById("partnerServiceQuantity");
   const includedCb = document.getElementById("partnerServiceIncluded");
@@ -171,6 +315,31 @@ function initPartnerServicesAssignment() {
     destinationInput.addEventListener("input", async () => {
       await ensurePartnersLoaded();
       applyPartnerDestinationFilter(destinationInput.value);
+
+      renderTransportPartnersOptions(destinationInput.value);
+    });
+  }
+
+  if (transportPartnerSelect) {
+    transportPartnerSelect.addEventListener("change", async () => {
+      await loadTransportServicesForPartner(transportPartnerSelect.value);
+      const supply = document.getElementById("transportSupplyQuantity");
+      if (supply) supply.value = 0;
+      setSelectedTransport(null, null);
+    });
+  }
+
+  if (transportServiceSelect) {
+    transportServiceSelect.addEventListener("change", () => {
+      const partnerId = transportPartnerSelect?.value;
+      const serviceId = transportServiceSelect.value;
+      if (!partnerId || !serviceId) {
+        const supply = document.getElementById("transportSupplyQuantity");
+        if (supply) supply.value = 0;
+        setSelectedTransport(null, null);
+        return;
+      }
+      setSelectedTransport(serviceId, partnerId);
     });
   }
 
@@ -201,6 +370,20 @@ function initPartnerServicesAssignment() {
       .get(partnerId)
       ?.find((s) => String(s._id) === String(serviceId));
 
+    const supply = Number(serviceMeta?.supplyQuantity) || 0;
+    if (
+      !included &&
+      Number.isFinite(qty) &&
+      qty > 0 &&
+      supply > 0 &&
+      qty > supply
+    ) {
+      Notification.error(
+        `Số lượng không được vượt quá số lượng cung cấp (${supply})`
+      );
+      return;
+    }
+
     const partnerMeta = partnersCache.find(
       (p) => String(p._id) === String(partnerId)
     );
@@ -213,11 +396,13 @@ function initPartnerServicesAssignment() {
       serviceId,
       quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
       includedInTourPrice: Boolean(included),
+      note: "",
       _meta: {
         partnerName: partnerMeta?.name || "",
         serviceName: serviceMeta?.name || "",
         price: serviceMeta?.price,
         unit: serviceMeta?.unit,
+        supplyQuantity: serviceMeta?.supplyQuantity,
       },
     };
 
@@ -232,14 +417,37 @@ function initPartnerServicesAssignment() {
   });
 
   window.removeSelectedPartnerService = function (index) {
+    const removed = selectedPartnerServices[index];
     selectedPartnerServices.splice(index, 1);
+
+    if (String(removed?.note || "").toLowerCase() === "transport") {
+      const tp = document.getElementById("transportPartnerSelect");
+      const ts = document.getElementById("transportServiceSelect");
+      const supply = document.getElementById("transportSupplyQuantity");
+      if (tp) {
+        tp.value = "";
+        tp.innerHTML = '<option value="">-- Chọn đối tác --</option>';
+      }
+      if (ts) {
+        ts.value = "";
+        ts.innerHTML = '<option value="">-- Chọn dịch vụ --</option>';
+      }
+      if (supply) supply.value = 0;
+      selectedTransportServiceId = null;
+      selectedTransportSupplyQuantity = 0;
+    }
+
     renderSelectedPartnerServices();
     syncPartnerServicesToHiddenInput();
   };
 }
 
 async function ensurePartnersLoaded() {
-  if (partnersLoaded) return;
+  if (partnersLoaded) {
+    applyPartnerDestinationFilter(lastDestinationFilter);
+    renderTransportPartnersOptions(lastDestinationFilter);
+    return;
+  }
   try {
     const res = await apiGet("/api/doi-tac?page=1&limit=1000&status=active");
     if (!res) return;
@@ -253,6 +461,9 @@ async function ensurePartnersLoaded() {
     partnersLoaded = true;
 
     applyPartnerDestinationFilter(lastDestinationFilter);
+
+    // Also load transport partners list
+    renderTransportPartnersOptions(lastDestinationFilter);
   } catch (err) {
     console.error(err);
     Notification.error("Lỗi khi tải danh sách đối tác");
@@ -267,6 +478,13 @@ function normalizeText(value) {
     .trim();
 }
 
+function matchesDestination(partnerDestination, destination) {
+  const pd = normalizeText(partnerDestination);
+  const dest = normalizeText(destination);
+  if (!pd || !dest) return false;
+  return pd === dest;
+}
+
 function applyPartnerDestinationFilter(destination) {
   const partnerSelect = document.getElementById("partnerSelect");
   if (!partnerSelect) return;
@@ -274,17 +492,24 @@ function applyPartnerDestinationFilter(destination) {
   const dest = normalizeText(destination);
   lastDestinationFilter = destination;
 
-  const filtered = !dest
-    ? partnersCache
-    : partnersCache.filter((p) => {
-        const pd = normalizeText(p.destination);
-        if (!pd) return false;
-        return pd.includes(dest) || dest.includes(pd);
-      });
+  if (!dest) {
+    partnerSelect.innerHTML =
+      '<option value="">(Vui lòng nhập điểm đến)</option>';
+    partnerSelect.value = "";
+
+    const serviceSelect = document.getElementById("partnerServiceSelect");
+    if (serviceSelect) {
+      serviceSelect.innerHTML = `<option value="">-- Chọn dịch vụ --</option>`;
+    }
+    return;
+  }
+
+  const base = (partnersCache || []).filter((p) => !isTransportPartner(p));
+  const filtered = base.filter((p) => matchesDestination(p.destination, dest));
 
   if (filtered.length === 0) {
     partnerSelect.innerHTML =
-      '<option value="">(Chưa có đối tác ở địa điểm này)</option>';
+      '<option value="">(Chưa có đối tác phù hợp)</option>';
     partnerSelect.value = "";
 
     const serviceSelect = document.getElementById("partnerServiceSelect");
@@ -365,6 +590,13 @@ function renderSelectedPartnerServices() {
       const partnerName = item?._meta?.partnerName || "";
       const price = item?._meta?.price;
       const included = item.includedInTourPrice ? "Có" : "Không";
+      const isTransport =
+        String(item?.note || "").toLowerCase() === "transport";
+      const supplyQty = item?._meta?.supplyQuantity;
+      const supplyText =
+        supplyQty === undefined || supplyQty === null
+          ? ""
+          : ` | SL cung cấp: ${Number(supplyQty) || 0}`;
       const qtyText = item.includedInTourPrice
         ? ""
         : `SL: ${item.quantity || 1} | `;
@@ -379,7 +611,9 @@ function renderSelectedPartnerServices() {
               String(partnerName || "")
             )}</div>
             <div class="text-xs text-gray-600 mt-1">
-              ${qtyText}Bao gồm: ${included}${
+              ${
+                isTransport ? "Di chuyển | " : ""
+              }${qtyText}Bao gồm: ${included}${supplyText}${
         price !== undefined ? ` | Giá: ${fmt(price)}` : ""
       }
             </div>
@@ -404,6 +638,7 @@ function syncPartnerServicesToHiddenInput() {
     serviceId: x.serviceId,
     quantity: x.quantity,
     includedInTourPrice: x.includedInTourPrice,
+    note: x.note || "",
   }));
   input.value = JSON.stringify(payload);
 }
@@ -415,6 +650,15 @@ function resetPartnerServicesUI() {
   const included = document.getElementById("partnerServiceIncluded");
   const input = document.getElementById("partnerServicesData");
   const qtyWrap = document.getElementById("partnerServiceQuantityWrap");
+  const transportPartnerSelect = document.getElementById(
+    "transportPartnerSelect"
+  );
+  const transportServiceSelect = document.getElementById(
+    "transportServiceSelect"
+  );
+  const transportSupplyQuantity = document.getElementById(
+    "transportSupplyQuantity"
+  );
 
   if (partnerSelect) partnerSelect.value = "";
   if (serviceSelect)
@@ -424,6 +668,25 @@ function resetPartnerServicesUI() {
   if (input) input.value = "";
 
   if (qtyWrap) qtyWrap.classList.add("hidden");
+
+  if (transportPartnerSelect) {
+    transportPartnerSelect.innerHTML =
+      '<option value="">-- Chọn đối tác --</option>';
+    transportPartnerSelect.value = "";
+  }
+  if (transportServiceSelect) {
+    transportServiceSelect.innerHTML =
+      '<option value="">-- Chọn dịch vụ --</option>';
+    transportServiceSelect.value = "";
+  }
+  if (transportSupplyQuantity) transportSupplyQuantity.value = 0;
+  selectedTransportServiceId = null;
+  selectedTransportSupplyQuantity = 0;
+
+  // Always repopulate transport partners based on current destination
+  const destination =
+    document.querySelector('input[name="destination"]')?.value || "";
+  renderTransportPartnersOptions(destination);
 
   renderSelectedPartnerServices();
 }
@@ -932,6 +1195,7 @@ function modalHandlers(onCloseCallback = null) {
     ensurePartnersLoaded();
     resetPartnerServicesUI();
     applyPartnerDestinationFilter("");
+    renderTransportPartnersOptions("");
   };
 
   window.hideAddTourModal = function () {
@@ -1077,6 +1341,34 @@ async function validateTourForm(formData) {
   const capacityError = validateCapacity(formData.get("capacity[max]"));
   if (capacityError) errors.capacity = capacityError;
 
+  // Validate transport service required + capacity constraint
+  const psRaw = document.getElementById("partnerServicesData")?.value || "";
+  let ps = [];
+  if (psRaw) {
+    try {
+      ps = JSON.parse(psRaw);
+    } catch (e) {
+      ps = [];
+    }
+  }
+
+  const transport = (ps || []).find(
+    (x) => String(x?.note || "").toLowerCase() === "transport"
+  );
+  if (!transport?.serviceId) {
+    errors.transportService = "Vui lòng chọn dịch vụ di chuyển";
+  }
+
+  const capMax = Number(formData.get("capacity[max]")) || 0;
+  const supply = Number(
+    document.getElementById("transportSupplyQuantity")?.value || 0
+  );
+  if (transport?.serviceId && supply <= 0) {
+    errors.transportService = "Dịch vụ di chuyển chưa có số lượng cung cấp";
+  } else if (capMax > 0 && capMax > supply) {
+    errors.capacity = `Sức chứa tối đa phải <= số lượng dịch vụ di chuyển cung cấp (${supply})`;
+  }
+
   const datesError = validateDepartureDates();
   if (datesError) errors.departureDates = datesError;
 
@@ -1101,6 +1393,8 @@ function showFormErrors(form, errors) {
       input = form.querySelector('input[name="duration[nights]"]');
     } else if (field === "capacity") {
       input = form.querySelector('input[name="capacity[max]"]');
+    } else if (field === "transportService") {
+      input = document.getElementById("transportServiceSelect");
     } else if (field === "departureDates") {
       input = document.getElementById("departureInput");
     } else if (field === "images") {
@@ -1427,6 +1721,7 @@ function editTour() {
           tour.capacity?.max || "";
 
         applyPartnerDestinationFilter(tour.destination || "");
+        renderTransportPartnersOptions(tour.destination || "");
 
         // Fill departure dates
         departureDates = [];
@@ -1481,21 +1776,59 @@ function editTour() {
                   (p) => String(p._id) === String(partnerId)
                 )?.name;
 
+                const note = ps.note || "";
+
                 return {
                   serviceId: serviceDoc?._id || ps.serviceId,
                   quantity: ps.quantity,
                   includedInTourPrice: ps.includedInTourPrice,
+                  note,
                   _meta: {
                     partnerName: partnerName || "",
                     serviceName: serviceDoc?.name || "",
                     price: serviceDoc?.price,
                     unit: serviceDoc?.unit,
+                    supplyQuantity: serviceDoc?.supplyQuantity,
                   },
                 };
               })
           : [];
-        renderSelectedPartnerServices();
-        syncPartnerServicesToHiddenInput();
+
+        // Restore transport dropdown selection (if any)
+        const transportItem = (selectedPartnerServices || []).find(
+          (x) => String(x?.note || "").toLowerCase() === "transport"
+        );
+
+        if (transportItem?.serviceId) {
+          const transportServiceId = String(transportItem.serviceId);
+
+          // Find partnerId from populated service doc if possible
+          const raw = (tour.partnerServices || []).find((ps) => {
+            const sdoc = typeof ps.serviceId === "object" ? ps.serviceId : null;
+            const sid = sdoc?._id || ps.serviceId;
+            return String(sid) === transportServiceId;
+          });
+          const sdoc =
+            raw && typeof raw.serviceId === "object" ? raw.serviceId : null;
+          const partnerId = sdoc?.partnerId;
+
+          const tp = document.getElementById("transportPartnerSelect");
+          const ts = document.getElementById("transportServiceSelect");
+          if (tp && partnerId) {
+            tp.value = String(partnerId);
+            await loadTransportServicesForPartner(String(partnerId));
+          }
+          if (ts) {
+            ts.value = transportServiceId;
+          }
+
+          if (partnerId) {
+            setSelectedTransport(transportServiceId, String(partnerId));
+          }
+        } else {
+          renderSelectedPartnerServices();
+          syncPartnerServicesToHiddenInput();
+        }
 
         // Show modal
         modal.classList.remove("hidden");

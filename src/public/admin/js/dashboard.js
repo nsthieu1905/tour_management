@@ -15,16 +15,44 @@ const CHART_COLORS = {
 
 async function initDashboardCharts() {
   try {
-    const embeddedRevenueData = window.dashboardData?.revenueData;
-    const embeddedPopularTours = window.dashboardData?.popularTours;
+    const startInput = document.querySelector('input[name="startDate"]');
+    const endInput = document.querySelector('input[name="endDate"]');
 
-    if (!embeddedRevenueData || !embeddedPopularTours) {
-      console.warn("Dashboard data not found in page");
-      return;
+    const params = new URLSearchParams();
+    if (startInput?.value) params.set("startDate", startInput.value);
+    if (endInput?.value) params.set("endDate", endInput.value);
+
+    const url = params.toString()
+      ? `/api/statistics/dashboard?${params.toString()}`
+      : `/api/statistics/dashboard`;
+
+    const res = await fetch(url, { credentials: "include" });
+    const payload = await res.json();
+    if (!res.ok || !payload?.success) {
+      throw new Error(payload?.message || "Không thể tải dữ liệu dashboard");
     }
 
+    const data = payload.data;
+    if (!data) return;
+
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    };
+
+    setText(
+      "monthlyRevenue",
+      (data.metrics?.monthlyRevenue || 0).toLocaleString("vi-VN")
+    );
+    setText("totalBookings", data.metrics?.totalBookings || 0);
+    setText("avgCapacity", `${data.metrics?.avgCapacity ?? 0}%`);
+    setText("newCustomers", data.metrics?.newCustomers || 0);
+
+    const embeddedRevenueData = data.charts?.revenue;
+    const embeddedPopularTours = data.charts?.popularTours || [];
+
     const revenueCtx = document.getElementById("revenueChart");
-    if (revenueCtx) {
+    if (revenueCtx && embeddedRevenueData) {
       new Chart(revenueCtx, {
         type: "line",
         data: {
@@ -120,9 +148,153 @@ async function initDashboardCharts() {
         },
       });
     }
+
+    renderTopTours(data.lists?.topTours || []);
+    renderTopVIPCustomers(data.lists?.topVIPCustomers || []);
   } catch (error) {
     console.error("Lỗi khởi tạo biểu đồ dashboard:", error);
   }
 }
 
+function renderTopTours(tours) {
+  const container = document.getElementById("topExpensiveTours");
+  if (!container) return;
+  container.innerHTML = "";
+
+  tours.slice(0, 10).forEach((tour, index) => {
+    const isTopThree = index < 3;
+
+    let rankColor = "gray";
+    let bgColor = "white";
+    let borderColor = "gray-100";
+    if (index === 0) {
+      rankColor = "yellow";
+      bgColor = "yellow-50";
+      borderColor = "yellow-500";
+    } else if (index === 1) {
+      rankColor = "purple";
+      bgColor = "purple-50";
+      borderColor = "purple-400";
+    } else if (index === 2) {
+      rankColor = "blue";
+      bgColor = "blue-50";
+      borderColor = "blue-500";
+    }
+
+    const div = document.createElement("div");
+    div.className = `flex items-center ${
+      isTopThree
+        ? `p-4 bg-${bgColor} rounded-lg border-l-4 border-${borderColor}`
+        : "p-3 bg-white rounded-lg hover:bg-gray-50 transition border border-gray-100"
+    }`;
+
+    const totalRevenue = (tour.totalRevenue || 0).toLocaleString("vi-VN");
+
+    div.innerHTML = `
+      <div class="flex-shrink-0 w-12">
+        <span class="${
+          isTopThree ? "text-xl" : "text-sm"
+        } font-bold text-${rankColor}-600">#${index + 1}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-${
+          isTopThree ? "semibold" : "medium"
+        } text-gray-900 truncate">
+          ${tour.tourName || ""}
+        </p>
+      </div>
+      <div class="flex-shrink-0 text-right ml-4">
+        <p class="text-sm font-bold text-gray-900">
+          ${totalRevenue} VNĐ
+        </p>
+        <p class="text-xs text-gray-500">${tour.bookingCount || 0} tour</p>
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+function renderTopVIPCustomers(customers) {
+  const container = document.getElementById("topVIPCustomers");
+  if (!container) return;
+  container.innerHTML = "";
+
+  customers.slice(0, 10).forEach((customer, index) => {
+    const isTopThree = index < 3;
+
+    let rankColor = "gray";
+    let bgColor = "white";
+    let borderColor = "gray-100";
+    if (index === 0) {
+      rankColor = "yellow";
+      bgColor = "yellow-50";
+      borderColor = "yellow-500";
+    } else if (index === 1) {
+      rankColor = "purple";
+      bgColor = "purple-50";
+      borderColor = "purple-400";
+    } else if (index === 2) {
+      rankColor = "blue";
+      bgColor = "blue-50";
+      borderColor = "blue-500";
+    }
+
+    const div = document.createElement("div");
+    div.className = `flex items-center ${
+      isTopThree
+        ? `p-4 bg-${bgColor} rounded-lg border-l-4 border-${borderColor}`
+        : "p-3 bg-white rounded-lg hover:bg-gray-50 transition border border-gray-100"
+    }`;
+
+    const totalSpent = (customer.totalSpent || 0).toLocaleString("vi-VN");
+
+    div.innerHTML = `
+      <div class="flex-shrink-0 w-12">
+        <span class="${
+          isTopThree ? "text-xl" : "text-sm"
+        } font-bold text-${rankColor}-600">#${index + 1}</span>
+      </div>
+      <div class="flex items-center flex-1 min-w-0 ml-3">
+        <div class="ml-3 flex-1 min-w-0">
+          <p class="text-sm font-${
+            isTopThree ? "semibold" : "medium"
+          } text-gray-900 truncate">
+            ${customer.userName || ""}
+          </p>
+        </div>
+      </div>
+      <div class="flex-shrink-0 text-right ml-4">
+        <p class="text-sm font-bold text-gray-900">
+          ${totalSpent} VNĐ
+        </p>
+        <p class="text-xs text-gray-500">${customer.bookingCount || 0} đơn</p>
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
 document.addEventListener("DOMContentLoaded", initDashboardCharts);
+
+document.addEventListener("DOMContentLoaded", () => {
+  const startInput = document.querySelector('input[name="startDate"]');
+  const endInput = document.querySelector('input[name="endDate"]');
+  const applyBtn = document.getElementById("applyDateRange");
+  if (!startInput || !endInput || !applyBtn) return;
+
+  applyBtn.addEventListener("click", () => {
+    const startDate = startInput.value;
+    const endDate = endInput.value;
+
+    const params = new URLSearchParams();
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+
+    const query = params.toString();
+    window.location.href = query
+      ? `/admin/dashboard?${query}`
+      : `/admin/dashboard`;
+  });
+});

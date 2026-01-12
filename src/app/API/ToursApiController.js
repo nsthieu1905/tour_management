@@ -1,7 +1,131 @@
-const { Tour } = require("../models/index");
+const { Tour, PartnerService, Doi_tac } = require("../models/index");
 const path = require("path");
 const fs = require("fs-extra");
 const { notifyTourUpdate } = require("../../utils/NotificationHelper");
+
+function getCapacityMaxFromBody(body) {
+  const cap = body?.capacity;
+  if (cap && typeof cap === "object") {
+    const n = Number(cap.max);
+    return Number.isFinite(n) ? n : 0;
+  }
+  const n = Number(body?.["capacity[max]"]);
+  return Number.isFinite(n) ? n : 0;
+}
+
+async function validateTransportCapacity({ partnerServices, capacityMax }) {
+  const parsed = Array.isArray(partnerServices) ? partnerServices : [];
+
+  const byNote = parsed.find(
+    (x) => String(x?.note || "").toLowerCase() === "transport"
+  );
+  const transportServiceId = byNote?.serviceId;
+
+  if (!transportServiceId) {
+    return {
+      isValid: false,
+      message: "Vui lòng chọn dịch vụ di chuyển",
+    };
+  }
+
+  const transportService = await PartnerService.findById(transportServiceId)
+    .select("supplyQuantity status partnerId")
+    .lean();
+  if (!transportService) {
+    return {
+      isValid: false,
+      message: "Dịch vụ di chuyển không tồn tại",
+    };
+  }
+
+  const partner = await Doi_tac.findById(transportService.partnerId)
+    .select("type status")
+    .lean();
+  if (!partner) {
+    return {
+      isValid: false,
+      message: "Đối tác dịch vụ di chuyển không tồn tại",
+    };
+  }
+
+  const partnerType = String(partner.type || "").toLowerCase();
+  if (
+    !partnerType.includes("di chuyển") &&
+    !partnerType.includes("di chuyen")
+  ) {
+    return {
+      isValid: false,
+      message: "Dịch vụ di chuyển không thuộc đối tác loại hình Di chuyển",
+    };
+  }
+
+  const supply = Number(transportService.supplyQuantity) || 0;
+  if (supply <= 0) {
+    return {
+      isValid: false,
+      message: "Dịch vụ di chuyển chưa có số lượng cung cấp",
+    };
+  }
+
+  const cap = Number(capacityMax) || 0;
+  if (cap > supply) {
+    return {
+      isValid: false,
+      message: `Sức chứa tối đa phải <= số lượng dịch vụ di chuyển cung cấp (${supply})`,
+    };
+  }
+
+  return { isValid: true };
+}
+
+async function validatePartnerServiceQuantities({ partnerServices }) {
+  const parsed = Array.isArray(partnerServices) ? partnerServices : [];
+  const ids = parsed
+    .map((x) => x?.serviceId)
+    .filter(Boolean)
+    .map((x) => String(x));
+
+  if (ids.length === 0) return { isValid: true };
+
+  const services = await PartnerService.find({ _id: { $in: ids } })
+    .select("name supplyQuantity status")
+    .lean();
+
+  const byId = new Map((services || []).map((s) => [String(s._id), s]));
+  const totals = new Map();
+
+  for (const item of parsed) {
+    const sid = item?.serviceId ? String(item.serviceId) : "";
+    if (!sid) continue;
+
+    const current = totals.get(sid) || 0;
+    const rawQty = Number(item?.quantity);
+    const qty = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 1;
+    totals.set(sid, current + qty);
+  }
+
+  for (const [sid, totalQty] of totals.entries()) {
+    const svc = byId.get(sid);
+    if (!svc) {
+      return {
+        isValid: false,
+        message: "Dịch vụ đối tác không tồn tại",
+      };
+    }
+
+    const supply = Number(svc.supplyQuantity) || 0;
+    if (supply > 0 && totalQty > supply) {
+      return {
+        isValid: false,
+        message: `Số lượng dịch vụ '${
+          svc.name || ""
+        }' không được vượt quá số lượng cung cấp (${supply})`,
+      };
+    }
+  }
+
+  return { isValid: true };
+}
 
 // [GET] /api/tours
 const findAll = async (req, res) => {
@@ -77,7 +201,7 @@ const findOne = async (req, res) => {
       })
       .populate({
         path: "partnerServices.serviceId",
-        select: "name price unit partnerId category status",
+        select: "name price unit partnerId category status supplyQuantity",
       })
       .lean();
     if (!tour)
@@ -186,6 +310,28 @@ const create = async (req, res) => {
       } else if (Array.isArray(partnerServices)) {
         parsedPartnerServices = partnerServices;
       }
+    }
+
+    const capMax = getCapacityMaxFromBody(req.body);
+    const transportValidation = await validateTransportCapacity({
+      partnerServices: parsedPartnerServices,
+      capacityMax: capMax,
+    });
+    if (!transportValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: transportValidation.message,
+      });
+    }
+
+    const qtyValidation = await validatePartnerServiceQuantities({
+      partnerServices: parsedPartnerServices,
+    });
+    if (!qtyValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: qtyValidation.message,
+      });
     }
 
     const tourData = {
@@ -352,6 +498,29 @@ const update = async (req, res) => {
       } else if (Array.isArray(partnerServices)) {
         parsedPartnerServices = partnerServices;
       }
+    }
+
+    const capMax =
+      getCapacityMaxFromBody(req.body) || existingTour.capacity?.max;
+    const transportValidation = await validateTransportCapacity({
+      partnerServices: parsedPartnerServices,
+      capacityMax: capMax,
+    });
+    if (!transportValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: transportValidation.message,
+      });
+    }
+
+    const qtyValidation = await validatePartnerServiceQuantities({
+      partnerServices: parsedPartnerServices,
+    });
+    if (!qtyValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: qtyValidation.message,
+      });
     }
 
     // Xử lý ảnh: giữ ảnh cũ nếu không có ảnh mới
