@@ -8,19 +8,30 @@ router.post("/momo-callback", bookingApiController.momoCallback);
 router.post(
   "/create-momo-payment",
   protectCusRoutes,
-  bookingApiController.createMoMoPayment
+  bookingApiController.createMoMoPayment,
 );
 router.post(
   "/create-bank-payment",
   protectCusRoutes,
-  bookingApiController.createBankPayment
+  bookingApiController.createBankPayment,
 );
 router.get(
   "/user/bookings",
   protectCusRoutes,
-  bookingApiController.getUserBookings
+  bookingApiController.getUserBookings,
 );
 
-router.get("/:bookingId", protectCusRoutes, bookingApiController.getBooking);
+router.get(
+  "/:bookingId",
+  (req, res, next) => {
+    const { bookingId } = req.params;
+    if (!/^[0-9a-fA-F]{24}$/.test(bookingId)) {
+      return next("router");
+    }
+    return next();
+  },
+  protectCusRoutes,
+  bookingApiController.getBooking,
+);
 
 module.exports = router;

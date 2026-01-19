@@ -31,7 +31,6 @@ function route(app) {
   app.use("/api/tours", toursApiRoutes);
   app.use("/api/coupons", couponApiRoutes);
   app.use("/api/users", usersApiRoutes);
-  app.use("/api/bookings", adminBookingRoutes);
   app.use("/api/staffs", adminStaffRoutes);
   app.use("/api/doi-tac", doiTacApiRoutes);
   app.use("/api/tour-categories", tourCategoryApiRoutes);
@@ -48,6 +47,7 @@ function route(app) {
   app.use("/customer/auth", customerAuthRoutes);
   app.use("/api/favorites", favoriteRoutes);
   app.use("/api/bookings", bookingRoutes);
+  app.use("/api/bookings", adminBookingRoutes);
   app.use("/api/feedbacks", feedbackRoutes);
   app.use("/", homeRoutes);
 }

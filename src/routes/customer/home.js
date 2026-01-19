@@ -12,12 +12,12 @@ router.get("/tours", homeController.toursList);
 router.get("/tours/:slug", tourApiController.tourDetail);
 router.get("/tours/:slug/feedbacks", tourApiController.tourFeedbacks);
 router.get("/booking/:slug", bookingController.bookingPage);
+router.get("/booking-success", bookingController.bookingSuccess);
 
 router.use(protectCusRoutes);
 
 router.get("/profile", homeController.profile);
 router.get("/favorites", homeController.favorites);
-router.get("/booking-success", bookingController.bookingSuccess);
 router.get("/booking-details/:bookingId", bookingController.bookingDetails);
 router.get("/my-bookings", bookingController.myBookings);
 

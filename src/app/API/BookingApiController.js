@@ -18,7 +18,7 @@ const { PAYMENT_LIMITS } = require("../../services/MoMoService");
 const updateTourCapacity = async (
   tourId,
   numberOfPeople,
-  action = "increase"
+  action = "increase",
 ) => {
   try {
     const tour = await Tour.findById(tourId);
@@ -49,7 +49,7 @@ const updateTourCapacity = async (
     } else if (action === "decrease") {
       tour.capacity.current = Math.max(
         0,
-        (tour.capacity.current || 0) - numberOfPeople
+        (tour.capacity.current || 0) - numberOfPeople,
       );
 
       if (tour.capacity.max) {
@@ -159,8 +159,8 @@ const validateExtraServiceStock = async ({ tour, requestedExtraServices }) => {
     const sid = ps?.serviceId?._id
       ? String(ps.serviceId._id)
       : ps?.serviceId
-      ? String(ps.serviceId)
-      : "";
+        ? String(ps.serviceId)
+        : "";
     if (!sid) continue;
     offerByServiceId.set(sid, Number(ps.quantity) || 0);
     nameByServiceId.set(sid, ps?.serviceId?.name || "");
@@ -187,7 +187,7 @@ const validateExtraServiceStock = async ({ tour, requestedExtraServices }) => {
   ]);
 
   const usedByServiceId = new Map(
-    (booked || []).map((x) => [String(x._id), Number(x.total) || 0])
+    (booked || []).map((x) => [String(x._id), Number(x.total) || 0]),
   );
 
   const requestedTotals = new Map();
@@ -329,7 +329,7 @@ const createMoMoPayment = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `Số tiền thanh toán phải tối thiểu ${PAYMENT_LIMITS.MIN_AMOUNT.toLocaleString(
-          "vi-VN"
+          "vi-VN",
         )} VND`,
       });
     }
@@ -337,7 +337,7 @@ const createMoMoPayment = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `Số tiền thanh toán không được vượt quá ${PAYMENT_LIMITS.MAX_AMOUNT.toLocaleString(
-          "vi-VN"
+          "vi-VN",
         )} VND`,
       });
     }
@@ -491,26 +491,63 @@ const momoCallback = async (req, res) => {
       message,
       payType,
       extraData,
+      signature,
+      partnerCode,
+      responseTime,
     } = req.body;
 
-    if (resultCode === 0) {
+    if (signature) {
+      const isValidSignature = MoMoService.verifySignature(req.body);
+      if (!isValidSignature) {
+        return res.status(400).json({
+          success: false,
+          message: "Chữ ký không hợp lệ.",
+        });
+      }
+    }
+
+    const normalizedResultCode =
+      typeof resultCode === "string" ? parseInt(resultCode, 10) : resultCode;
+
+    if (normalizedResultCode === 0) {
       if (extraData) {
         const booking = await Booking.findById(extraData).populate("tourId");
 
         if (booking) {
-          const wasAlreadyPaid = booking.paymentStatus === "paid";
+          if (booking.paymentStatus !== "paid") {
+            booking.bookingStatus = "confirmed";
+            booking.paymentStatus = "paid";
 
-          booking.bookingStatus = "pending";
-          booking.paymentStatus = "paid";
-          booking.payments.push({
-            amount,
-            method: "momo",
-            transactionId: transId,
-            status: "success",
-            paidAt: new Date(),
-          });
+            const hasTx = (booking.payments || []).some(
+              (p) => p?.transactionId === transId && p?.method === "momo",
+            );
+            if (!hasTx) {
+              booking.payments.push({
+                amount: parseInt(amount) || 0,
+                method: "momo",
+                transactionId: transId,
+                status: "success",
+                paidAt: new Date(),
+              });
+            }
 
-          await booking.save();
+            await booking.save();
+
+            try {
+              if (booking.tourId?._id && booking.numberOfPeople) {
+                await updateTourCapacity(
+                  booking.tourId._id,
+                  booking.numberOfPeople,
+                  "increase",
+                );
+              }
+            } catch (capacityError) {
+              console.error(
+                "MoMo callback capacity update failed:",
+                capacityError,
+              );
+            }
+          }
         }
       }
 
@@ -763,7 +800,7 @@ const confirmPayment = async (req, res) => {
       await updateTourCapacity(
         booking.tourId._id,
         booking.numberOfPeople,
-        "increase"
+        "increase",
       );
     }
 
@@ -907,7 +944,7 @@ const completeBooking = async (req, res) => {
     // Gửi email cảm ơn
     const emailSent = await EmailService.sendCompletionThankYouEmail(
       booking,
-      booking.tourId
+      booking.tourId,
     );
 
     // Gửi notification cho customer
@@ -966,7 +1003,7 @@ const requestRefund = async (req, res) => {
 
     // Tính % hoàn tiền tự động
     const refundCalc = RefundService.calculateRefundPercentage(
-      booking.departureDate
+      booking.departureDate,
     );
 
     // Cập nhật trạng thái
@@ -1069,7 +1106,7 @@ const approveRefund = async (req, res) => {
     await updateTourCapacity(
       booking.tourId._id,
       booking.numberOfPeople,
-      "decrease"
+      "decrease",
     );
 
     booking.bookingStatus = "refunded";
@@ -1174,7 +1211,7 @@ const cancelBooking = async (req, res) => {
     await updateTourCapacity(
       booking.tourId._id,
       booking.numberOfPeople,
-      "decrease"
+      "decrease",
     );
 
     booking.bookingStatus = "cancelled";

@@ -6,7 +6,7 @@ const { notifyPayment } = require("../../../utils/NotificationHelper");
 const updateTourCapacity = async (
   tourId,
   numberOfPeople,
-  action = "increase"
+  action = "increase",
 ) => {
   try {
     const tour = await Tour.findById(tourId);
@@ -74,7 +74,7 @@ const bookingPage = async (req, res, next) => {
       ]);
 
       const bookedByServiceId = new Map(
-        (booked || []).map((x) => [String(x._id), Number(x.total) || 0])
+        (booked || []).map((x) => [String(x._id), Number(x.total) || 0]),
       );
 
       tour.partnerServices = (tour.partnerServices || []).map((ps) => {
@@ -105,6 +105,9 @@ const bookingSuccess = async (req, res) => {
   try {
     const { resultCode, extraData, signature, transId, amount } = req.query;
 
+    const normalizedResultCode =
+      typeof resultCode === "string" ? parseInt(resultCode, 10) : resultCode;
+
     if (signature && extraData && resultCode !== undefined) {
       const isValidSignature = MoMoService.verifySignature(req.query);
       if (!isValidSignature) {
@@ -115,13 +118,13 @@ const bookingSuccess = async (req, res) => {
       }
     }
 
-    if (resultCode === "0" && extraData) {
+    if (normalizedResultCode === 0 && extraData) {
       setTimeout(async () => {
         try {
           const booking = await Booking.findById(extraData).populate("tourId");
 
           if (booking && booking.paymentStatus !== "paid") {
-            booking.bookingStatus = "pending";
+            booking.bookingStatus = "confirmed";
             booking.paymentStatus = "paid";
             booking.payments.push({
               amount: parseInt(amount) || 0,
@@ -137,7 +140,7 @@ const bookingSuccess = async (req, res) => {
               await updateTourCapacity(
                 booking.tourId._id,
                 booking.numberOfPeople,
-                "increase"
+                "increase",
               );
             } catch (capacityError) {
               console.error(`Fallback capacity update failed:`, capacityError);
@@ -165,6 +168,7 @@ const bookingSuccess = async (req, res) => {
 
     res.render("booking-success", {
       user: req.user,
+      bookingId: extraData || "",
     });
   } catch (error) {
     console.error("Booking success page error:", error);
