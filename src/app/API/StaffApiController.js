@@ -57,6 +57,7 @@ const create = async (req, res) => {
       dateOfBirth,
       password,
       passwordConfirm,
+      role,
     } = req.body;
 
     // Validate required fields
@@ -90,6 +91,10 @@ const create = async (req, res) => {
       errors.passwordConfirm = "Mật khẩu xác nhận không khớp";
     }
 
+    if (role && role !== "admin" && role !== "staff") {
+      errors.role = "Phân quyền không hợp lệ";
+    }
+
     // Nếu có lỗi validation, trả về ngay
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({
@@ -111,7 +116,9 @@ const create = async (req, res) => {
       });
     }
 
-    // Tạo user mới với role mặc định là 'admin'
+    const staffRole = role || "staff";
+
+    // Tạo user mới với role mặc định là 'staff'
     const newUser = new User({
       fullName: fullName.trim(),
       email: email.toLowerCase().trim(),
@@ -119,7 +126,7 @@ const create = async (req, res) => {
       gender: gender || null,
       dateOfBirth: dateOfBirth || null,
       password: password,
-      role: "admin",
+      role: staffRole,
       status: "active",
     });
 
@@ -154,10 +161,12 @@ const findAll = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Lấy tổng số nhân viên
-    const total = await User.countDocuments({ role: "admin" });
+    const total = await User.countDocuments({
+      role: { $in: ["admin", "staff"] },
+    });
 
     // Lấy dữ liệu nhân viên với phân trang
-    const staffList = await User.find({ role: "admin" })
+    const staffList = await User.find({ role: { $in: ["admin", "staff"] } })
       .select("-password -metadata")
       .skip(skip)
       .limit(limit)
@@ -227,7 +236,7 @@ const deleteOne = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullName, email, phone, status, department } = req.body;
+    const { fullName, email, phone, status, department, role } = req.body;
 
     const staff = await User.findById(id);
 
@@ -238,10 +247,17 @@ const update = async (req, res) => {
       });
     }
 
-    if (staff.role !== "admin") {
+    if (staff.role !== "admin" && staff.role !== "staff") {
       return res.status(403).json({
         success: false,
-        message: "Chỉ có thể cập nhật nhân viên admin",
+        message: "Chỉ có thể cập nhật nhân viên",
+      });
+    }
+
+    if (role && role !== "admin" && role !== "staff") {
+      return res.status(400).json({
+        success: false,
+        message: "Phân quyền không hợp lệ",
       });
     }
 
@@ -262,6 +278,7 @@ const update = async (req, res) => {
     if (phone) staff.phone = phone;
     if (status) staff.status = status;
     if (department) staff.department = department;
+    if (role) staff.role = role;
 
     await staff.save();
 
@@ -302,10 +319,10 @@ const updateStatus = async (req, res) => {
       });
     }
 
-    if (staff.role !== "admin") {
+    if (staff.role !== "admin" && staff.role !== "staff") {
       return res.status(403).json({
         success: false,
-        message: "Chỉ có thể cập nhật trạng thái nhân viên admin",
+        message: "Chỉ có thể cập nhật trạng thái nhân viên",
       });
     }
 
@@ -507,7 +524,7 @@ const changePassword = async (req, res) => {
     console.log("Comparing password...");
     console.log(
       "Current password hash:",
-      user.password.substring(0, 20) + "..."
+      user.password.substring(0, 20) + "...",
     );
 
     let isPasswordValid = false;

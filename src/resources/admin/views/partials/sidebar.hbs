@@ -68,6 +68,7 @@
         <i class="fas fa-comments mr-3"></i>
         Nhắn Tin
       </a>
+      {{#if (eq user.role "admin")}}
       <a
         href="/admin/qly-nhan-vien"
         class="sidebar-item p-3 rounded-lg text-gray-700 hover:text-white flex items-center hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600"
@@ -75,6 +76,7 @@
         <i class="fas fa-user-tie mr-3"></i>
         Nhân viên
       </a>
+      {{/if}}
       <a
         href="/admin/qly-khach-hang"
         class="sidebar-item p-3 rounded-lg text-gray-700 hover:text-white flex items-center hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600"

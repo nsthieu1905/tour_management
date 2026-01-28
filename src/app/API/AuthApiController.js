@@ -43,7 +43,7 @@ const adminLogin = async (req, res) => {
       username,
       password,
       user,
-      isPasswordValid
+      isPasswordValid,
     );
 
     // Xử lý các loại lỗi validation khác nhau
@@ -62,7 +62,7 @@ const adminLogin = async (req, res) => {
       });
     }
 
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "staff") {
       return res.status(403).json({
         success: false,
         message: "Tài khoản này không có quyền truy cập hệ thống quản trị.",
@@ -132,7 +132,7 @@ const adminLogin = async (req, res) => {
     res.cookie(
       process.env.REFRESH_TOKEN_NAME,
       refreshToken,
-      refreshCookieOptions
+      refreshCookieOptions,
     );
 
     // Lưu refresh token vào db
@@ -194,7 +194,7 @@ const cusLogin = async (req, res) => {
       username,
       password,
       user,
-      isPasswordValid
+      isPasswordValid,
     );
 
     // Xử lý các loại lỗi validation khác nhau
@@ -275,7 +275,7 @@ const cusLogin = async (req, res) => {
     res.cookie(
       process.env.REFRESH_TOKEN_NAME,
       refreshToken,
-      refreshCookieOptions
+      refreshCookieOptions,
     );
 
     // Lưu refresh token vào db
@@ -342,7 +342,7 @@ const refreshToken = async (req, res) => {
     // Verify refresh token signature
     const decoded = jwt.verify(
       refreshTokenValue,
-      process.env.REFRESH_TOKEN_SECRET
+      process.env.REFRESH_TOKEN_SECRET,
     );
 
     // Tìm user
@@ -426,7 +426,7 @@ const logout = async (req, res) => {
         {
           isActive: false,
           revokedAt: new Date(),
-        }
+        },
       );
     }
 

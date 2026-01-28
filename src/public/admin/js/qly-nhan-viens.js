@@ -35,7 +35,7 @@ function initializeEventListeners() {
   // Tìm kiếm
   const staffSearchInput = document.getElementById("staffSearchInput");
   staffSearchInput?.addEventListener("input", (e) =>
-    searchStaff(e.target.value)
+    searchStaff(e.target.value),
   );
 
   // Filter trạng thái
@@ -67,7 +67,7 @@ function initializeEventListeners() {
           validateFormField(e.target);
         }
       },
-      true
+      true,
     );
 
     addStaffForm.addEventListener("input", (e) => {
@@ -254,7 +254,7 @@ function renderStaffRow(staff) {
           <img 
             class="h-10 w-10 rounded-full" 
             src="https://ui-avatars.com/api/?name=${encodeURIComponent(
-              avatarLetter
+              avatarLetter,
             )}&background=random" 
             alt="${staff.fullName}"
           >
@@ -387,7 +387,7 @@ async function handleAddStaff(e) {
       formData.email,
       formData.phone,
       formData.password,
-      formData.passwordConfirm
+      formData.passwordConfirm,
     );
 
     if (!validation.isValid) {
@@ -399,7 +399,7 @@ async function handleAddStaff(e) {
       formData.email,
       formData.phone,
       formData.password || "123456",
-      formData.passwordConfirm || "123456"
+      formData.passwordConfirm || "123456",
     );
 
     if (!validation.isValid) {
@@ -430,6 +430,7 @@ async function handleAddStaff(e) {
     phone: formData.phone,
     gender: formData.gender || null,
     dateOfBirth: formData.dateOfBirth || null,
+    role: formData.role || "staff",
   };
 
   if (formData.password) {
@@ -472,6 +473,7 @@ function getFormData(form) {
       form.querySelector('input[name="passwordConfirm"]')?.value || "",
     gender: form.querySelector('select[name="gender"]')?.value || "",
     dateOfBirth: form.querySelector('input[name="dateOfBirth"]')?.value || "",
+    role: form.querySelector('select[name="role"]')?.value || "",
   };
 }
 
@@ -494,7 +496,7 @@ window.showAddStaffModal = function () {
 
     const passwordInput = form.querySelector('input[name="password"]');
     const passwordConfirmInput = form.querySelector(
-      'input[name="passwordConfirm"]'
+      'input[name="passwordConfirm"]',
     );
     if (passwordInput) passwordInput.placeholder = "Nhập mật khẩu";
     if (passwordConfirmInput)
@@ -502,6 +504,9 @@ window.showAddStaffModal = function () {
 
     form.reset();
     clearAllErrors(form);
+
+    const roleSelect = form.querySelector('select[name="role"]');
+    if (roleSelect) roleSelect.value = "staff";
 
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
@@ -551,6 +556,9 @@ async function editStaff(staffId) {
     form.querySelector('input[name="staffPhone"]').value = staff.phone || "";
     form.querySelector('select[name="gender"]').value = staff.gender || "";
 
+    const roleSelect = form.querySelector('select[name="role"]');
+    if (roleSelect) roleSelect.value = staff.role || "staff";
+
     const dateInput = form.querySelector('input[name="dateOfBirth"]');
     if (dateInput && staff.dateOfBirth) {
       dateInput.value = new Date(staff.dateOfBirth).toISOString().split("T")[0];
@@ -558,7 +566,7 @@ async function editStaff(staffId) {
 
     const passwordInput = form.querySelector('input[name="password"]');
     const passwordConfirmInput = form.querySelector(
-      'input[name="passwordConfirm"]'
+      'input[name="passwordConfirm"]',
     );
     if (passwordInput) {
       passwordInput.value = "";
@@ -613,7 +621,7 @@ async function confirmDelete(staffId) {
           Notification.success("Xóa nhân viên thành công");
         } else {
           Notification.error(
-            result.message || "Có lỗi xảy ra khi xóa nhân viên"
+            result.message || "Có lỗi xảy ra khi xóa nhân viên",
           );
         }
       } catch (error) {
@@ -658,7 +666,7 @@ async function toggleStaffStatus(staffId, newStatus) {
             result.message ||
               `${
                 statusText.charAt(0).toUpperCase() + statusText.slice(1)
-              } thành công`
+              } thành công`,
           );
         } else {
           Notification.error(result.message || "Có lỗi xảy ra");
@@ -710,7 +718,7 @@ async function exportStaffData() {
     const element = document.createElement("a");
     element.setAttribute(
       "href",
-      "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent)
+      "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent),
     );
     element.setAttribute("download", `nhan-vien-${Date.now()}.csv`);
     element.style.display = "none";
@@ -862,7 +870,7 @@ function displayFormErrors(form, errors) {
     if (fieldName === "phone") inputName = "staffPhone";
 
     const input = form.querySelector(
-      `input[name="${inputName}"], select[name="${inputName}"]`
+      `input[name="${inputName}"], select[name="${inputName}"]`,
     );
     if (input) {
       let errorContainer = input.parentElement.querySelector(".error-message");

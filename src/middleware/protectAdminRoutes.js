@@ -17,7 +17,7 @@ const protectAdminRoutes = async (req, res, next) => {
           return res.redirect("/auth/admin");
         }
 
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "staff") {
           return res.status(403).render("auth/forbidden", {
             message: "Bạn không đủ quyền truy cập.",
             layout: false,
@@ -36,6 +36,7 @@ const protectAdminRoutes = async (req, res, next) => {
           role: user.role,
           fullName: user.fullName,
         };
+        res.locals.user = req.user;
         return next();
       } catch (error) {
         if (error.name === "TokenExpiredError") {
@@ -48,7 +49,7 @@ const protectAdminRoutes = async (req, res, next) => {
             // Refresh token còn hạn
             const decodedRefresh = jwt.verify(
               refreshToken,
-              process.env.REFRESH_TOKEN_SECRET
+              process.env.REFRESH_TOKEN_SECRET,
             );
 
             const user = await User.findById(decodedRefresh.userId);
@@ -56,7 +57,7 @@ const protectAdminRoutes = async (req, res, next) => {
               return res.redirect("/auth/admin");
             }
 
-            if (user.role !== "admin") {
+            if (user.role !== "admin" && user.role !== "staff") {
               return res.status(403).render("auth/forbidden", {
                 message: "Bạn không đủ quyền truy cập.",
                 layout: false,
@@ -99,6 +100,7 @@ const protectAdminRoutes = async (req, res, next) => {
               role: user.role,
               fullName: user.fullName,
             };
+            res.locals.user = req.user;
             return next();
           } catch (refreshError) {
             return res.redirect("/auth/admin");
@@ -118,7 +120,7 @@ const protectAdminRoutes = async (req, res, next) => {
         // Tạo access token mới từ refresh token
         const decodedRefresh = jwt.verify(
           refreshToken,
-          process.env.REFRESH_TOKEN_SECRET
+          process.env.REFRESH_TOKEN_SECRET,
         );
 
         const user = await User.findById(decodedRefresh.userId);
@@ -126,7 +128,7 @@ const protectAdminRoutes = async (req, res, next) => {
           return res.redirect("/auth/admin");
         }
 
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "staff") {
           return res.status(403).render("auth/forbidden", {
             message: "Bạn không đủ quyền truy cập.",
             layout: false,
@@ -162,6 +164,7 @@ const protectAdminRoutes = async (req, res, next) => {
           role: user.role,
           fullName: user.fullName,
         };
+        res.locals.user = req.user;
         return next();
       } catch (refreshError) {
         return res.redirect("/auth/admin");

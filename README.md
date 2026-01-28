@@ -43,7 +43,13 @@ npm install
 3. Tạo file .env:
 
 ```bash
-cp .env.example .env
+npm run setup:env
+```
+
+hoặc
+
+```bash
+cp .env.example .env (ubuntu)
 ```
 
 Điền các thông tin cần thiết:

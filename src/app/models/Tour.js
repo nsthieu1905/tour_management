@@ -161,7 +161,7 @@ const tourSchema = new Schema(
       default: 0,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 mongoose.plugin(slug);

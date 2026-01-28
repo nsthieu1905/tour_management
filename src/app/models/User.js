@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["admin", "customer", "partner"],
+      enum: ["admin", "staff", "customer", "partner"],
       default: "customer",
     },
     avatar: String,
@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
       loginCount: { type: Number, default: 0 },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre("save", async function (next) {

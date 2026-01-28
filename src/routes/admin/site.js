@@ -15,7 +15,19 @@ router.get("/qly-tour/categories", siteController.qlyTourCategories);
 
 router.get("/booking-tour", siteController.bookingTour);
 
-router.get("/qly-nhan-vien", siteController.qlyNhanVien);
+router.get(
+  "/qly-nhan-vien",
+  (req, res, next) => {
+    if (req.user?.role !== "admin") {
+      return res.status(403).render("auth/forbidden", {
+        message: "Bạn không đủ quyền truy cập.",
+        layout: false,
+      });
+    }
+    return next();
+  },
+  siteController.qlyNhanVien,
+);
 
 router.get("/qly-khach-hang", siteController.qlyKhachHang);
 
