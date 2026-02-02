@@ -41,6 +41,7 @@ function updateBookingUI(booking) {
 // Nếu sessionStorage trống (sau khi F5), lấy từ server
 if (!bookingCode || !bookingTotal) {
   if (bookingId) {
+    setupViewDetailsButton(bookingId);
     apiGet(`/api/bookings/${bookingId}`)
       .then((res) => res.json())
       .then((result) => {
@@ -62,6 +63,10 @@ if (!bookingCode || !bookingTotal) {
   document.getElementById("booking-code").textContent = bookingCode;
   document.getElementById("booking-total").textContent =
     formatPrice(parseInt(bookingTotal)) + "₫";
+
+  if (bookingId) {
+    setupViewDetailsButton(bookingId);
+  }
 
   // Cập nhật badge trạng thái thanh toán
   if (paymentMethod) {

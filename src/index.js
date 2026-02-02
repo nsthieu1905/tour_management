@@ -30,6 +30,17 @@ socketService.initialize();
 global.io = io;
 global.connectedUsers = socketService.getConnectedUsers();
 
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+  if (process.env.NODE_ENV === "production") {
+    process.exit(1);
+  }
+});
+
 app.use(methodOverride("_method"));
 
 //Connect to DB
@@ -152,9 +163,23 @@ app.set("views", [
 
 route(app);
 
+server.on("error", (error) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(`Port ${port} is already in use.`);
+    process.exit(1);
+  }
+
+  if (error.code === "EACCES") {
+    console.error(`Port ${port} requires elevated privileges.`);
+    process.exit(1);
+  }
+
+  throw error;
+});
+
 server.listen(port, () => {
   console.log(
-    `Admin app listening on http://localhost:${port}/admin/dashboard`
+    `Admin app listening on http://localhost:${port}/admin/dashboard`,
   );
   console.log(`Customer app listening on http://localhost:${port}`);
 });

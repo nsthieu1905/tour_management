@@ -124,7 +124,7 @@ const bookingSuccess = async (req, res) => {
           const booking = await Booking.findById(extraData).populate("tourId");
 
           if (booking && booking.paymentStatus !== "paid") {
-            booking.bookingStatus = "confirmed";
+            booking.bookingStatus = "pending";
             booking.paymentStatus = "paid";
             booking.payments.push({
               amount: parseInt(amount) || 0,

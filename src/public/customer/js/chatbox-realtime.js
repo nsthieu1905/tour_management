@@ -8,19 +8,19 @@ const closeContactBtnBottom = document.getElementById("closeContactBtnBottom");
 
 if (contactBtn) {
   contactBtn.addEventListener("click", () =>
-    contactModal.classList.add("active")
+    contactModal.classList.add("active"),
   );
 }
 
 if (closeContactBtn) {
   closeContactBtn.addEventListener("click", () =>
-    contactModal.classList.remove("active")
+    contactModal.classList.remove("active"),
   );
 }
 
 if (closeContactBtnBottom) {
   closeContactBtnBottom.addEventListener("click", () =>
-    contactModal.classList.remove("active")
+    contactModal.classList.remove("active"),
   );
 }
 
@@ -61,8 +61,16 @@ class RealtimeMessagingCustomer {
   init() {
     if (!this.openChatBtn || !this.chatWindow) return;
     this.attachEventListeners();
-    this.initSocket();
-    this.loadCurrentUser();
+    this.loadCurrentUser().finally(() => {
+      this.initSocket();
+
+      if (this.socket && this.socket.connected && this.currentUserId) {
+        this.socket.emit("customer:join", { userId: this.currentUserId });
+        if (this.currentConversationId) {
+          this.rejoinConversation();
+        }
+      }
+    });
   }
 
   // ============================
@@ -97,7 +105,7 @@ class RealtimeMessagingCustomer {
 
   loadStoredData() {
     this.currentConversationId = localStorage.getItem(
-      `conversation_${this.currentUserId}`
+      `conversation_${this.currentUserId}`,
     );
     this.hasShownGreeting =
       localStorage.getItem(`greeting_shown_${this.currentUserId}`) === "true";
@@ -106,7 +114,7 @@ class RealtimeMessagingCustomer {
   saveConversationId() {
     localStorage.setItem(
       `conversation_${this.currentUserId}`,
-      this.currentConversationId
+      this.currentConversationId,
     );
   }
 
@@ -125,10 +133,16 @@ class RealtimeMessagingCustomer {
   initSocket() {
     if (typeof io === "undefined") return;
 
+    if (this.socket) {
+      return;
+    }
+
     this.socket = io();
 
     this.socket.on("connect", () => {
-      this.socket.emit("customer:join", { userId: this.currentUserId });
+      if (this.currentUserId) {
+        this.socket.emit("customer:join", { userId: this.currentUserId });
+      }
       if (this.currentConversationId) this.rejoinConversation();
     });
 
@@ -136,10 +150,10 @@ class RealtimeMessagingCustomer {
     this.socket.on("typing:active", (data) => this.showTypingIndicator(data));
     this.socket.on("typing:inactive", (data) => this.hideTypingIndicator(data));
     this.socket.on("message:marked-read", (data) =>
-      this.markMessageAsRead(data.messageId)
+      this.markMessageAsRead(data.messageId),
     );
     this.socket.on("conversation:closed", () =>
-      this.handleConversationClosed()
+      this.handleConversationClosed(),
     );
   }
 
@@ -295,7 +309,7 @@ class RealtimeMessagingCustomer {
   async loadMessages() {
     try {
       const response = await fetch(
-        `/api/messages/conversations/${this.currentConversationId}/messages`
+        `/api/messages/conversations/${this.currentConversationId}/messages`,
       );
       const data = await response.json();
 
@@ -323,7 +337,7 @@ class RealtimeMessagingCustomer {
         `/api/messages/conversations/${this.currentConversationId}/mark-read`,
         {
           method: "POST",
-        }
+        },
       );
     } catch (error) {
       // Silent fail

@@ -75,6 +75,19 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString("vi-VN", options);
 }
 
+function formatDateTime(dateStr) {
+  if (!dateStr) return "N/A";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "N/A";
+  return d.toLocaleString("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function formatPrice(price) {
   if (!price) return "0 VNĐ";
   return new Intl.NumberFormat("vi-VN").format(Math.round(price)) + " VNĐ";
@@ -122,7 +135,7 @@ function calculateRefundInfo(departureDate, totalAmount) {
   }
 
   const daysUntilDeparture = Math.ceil(
-    (departure - now) / (1000 * 60 * 60 * 24)
+    (departure - now) / (1000 * 60 * 60 * 24),
   );
 
   let cancellationFeePercent = 0;
@@ -159,7 +172,7 @@ function showLoading() {
   const tbody = document.getElementById("bookingsTableBody");
   tbody.innerHTML = `
     <tr>
-      <td colspan="8" class="px-6 py-8 text-center">
+      <td colspan="9" class="px-6 py-8 text-center">
         <div class="flex items-center justify-center">
           <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -211,7 +224,7 @@ async function fetchBookings(page = 1, status = currentStatus) {
     const tbody = document.getElementById("bookingsTableBody");
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="px-6 py-4 text-center text-red-600">
+        <td colspan="9" class="px-6 py-4 text-center text-red-600">
           Lỗi: ${error.message}
         </td>
       </tr>
@@ -232,7 +245,7 @@ async function fetchAllCounts() {
 
     for (const status of statuses) {
       const response = await fetch(
-        `/api/bookings/all?page=1&limit=1&status=${status}`
+        `/api/bookings/all?page=1&limit=1&status=${status}`,
       );
       const result = await response.json();
 
@@ -269,7 +282,7 @@ function renderBookings(bookings) {
   if (bookings.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+        <td colspan="9" class="px-6 py-4 text-center text-gray-500">
         <i class="fas fa-search text-3xl mb-3 block"></i>
           Không có đơn đặt tour nào
         </td>
@@ -302,6 +315,9 @@ function renderBookings(bookings) {
           ${formatDate(booking.departureDate)}
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${formatDateTime(booking.createdAt)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
           ${booking.numberOfPeople || 0} người
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -314,7 +330,7 @@ function renderBookings(bookings) {
           ${renderActions(booking)}
         </td>
       </tr>
-    `
+    `,
     )
     .join("");
 }
@@ -505,7 +521,7 @@ function confirmBooking(bookingId) {
       if (res.success) {
         Notification.show(
           "Xác nhận đơn thành công! Email đã được gửi.",
-          "success"
+          "success",
         );
         fetchBookings(currentPage, currentStatus);
         fetchAllCounts();
@@ -535,7 +551,7 @@ function completeBooking(bookingId) {
       if (res.success) {
         Notification.show(
           "Hoàn thành tour! Email cảm ơn đã được gửi.",
-          "success"
+          "success",
         );
         fetchBookings(currentPage, currentStatus);
         fetchAllCounts();
@@ -579,7 +595,7 @@ function approveRefund(bookingId, totalAmount, departureDate) {
   if (isNaN(refundInfo.refundAmount) || isNaN(refundInfo.cancellationFee)) {
     Notification.show(
       "Lỗi: Không thể tính toán số tiền hoàn lại. Vui lòng kiểm tra lại thông tin.",
-      "error"
+      "error",
     );
     return;
   }
@@ -592,7 +608,7 @@ function approveRefund(bookingId, totalAmount, departureDate) {
     refundInfo.cancellationFeePercent
   }%</strong> (${formatPrice(refundInfo.cancellationFee)})</p>
   <p>Số tiền hoàn lại: <strong>${formatPrice(
-    refundInfo.refundAmount
+    refundInfo.refundAmount,
   )}</strong></p>
 </div>
   `.trim();

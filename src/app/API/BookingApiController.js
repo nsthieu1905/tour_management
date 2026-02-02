@@ -515,7 +515,7 @@ const momoCallback = async (req, res) => {
 
         if (booking) {
           if (booking.paymentStatus !== "paid") {
-            booking.bookingStatus = "confirmed";
+            booking.bookingStatus = "pending";
             booking.paymentStatus = "paid";
 
             const hasTx = (booking.payments || []).some(
@@ -532,6 +532,20 @@ const momoCallback = async (req, res) => {
             }
 
             await booking.save();
+
+            try {
+              await notifyBookingPaid({
+                userId: booking.userId,
+                bookingId: booking._id,
+                tourName: booking.tourId?.name || "Tour",
+                paymentMethod: "momo",
+              });
+            } catch (notifError) {
+              console.error(
+                "MoMo callback notifyBookingPaid failed:",
+                notifError,
+              );
+            }
 
             try {
               if (booking.tourId?._id && booking.numberOfPeople) {
@@ -757,8 +771,21 @@ const getAllBookings = async (req, res) => {
       });
     }
 
+    let sortQuery = { createdAt: -1 };
+    if (status === "confirmed") {
+      sortQuery = { confirmedAt: -1, createdAt: -1 };
+    } else if (status === "completed") {
+      sortQuery = { completedAt: -1, createdAt: -1 };
+    } else if (status === "refund_requested") {
+      sortQuery = { "refundInfo.requestedAt": -1, createdAt: -1 };
+    } else if (status === "pending") {
+      sortQuery = { updatedAt: -1, createdAt: -1 };
+    } else if (status === "pre_pending") {
+      sortQuery = { createdAt: -1 };
+    }
+
     const bookings = await query
-      .sort({ createdAt: -1 })
+      .sort(sortQuery)
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();

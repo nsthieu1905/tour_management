@@ -26,7 +26,7 @@ const notifyNewBooking = async (bookingData) => {
         },
         priority: "high",
       },
-      "admin"
+      "admin",
     );
     // 2. Notify CUSTOMER about successful booking
     if (bookingData.userId) {
@@ -38,11 +38,11 @@ const notifyNewBooking = async (bookingData) => {
           message: `Đặt thành công tour ${bookingData.tourName}. Chúng tôi sẽ sớm liên hệ với bạn.`,
           icon: "fa-check-circle",
           iconBg: "bg-blue-100",
-          link: `/booking/${bookingData.bookingId}`,
+          link: `/booking-details/${bookingData.bookingId}`,
           data: { bookingId: bookingData.bookingId },
           priority: "high",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
@@ -73,7 +73,7 @@ const notifyPayment = async (paymentData) => {
         },
         priority: "high",
       },
-      "admin"
+      "admin",
     );
     // Notify customer about payment confirmation
     if (paymentData.userId) {
@@ -85,11 +85,11 @@ const notifyPayment = async (paymentData) => {
           message: `Đặt thành công tour ${paymentData.tourName}. Chúng tôi sẽ sớm liên hệ với bạn.`,
           icon: "fa-check-circle",
           iconBg: "bg-blue-100",
-          link: `/booking/${paymentData.bookingId}`,
+          link: `/booking-details/${paymentData.bookingId}`,
           data: { paymentId: paymentData.paymentId },
           priority: "high",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
@@ -115,7 +115,7 @@ const notifyRefund = async (refundData) => {
         data: { refundId: refundData.refundId },
         priority: "high",
       },
-      "admin"
+      "admin",
     );
 
     // Notify customer about refund status
@@ -131,7 +131,7 @@ const notifyRefund = async (refundData) => {
           data: { refundId: refundData.refundId },
           priority: "medium",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
@@ -194,7 +194,7 @@ const notifyTourAlmostFull = async (tourData) => {
         data: { tourId: tourData.tourId },
         priority: "urgent",
       },
-      "admin"
+      "admin",
     );
   } catch (error) {
     console.error("Error sending tour alert notification:", error);
@@ -235,11 +235,11 @@ const notifyBookingPaid = async (bookingData) => {
           message: `Đặt thành công tour ${bookingData.tourName}. Chúng tôi sẽ sớm liên hệ với bạn.`,
           icon: "fa-check-circle",
           iconBg: "bg-blue-100",
-          link: `/booking/${bookingData.bookingId}`,
+          link: `/booking-details/${bookingData.bookingId}`,
           data: { bookingId: bookingData.bookingId },
           priority: "high",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
@@ -276,7 +276,7 @@ const notifyRefundRequested = async (refundData) => {
         data: { bookingId: refundData.bookingId },
         priority: "high",
       },
-      "admin"
+      "admin",
     );
     // 2. Notify CUSTOMER
     if (refundData.userId) {
@@ -293,7 +293,7 @@ const notifyRefundRequested = async (refundData) => {
           data: { bookingId: refundData.bookingId },
           priority: "high",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
@@ -340,7 +340,7 @@ const notifyRefundConfirmed = async (refundData) => {
           data: { bookingId: refundData.bookingId },
           priority: "high",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
@@ -386,7 +386,7 @@ const notifyCancellation = async (cancellationData) => {
           data: { bookingId: cancellationData.bookingId },
           priority: "high",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
@@ -412,7 +412,7 @@ const notifyBookingCompleted = async (bookingData) => {
           data: { bookingId: bookingData.bookingId },
           priority: "medium",
         },
-        "customer"
+        "customer",
       );
     }
   } catch (error) {
